@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+body { margin:0; background:#2a2b2e; font-family:'Source Sans 3', 'Segoe UI', Helvetica, sans-serif; }
+a { color:#8fd0ff; } a:hover { color:#c2e6ff; }
+@keyframes ripple { 0% { transform:scale(.35); opacity:.5 } 100% { transform:scale(1.6); opacity:0 } }
+</style>
+</helmet>
+
+<section style="display:flex;flex-direction:column;gap:14px;padding:48px">
+  <div style="display:flex;align-items:baseline;gap:18px;color:#efefef">
+    <h1 style="margin:0;font-size:34px;font-weight:600;letter-spacing:.01em">Nova OS — blade dashboard mockups</h1>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#9a9a9e">6 screens · 1280 × 720 · 10-foot UI</span>
+  </div>
+  <p style="margin:0 0 14px;max-width:960px;color:#a8a8ad;font-size:16px;line-height:1.5;text-wrap:pretty">Blade edges follow §1.1: they run straight off the top edge, hold a near-vertical shoulder, bow ~2% inward at the waist, then flare outward and exit the bottom edge — each edge stroked with a silver rim, gaps widening downward so the stack reads as a fanned hand of cards. Tab labels rotate 90° clockwise on both sides.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px">
+
+    <!-- 1a — Games blade, signed in -->
+    <div id="1a" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1d1d1d;background:#d8d8d8;border-radius:4px;padding:3px 8px">1a</span>
+        <span style="color:#e6e6e6;font-size:17px">Top-level blade — Games, signed in</span>
+      </div>
+      <div data-screen-label="1a Games blade" style="position:relative;width:1280px;height:720px;overflow:hidden;border-radius:6px;background:radial-gradient(115% 95% at 50% 44%, #8fdc47 0%, #62c024 40%, #3b8a12 100%)">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 44%, rgba(255,255,255,0) 26%, rgba(255,255,255,.10) 28.5%, rgba(255,255,255,0) 31%), radial-gradient(circle at 50% 44%, rgba(255,255,255,0) 44%, rgba(255,255,255,.07) 47%, rgba(255,255,255,0) 50%), radial-gradient(circle at 50% 44%, rgba(0,0,0,0) 62%, rgba(0,0,0,.06) 66%, rgba(0,0,0,0) 70%)"></div>
+        <sc-if value="{{ ripples }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;left:50%;top:44%;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;border:2px solid rgba(255,255,255,.30);animation:ripple 9s ease-out infinite"></div>
+          <div style="position:absolute;left:50%;top:44%;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;border:2px solid rgba(255,255,255,.22);animation:ripple 9s ease-out 4.5s infinite"></div>
+        </sc-if>
+
+        <svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%">
+          <defs>
+            <linearGradient id="silverA" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a9a9a9"/><stop offset="0.3" stop-color="#fbfbfb"/><stop offset="0.62" stop-color="#dcdcdc"/><stop offset="1" stop-color="#b6b6b6"/></linearGradient>
+            <linearGradient id="rimA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/><stop offset="0.5" stop-color="#f0f0f0" stop-opacity="0.7"/><stop offset="1" stop-color="#8b8b8b" stop-opacity="0.6"/></linearGradient>
+            <linearGradient id="tabActiveA" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#478f14"/><stop offset="0.35" stop-color="#95e04d"/><stop offset="1" stop-color="#57a91b"/></linearGradient>
+            <radialGradient id="panelA" cx="0.5" cy="0.3" r="0.85"><stop offset="0" stop-color="#9ade4f"/><stop offset="0.5" stop-color="#66c527"/><stop offset="1" stop-color="#3f8d0f"/></radialGradient>
+            <linearGradient id="glossA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.30"/><stop offset="0.45" stop-color="#ffffff" stop-opacity="0.05"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+          </defs>
+          <path d="M 152,-8 C 157,200 160,310 155,430 C 150,530 124,610 86,720 L 130,720 C 168,610 194,530 199,430 C 204,310 201,200 196,-8 Z" fill="url(#silverA)" stroke="url(#rimA)" stroke-width="2.5"/>
+          <path d="M 200,-8 C 205,200 208,310 203,430 C 198,530 172,610 134,720 L 178,720 C 216,610 242,530 247,430 C 252,310 249,200 244,-8 Z" fill="url(#silverA)" stroke="url(#rimA)" stroke-width="2.5"/>
+          <path d="M 248,-8 C 253,200 256,310 251,430 C 246,530 220,610 182,720 L 226,720 C 264,610 290,530 295,430 C 300,310 297,200 292,-8 Z" fill="url(#tabActiveA)" stroke="url(#rimA)" stroke-width="2.5"/>
+          <path d="M 1044,-8 C 1039,200 1036,310 1041,430 C 1046,530 1072,610 1110,720 L 1066,720 C 1028,610 1002,530 997,430 C 992,310 995,200 1000,-8 Z" fill="url(#silverA)" stroke="url(#rimA)" stroke-width="2.5"/>
+          <path d="M 1092,-8 C 1087,200 1084,310 1089,430 C 1094,530 1120,610 1158,720 L 1114,720 C 1076,610 1050,530 1045,430 C 1040,310 1043,200 1048,-8 Z" fill="url(#silverA)" stroke="url(#rimA)" stroke-width="2.5"/>
+          <path d="M 292,-8 C 297,150 300,260 295,380 C 290,500 264,610 226,720 L 1066,720 C 1028,610 1002,500 997,380 C 992,260 995,150 1000,-8 Z" fill="url(#panelA)" stroke="url(#rimA)" stroke-width="2.5"/>
+          <path d="M 292,-8 C 297,150 300,260 295,380 C 290,500 264,610 226,720 L 1066,720 C 1028,610 1002,500 997,380 C 992,260 995,150 1000,-8 Z" fill="url(#glossA)"/>
+        </svg>
+
+        <span style="position:absolute;left:158px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">store</span>
+        <span style="position:absolute;left:206px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">community</span>
+        <span style="position:absolute;left:254px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#1e3d08">games</span>
+        <span style="position:absolute;left:1010px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">media</span>
+        <span style="position:absolute;left:1058px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">system</span>
+
+        <div style="position:absolute;left:332px;top:26px;width:632px">
+          <div style="font-size:34px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.28);margin-bottom:14px">Games</div>
+          <div style="display:grid;grid-template-columns:318px 288px;gap:26px">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ true }}">
+                <div style="border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#ffffff,#f2f2f2 52%,#dcdcdc);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(255,255,255,.7),0 8px 18px rgba(0,0,0,.18)">
+                  <div style="padding:6px 12px;background:linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.28));color:#fff;font-size:20px">Kestrel_09</div>
+                  <div style="display:flex;gap:14px;padding:12px">
+                    <div style="width:76px;height:76px;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a5a5a;text-align:center">player<br>pic</span></div>
+                    <div style="flex:1;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;align-items:center;font-size:19px;color:#1a1a1a">
+                      <span>Rep</span><span style="color:#c58f12;font-size:16px">★ ★ ★ ★ ☆</span>
+                      <span>Score</span><span style="font-weight:600">2,285</span>
+                      <span>Tier</span><span>Pro</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ signedOutCard }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#ffffff,#eeeeee 55%,#d9d9d9);box-shadow:0 0 0 1px rgba(255,255,255,.7),0 8px 18px rgba(0,0,0,.18)">
+                  <div style="padding:6px 12px;background:linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.28));color:#fff;font-size:20px">Sign in</div>
+                  <div style="display:flex;gap:14px;padding:12px;align-items:center"><div style="width:60px;height:60px;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)"></div><span style="font-size:22px;color:#1a1a1a">3 profiles found</span></div>
+                </div>
+              </sc-if>
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:14px;padding:10px 13px;border-radius:10px;background:linear-gradient(180deg,#ffffff,#ffffff 46%,#e4e4e4);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(255,255,255,.8),0 4px 10px rgba(0,0,0,.14)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.22)"></div><span style="flex:1;font-size:23px;color:#151515">My library</span><span style="font-size:21px;color:#3a3a3a">12</span></div>
+                <div style="display:flex;align-items:center;gap:14px;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.5)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.24)"></div><span style="flex:1;font-size:23px;color:#17300a">Achievements</span></div>
+                <div style="display:flex;align-items:center;gap:14px;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.5)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.24)"></div><span style="flex:1;font-size:23px;color:#17300a">Friends</span><span style="font-size:20px;color:#1f3b0d">3</span></div>
+                <div style="display:flex;align-items:center;gap:14px;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.5);opacity:.45"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.2)"></div><span style="flex:1;font-size:23px;color:#17300a">Friends playing now</span></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;padding-top:4px">
+              <div style="font-size:22px;color:#17300a;line-height:1.35;text-wrap:pretty"><span style="display:block;font-weight:600;font-size:25px;margin-bottom:5px">Nova Online</span>Play together, every night. Tournaments, clubs, and a hundred ways to lose gracefully.</div>
+              <div style="height:162px;border-radius:10px;background:repeating-linear-gradient(135deg, rgba(255,255,255,.30) 0 8px, rgba(255,255,255,.14) 8px 16px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),inset 0 12px 24px rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#2b4a12">promo artwork 16:9</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:absolute;left:326px;top:562px;width:640px;box-sizing:border-box;display:flex;align-items:center;gap:16px;padding:8px 14px;border-radius:26px;background:linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(255,255,255,.4)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,.12));box-shadow:inset 0 0 0 1px rgba(255,255,255,.55)"></div><span style="font-size:23px;color:#17300a">Open tray</span></div>
+
+        <sc-if value="{{ legend }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;left:300px;top:636px;width:700px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:9px"><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#e4dca0,#bdbdbd);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)"></div><span style="font-size:19px;color:rgba(255,255,255,.5)">Y</span></div>
+              <div style="display:flex;align-items:center;gap:9px"><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#7fb6dd,#4d86b3);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)"></div><span style="font-size:19px;color:#f2f7ec">Sign out</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+              <div style="display:flex;align-items:center;gap:9px"><span style="font-size:19px;color:rgba(255,255,255,.5)">B</span><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#d3b3b0,#a8a8a8)"></div></div>
+              <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#f2f7ec">Select</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#9fe06a,#4f9c1c);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)"></div></div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- 1b — Store blade, offline -->
+    <div id="1b" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1d1d1d;background:#d8d8d8;border-radius:4px;padding:3px 8px">1b</span>
+        <span style="color:#e6e6e6;font-size:17px">Top-level blade — Store, offline · four-deep fanned right stack, disabled row</span>
+      </div>
+      <div data-screen-label="1b Store blade" style="position:relative;width:1280px;height:720px;overflow:hidden;border-radius:6px;background:radial-gradient(115% 95% at 46% 44%, #f0863a 0%, #d75c22 42%, #a83c12 100%)">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 46% 44%, rgba(255,255,255,0) 26%, rgba(255,255,255,.10) 28.5%, rgba(255,255,255,0) 31%), radial-gradient(circle at 46% 44%, rgba(255,255,255,0) 46%, rgba(255,255,255,.06) 49%, rgba(255,255,255,0) 52%)"></div>
+        <svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%">
+          <defs>
+            <linearGradient id="silverB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a9a9a9"/><stop offset="0.3" stop-color="#fbfbfb"/><stop offset="0.62" stop-color="#dcdcdc"/><stop offset="1" stop-color="#b6b6b6"/></linearGradient>
+            <linearGradient id="rimB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/><stop offset="0.5" stop-color="#f0f0f0" stop-opacity="0.7"/><stop offset="1" stop-color="#8b8b8b" stop-opacity="0.6"/></linearGradient>
+            <linearGradient id="tabActiveB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bb5219"/><stop offset="0.35" stop-color="#f79a58"/><stop offset="1" stop-color="#cc6024"/></linearGradient>
+            <radialGradient id="panelB" cx="0.46" cy="0.3" r="0.85"><stop offset="0" stop-color="#f4924b"/><stop offset="0.5" stop-color="#dc6522"/><stop offset="1" stop-color="#ab3e12"/></radialGradient>
+            <linearGradient id="glossB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.32"/><stop offset="0.45" stop-color="#ffffff" stop-opacity="0.05"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+          </defs>
+          <path d="M 200,-8 C 205,200 208,310 203,430 C 198,530 172,610 134,720 L 178,720 C 216,610 242,530 247,430 C 252,310 249,200 244,-8 Z" fill="url(#tabActiveB)" stroke="url(#rimB)" stroke-width="2.5"/>
+          <path d="M 996,-8 C 991,200 988,310 993,430 C 998,530 1024,610 1062,720 L 1018,720 C 980,610 954,530 949,430 C 944,310 947,200 952,-8 Z" fill="url(#silverB)" stroke="url(#rimB)" stroke-width="2.5"/>
+          <path d="M 1044,-8 C 1039,200 1036,310 1041,430 C 1046,530 1072,610 1110,720 L 1066,720 C 1028,610 1002,530 997,430 C 992,310 995,200 1000,-8 Z" fill="url(#silverB)" stroke="url(#rimB)" stroke-width="2.5"/>
+          <path d="M 1092,-8 C 1087,200 1084,310 1089,430 C 1094,530 1120,610 1158,720 L 1114,720 C 1076,610 1050,530 1045,430 C 1040,310 1043,200 1048,-8 Z" fill="url(#silverB)" stroke="url(#rimB)" stroke-width="2.5"/>
+          <path d="M 1140,-8 C 1135,200 1132,310 1137,430 C 1142,530 1168,610 1206,720 L 1162,720 C 1124,610 1098,530 1093,430 C 1088,310 1091,200 1096,-8 Z" fill="url(#silverB)" stroke="url(#rimB)" stroke-width="2.5"/>
+          <path d="M 244,-8 C 249,150 252,260 247,380 C 242,500 216,610 178,720 L 1018,720 C 980,610 954,500 949,380 C 944,260 947,150 952,-8 Z" fill="url(#panelB)" stroke="url(#rimB)" stroke-width="2.5"/>
+          <path d="M 244,-8 C 249,150 252,260 247,380 C 242,500 216,610 178,720 L 1018,720 C 980,610 954,500 949,380 C 944,260 947,150 952,-8 Z" fill="url(#glossB)"/>
+        </svg>
+        <span style="position:absolute;left:206px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#4a1d05">store</span>
+        <span style="position:absolute;left:962px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">community</span>
+        <span style="position:absolute;left:1010px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">games</span>
+        <span style="position:absolute;left:1058px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">media</span>
+        <span style="position:absolute;left:1106px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">system</span>
+
+        <div style="position:absolute;left:286px;top:26px;width:630px">
+          <div style="font-size:34px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3);margin-bottom:14px">Store</div>
+          <div style="display:grid;grid-template-columns:318px 286px;gap:26px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:14px;padding:10px 15px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 0 1px rgba(255,255,255,.28);opacity:.45"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.25)"></div><span style="font-size:23px;color:#3d1704">Spotlight</span></div>
+              <div style="display:flex;align-items:center;gap:14px;padding:10px 15px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(255,255,255,.45)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.28)"></div><span style="font-size:23px;color:#3d1704">New arrivals</span></div>
+              <div style="display:flex;align-items:center;gap:14px;padding:10px 15px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(255,255,255,.45)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.28)"></div><span style="font-size:23px;color:#3d1704">Game store</span></div>
+              <div style="display:flex;align-items:center;gap:14px;padding:10px 15px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(255,255,255,.45)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.28)"></div><span style="font-size:23px;color:#3d1704">Video store</span></div>
+              <div style="margin-top:8px;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:14px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.4)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.26)"></div><span style="font-size:23px;color:#3d1704">Redeem code</span></div>
+                <div style="display:flex;align-items:center;gap:14px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.4)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.26)"></div><span style="flex:1;font-size:23px;color:#3d1704">Active downloads</span><span style="font-size:20px;color:#4a2007">2</span></div>
+                <div style="display:flex;align-items:center;gap:14px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.4)"><div style="width:24px;height:24px;border-radius:4px;background:rgba(0,0,0,.26)"></div><span style="font-size:23px;color:#3d1704">Account</span></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="height:240px;border-radius:10px;background:repeating-linear-gradient(135deg, rgba(255,255,255,.34) 0 8px, rgba(255,255,255,.16) 8px 16px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#57250a">featured hero image 4:3</span></div>
+              <div style="height:86px;border-radius:10px;background:linear-gradient(180deg,#565656,#3a3a3a);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 1px rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#c9c9c9">network banner slot</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:260px;top:636px;width:690px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;align-items:center;gap:9px"><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#cfcfcf,#a4a4a4)"></div><span style="font-size:19px;color:rgba(255,255,255,.5)">Y</span></div>
+            <div style="display:flex;align-items:center;gap:9px"><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#cfcfcf,#a4a4a4)"></div><span style="font-size:19px;color:rgba(255,255,255,.5)">X</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:19px;color:rgba(255,255,255,.5)">B</span><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#d3b3b0,#a8a8a8)"></div></div>
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#fff5ee">Select</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#9fe06a,#4f9c1c);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1c — My library master-detail -->
+    <div id="1c" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1d1d1d;background:#d8d8d8;border-radius:4px;padding:3px 8px">1c</span>
+        <span style="color:#e6e6e6;font-size:17px">Drill-down — My library · clipped filter tabs, master–detail, tile grid</span>
+      </div>
+      <div data-screen-label="1c My library" style="position:relative;width:1280px;height:720px;overflow:hidden;border-radius:6px;background:radial-gradient(115% 100% at 50% 46%, #8ad943 0%, #63c126 44%, #47960f 100%)">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 46%, rgba(255,255,255,0) 30%, rgba(255,255,255,.08) 33%, rgba(255,255,255,0) 36%), radial-gradient(circle at 50% 46%, rgba(0,0,0,0) 58%, rgba(0,0,0,.07) 62%, rgba(0,0,0,0) 66%)"></div>
+        <div style="position:relative;padding:20px 0 0 44px;background:linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,0));height:76px;box-sizing:border-box"><span style="font-size:32px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)">My library</span></div>
+        <div style="position:relative;display:flex;align-items:baseline;gap:44px;padding:6px 0 18px;margin-left:-52px;font-size:26px;white-space:nowrap">
+          <span style="color:rgba(255,255,255,.35)">…yed</span>
+          <span style="color:#ffffff">All games</span>
+          <span style="color:rgba(255,255,255,.55)">Arcade</span>
+          <span style="color:rgba(255,255,255,.55)">Demos</span>
+          <span style="color:rgba(255,255,255,.55)">Recently downloaded</span>
+          <span style="color:rgba(255,255,255,.35)">Rec…</span>
+        </div>
+        <div style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:0 60px">
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:16px;padding:11px 14px;border-radius:10px;background:linear-gradient(180deg,#ffffff,#ffffff 46%,#e2e2e2);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(255,255,255,.8),0 4px 10px rgba(0,0,0,.14)"><div style="width:44px;height:44px;border-radius:4px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.12) 0 5px, rgba(0,0,0,.04) 5px 10px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)"></div><span style="font-size:25px;color:#151515">Skyline Drift</span></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.5)"><div style="width:40px;height:40px;border-radius:4px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.12) 0 5px, rgba(0,0,0,.04) 5px 10px)"></div><span style="font-size:25px;color:#17300a">Lantern Hollow</span></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.5)"><div style="width:40px;height:40px;border-radius:4px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.12) 0 5px, rgba(0,0,0,.04) 5px 10px)"></div><span style="font-size:25px;color:#17300a">Lantern Hollow II</span></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.5)"><div style="width:40px;height:40px;border-radius:4px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.12) 0 5px, rgba(0,0,0,.04) 5px 10px)"></div><span style="font-size:25px;color:#17300a">Pocket Regatta</span></div>
+            <div style="padding:36px 14px 0;font-size:21px;color:#1f3b0d">1 of 4</div>
+          </div>
+          <div style="align-self:start;border-radius:14px;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 0 1px rgba(255,255,255,.45)">
+            <div style="padding:9px 18px;font-size:23px;color:#17300a;background:linear-gradient(180deg, rgba(255,255,255,.36), rgba(255,255,255,.10))">Arcade game</div>
+            <div style="display:flex;align-items:center;gap:18px;padding:14px 18px">
+              <div style="width:64px;height:64px;border-radius:5px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.12) 0 5px, rgba(0,0,0,.04) 5px 10px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)"></div>
+              <span style="flex:1;font-size:24px;color:#17300a">Score</span>
+              <span style="font-size:24px;color:#17300a;font-weight:600">5 / 400</span>
+            </div>
+            <div style="padding:2px 18px 8px;font-size:23px;color:#17300a">Achievements</div>
+            <div style="display:grid;grid-template-columns:repeat(4,74px);gap:9px;padding:0 18px 16px">
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(255,255,255,.42) 0 6px, rgba(255,255,255,.20) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(255,255,255,.42) 0 6px, rgba(255,255,255,.20) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(255,255,255,.42) 0 6px, rgba(255,255,255,.20) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(255,255,255,.42) 0 6px, rgba(255,255,255,.20) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+              <div style="aspect-ratio:1;border-radius:6px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.10) 0 6px, rgba(0,0,0,.03) 6px 12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.6"></div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:80px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.16))">
+          <div style="display:flex;align-items:center;gap:10px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#f5d766,#c9a41c);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)"></div><span style="font-size:21px;color:#f4f9ee">Sort by title</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#f4f9ee">Back</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#e88a80,#b8342a);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)"></div></div>
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#f4f9ee">Select</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#9fe06a,#4f9c1c);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1d — Console settings -->
+    <div id="1d" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1d1d1d;background:#d8d8d8;border-radius:4px;padding:3px 8px">1d</span>
+        <span style="color:#e6e6e6;font-size:17px">Drill-down — Console settings · inherited color, scroll indicator</span>
+      </div>
+      <div data-screen-label="1d Console settings" style="position:relative;width:1280px;height:720px;overflow:hidden;border-radius:6px;background:radial-gradient(115% 100% at 50% 46%, #b49ce0 0%, #8f6ecb 44%, #6d4ba8 100%)">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 46%, rgba(255,255,255,0) 28%, rgba(255,255,255,.09) 31%, rgba(255,255,255,0) 34%), radial-gradient(circle at 50% 46%, rgba(0,0,0,0) 60%, rgba(0,0,0,.07) 64%, rgba(0,0,0,0) 68%)"></div>
+        <div style="position:relative;padding:20px 0 0 44px;background:linear-gradient(180deg, rgba(0,0,0,.16), rgba(0,0,0,0));height:78px;box-sizing:border-box"><span style="font-size:32px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)">Console settings</span></div>
+        <div style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:52px;padding:10px 64px 0">
+          <div style="display:flex;flex-direction:column">
+            <div style="padding:10px 16px;border-radius:10px;background:linear-gradient(180deg,#ffffff,#ffffff 44%,#e4e4e4);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(255,255,255,.8),0 4px 10px rgba(0,0,0,.14);font-size:26px;color:#151515">Display</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Audio</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Themes</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Language</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Clock</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Locale</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Startup</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Shutdown</div>
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.45);font-size:26px;color:#2a1350">Screen saver</div>
+            <div style="display:flex;justify-content:flex-end;padding:10px 16px 0"><span style="font-size:20px;color:rgba(255,255,255,.8)">▼</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:26px;padding-top:6px">
+            <div>
+              <div style="font-size:27px;font-weight:600;color:#2a1350;margin-bottom:6px">Current setting</div>
+              <div style="font-size:25px;color:#2a1350;line-height:1.4">1920 × 1080<br>Widescreen<br>Standard</div>
+            </div>
+            <div style="font-size:25px;color:#2a1350;line-height:1.4;max-width:460px;text-wrap:pretty">Change your display output settings. Display settings include screen size, output mode, and HD.</div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:80px;display:flex;align-items:center;justify-content:flex-end;padding:0 48px;background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.16))">
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#f6f2fd">Back</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#e88a80,#b8342a);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)"></div></div>
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#f6f2fd">Select</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#9fe06a,#4f9c1c);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1e — steel sign-in overlay -->
+    <div id="1e" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1d1d1d;background:#d8d8d8;border-radius:4px;padding:3px 8px">1e</span>
+        <span style="color:#e6e6e6;font-size:17px">Overlay — system task blade (steel, left) with lazy-S inner edge over dimmed content</span>
+      </div>
+      <div data-screen-label="1e Sign in overlay" style="position:relative;width:1280px;height:720px;overflow:hidden;border-radius:6px;background:radial-gradient(115% 100% at 55% 46%, #e8b03e 0%, #cf8a1d 44%, #9d6410 100%)">
+        <div style="position:absolute;inset:0;filter:brightness(.6) saturate(.85)">
+          <div style="position:absolute;inset:0;background:radial-gradient(circle at 55% 46%, rgba(255,255,255,0) 28%, rgba(255,255,255,.10) 31%, rgba(255,255,255,0) 34%)"></div>
+          <svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%">
+            <defs>
+              <linearGradient id="silverE" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a9a9a9"/><stop offset="0.3" stop-color="#fbfbfb"/><stop offset="0.62" stop-color="#dcdcdc"/><stop offset="1" stop-color="#b6b6b6"/></linearGradient>
+              <linearGradient id="rimE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/><stop offset="0.5" stop-color="#efefef" stop-opacity="0.65"/><stop offset="1" stop-color="#8b8b8b" stop-opacity="0.55"/></linearGradient>
+              <radialGradient id="panelE" cx="0.55" cy="0.3" r="0.85"><stop offset="0" stop-color="#eeb845"/><stop offset="0.5" stop-color="#d4901f"/><stop offset="1" stop-color="#9d6410"/></radialGradient>
+            </defs>
+            <path d="M 1044,-8 C 1039,200 1036,310 1041,430 C 1046,530 1072,610 1110,720 L 1066,720 C 1028,610 1002,530 997,430 C 992,310 995,200 1000,-8 Z" fill="url(#silverE)" stroke="url(#rimE)" stroke-width="2.5"/>
+            <path d="M 1092,-8 C 1087,200 1084,310 1089,430 C 1094,530 1120,610 1158,720 L 1114,720 C 1076,610 1050,530 1045,430 C 1040,310 1043,200 1048,-8 Z" fill="url(#silverE)" stroke="url(#rimE)" stroke-width="2.5"/>
+            <path d="M 1140,-8 C 1135,200 1132,310 1137,430 C 1142,530 1168,610 1206,720 L 1162,720 C 1124,610 1098,530 1093,430 C 1088,310 1091,200 1096,-8 Z" fill="url(#silverE)" stroke="url(#rimE)" stroke-width="2.5"/>
+            <path d="M 292,-8 C 297,150 300,260 295,380 C 290,500 264,610 226,720 L 1066,720 C 1028,610 1002,500 997,380 C 992,260 995,150 1000,-8 Z" fill="url(#panelE)" stroke="url(#rimE)" stroke-width="2.5"/>
+          </svg>
+          <div style="position:absolute;left:1010px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">games</div>
+          <div style="position:absolute;left:1058px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">media</div>
+          <div style="position:absolute;left:1106px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">system</div>
+          <div style="position:absolute;left:576px;top:26px;font-size:34px;color:#fff">Community</div>
+          <div style="position:absolute;left:332px;top:88px;width:318px;height:120px;border-radius:12px;background:linear-gradient(180deg,#f2f2f2,#d6d6d6)"></div>
+          <div style="position:absolute;left:332px;top:250px;width:318px;height:170px;border-radius:10px;background:linear-gradient(180deg,#3f3f3f,#2b2b2b)"></div>
+          <div style="position:absolute;left:676px;top:250px;width:280px;font-size:22px;color:#3a2503;line-height:1.35">Nova Online<br>Clubs. Ladders. Late-night lobbies.</div>
+          <div style="position:absolute;left:326px;top:562px;width:640px;height:52px;border-radius:26px;background:linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.08))"></div>
+        </div>
+
+        <svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%">
+          <defs>
+            <linearGradient id="steelE" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e4e4e4"/><stop offset="0.28" stop-color="#fcfcfc"/><stop offset="0.66" stop-color="#d2d2d2"/><stop offset="1" stop-color="#eeeeee"/></linearGradient>
+            <linearGradient id="steelRimE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#f4f4f4"/><stop offset="1" stop-color="#9e9e9e"/></linearGradient>
+          </defs>
+          <path d="M 0,0 L 520,0 C 533,150 539,260 533,380 C 527,500 490,610 435,720 L 0,720 Z" fill="url(#steelE)" stroke="url(#steelRimE)" stroke-width="4"/>
+        </svg>
+        <div style="position:absolute;left:0;top:0;width:520px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 40px 16px">
+            <span style="font-size:30px;color:#2e2e2e">Sign in</span>
+            <span style="font-size:24px;color:#4a4a4a">7:10 AM</span>
+          </div>
+          
+          <div style="padding:52px 40px 0;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:16px;padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#ffffff,#ececec);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.14)">
+              <div style="width:56px;height:56px;border-radius:4px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.12) 0 5px, rgba(0,0,0,.04) 5px 10px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)"></div>
+              <div style="flex:1;line-height:1.25"><div style="font-size:24px;color:#161616">Kestrel_09</div><div style="font-size:20px;color:#4d4d4d">Nova Online</div></div>
+              <span style="font-size:20px;color:#4d4d4d">HDD</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;padding:10px 14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,.5), rgba(0,0,0,.04));box-shadow:0 0 0 1px rgba(0,0,0,.12)">
+              <div style="width:56px;height:56px;border-radius:4px;background:repeating-linear-gradient(135deg, rgba(0,0,0,.12) 0 5px, rgba(0,0,0,.04) 5px 10px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)"></div>
+              <div style="flex:1;line-height:1.25"><div style="font-size:24px;color:#161616">Marrow.Fen</div><div style="font-size:20px;color:#4d4d4d">Local profile</div></div>
+              <span style="font-size:20px;color:#4d4d4d">HDD</span>
+            </div>
+            <div style="height:1px;background:rgba(0,0,0,.12);margin-top:12px"></div>
+          </div>
+        </div>
+        <div style="position:absolute;left:40px;top:624px;width:400px;display:flex;align-items:flex-end;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#f5d766,#c9a41c)"></div><span style="font-size:20px;color:#2b2b2b">Create new profile</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#7fb6dd,#4d86b3)"></div><span style="font-size:20px;color:#2b2b2b">Recover profile</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px;color:#2b2b2b">Back</span><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#e88a80,#b8342a)"></div></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px;color:#2b2b2b">Select</span><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#9fe06a,#4f9c1c)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1f — gold decision dialog -->
+    <div id="1f" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1d1d1d;background:#d8d8d8;border-radius:4px;padding:3px 8px">1f</span>
+        <span style="color:#e6e6e6;font-size:17px">Overlay — decision dialog (gold, right) with glossy selection bar</span>
+      </div>
+      <div data-screen-label="1f Update dialog" style="position:relative;width:1280px;height:720px;overflow:hidden;border-radius:6px;background:radial-gradient(115% 100% at 40% 46%, #e8b03e 0%, #cf8a1d 44%, #9d6410 100%)">
+        <div style="position:absolute;inset:0;filter:brightness(.58) saturate(.8)">
+          <div style="position:absolute;inset:0;background:radial-gradient(circle at 40% 46%, rgba(255,255,255,0) 28%, rgba(255,255,255,.10) 31%, rgba(255,255,255,0) 34%)"></div>
+          <svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%">
+            <defs>
+              <linearGradient id="silverF" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a9a9a9"/><stop offset="0.3" stop-color="#fbfbfb"/><stop offset="0.62" stop-color="#dcdcdc"/><stop offset="1" stop-color="#b6b6b6"/></linearGradient>
+              <linearGradient id="rimF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/><stop offset="0.5" stop-color="#efefef" stop-opacity="0.65"/><stop offset="1" stop-color="#8b8b8b" stop-opacity="0.55"/></linearGradient>
+              <linearGradient id="tabActiveF" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c08e1c"/><stop offset="0.35" stop-color="#f4cd6a"/><stop offset="1" stop-color="#cd9a25"/></linearGradient>
+              <radialGradient id="panelF" cx="0.4" cy="0.3" r="0.85"><stop offset="0" stop-color="#eeb845"/><stop offset="0.5" stop-color="#d4901f"/><stop offset="1" stop-color="#9d6410"/></radialGradient>
+            </defs>
+            <path d="M 152,-8 C 157,200 160,310 155,430 C 150,530 124,610 86,720 L 130,720 C 168,610 194,530 199,430 C 204,310 201,200 196,-8 Z" fill="url(#silverF)" stroke="url(#rimF)" stroke-width="2.5"/>
+            <path d="M 200,-8 C 205,200 208,310 203,430 C 198,530 172,610 134,720 L 178,720 C 216,610 242,530 247,430 C 252,310 249,200 244,-8 Z" fill="url(#tabActiveF)" stroke="url(#rimF)" stroke-width="2.5"/>
+            <path d="M 244,-8 C 249,150 252,260 247,380 C 242,500 216,610 178,720 L 1018,720 C 980,610 954,500 949,380 C 944,260 947,150 952,-8 Z" fill="url(#panelF)" stroke="url(#rimF)" stroke-width="2.5"/>
+          </svg>
+          <div style="position:absolute;left:158px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#7d7d7d">store</div>
+          <div style="position:absolute;left:206px;top:60px;writing-mode:vertical-rl;font-size:20px;color:#4a3403">community</div>
+          <div style="position:absolute;left:286px;top:26px;font-size:34px;color:#fff">Community</div>
+          <div style="position:absolute;left:286px;top:88px;width:318px;height:124px;border-radius:12px;background:linear-gradient(180deg,#f4f4f4,#d8d8d8)"></div>
+          <div style="position:absolute;left:286px;top:250px;width:318px;font-size:23px;color:#3a2503">Connect to Nova Online</div>
+          <div style="position:absolute;left:286px;top:300px;width:318px;height:120px;border-radius:10px;background:linear-gradient(180deg,#3f3f3f,#2b2b2b)"></div>
+          <div style="position:absolute;left:260px;top:562px;width:690px;height:52px;border-radius:26px;background:linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.08))"></div>
+        </div>
+
+        <svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%">
+          <defs>
+            <radialGradient id="goldF" cx="0.6" cy="0.25" r="0.9"><stop offset="0" stop-color="#f7d478"/><stop offset="0.55" stop-color="#e0a72c"/><stop offset="1" stop-color="#c68a17"/></radialGradient>
+            <linearGradient id="goldRimF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/><stop offset="0.55" stop-color="#fdf3d8" stop-opacity="0.7"/><stop offset="1" stop-color="#9c7412" stop-opacity="0.7"/></linearGradient>
+          </defs>
+          <path d="M 1280,0 L 700,0 C 687,150 681,260 687,380 C 693,500 730,610 785,720 L 1280,720 Z" fill="url(#goldF)" stroke="url(#goldRimF)" stroke-width="4"/>
+        </svg>
+        <div style="position:absolute;left:716px;top:0;width:520px">
+          <div style="display:flex;align-items:center;gap:14px;padding:22px 0 12px">
+            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(180deg,#7fb6dd,#4d86b3);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)"></div>
+            <span style="font-size:30px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.22)">Update required</span>
+          </div>
+          <div style="font-size:24px;color:#3c2604;line-height:1.4;text-wrap:pretty;width:470px">
+            <p style="margin:0 0 20px">A console update is available from Nova Online. If you decline, you will be signed out. For more info, see the support page in Settings.</p>
+            <p style="margin:0">Do you want to apply the update now?</p>
+          </div>
+        </div>
+        <div style="position:absolute;left:750px;top:470px;width:470px;display:flex;flex-direction:column;gap:2px">
+          <div style="padding:11px 16px;font-size:24px;color:#3c2604;border-bottom:1px solid rgba(255,255,255,.45)">Yes, update now</div>
+          <div style="padding:11px 16px;border-radius:8px;font-size:24px;color:#151515;background:linear-gradient(180deg,#ffffff,#ffffff 46%,#e6e6e6);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(255,255,255,.8),0 4px 10px rgba(0,0,0,.14)">No, don't update</div>
+        </div>
+        <div style="position:absolute;left:800px;top:624px;width:420px;display:flex;align-items:flex-end;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#cfcfcf,#a8a8a8)"></div>
+            <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#cfcfcf,#a8a8a8)"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#fffaf0">Back</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#e88a80,#b8342a)"></div></div>
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:21px;color:#fffaf0">Select</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#9fe06a,#4f9c1c)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;signedIn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;States&quot;},&quot;animateRipples&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Materiality&quot;},&quot;showLegend&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Chrome&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const signedIn = this.props.signedIn ?? true;
+    return {
+      signedIn,
+      signedOutCard: !signedIn,
+      ripples: this.props.animateRipples ?? true,
+      legend: this.props.showLegend ?? true,
+    };
+  }
+}
+</script>
+</body>
+</html>
