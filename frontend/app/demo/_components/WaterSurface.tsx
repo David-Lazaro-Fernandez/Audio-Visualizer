@@ -4,9 +4,11 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { WATER_FRAGMENT_SHADER, WATER_VERTEX_SHADER } from "./water-shader";
+import { flatDropK } from "@/app/_water/water-field";
 import {
   LIGHT_DIR,
   MAX_DROPS,
+  DEFAULT_DROP_CAPACITY,
   PLANE_SEGMENTS,
   PLANE_SIZE,
   WATER_COLORS,
@@ -172,6 +174,8 @@ export function WaterSurface({
       uTime: { value: 0 },
       uDropCount: { value: 0 },
       uDrops: { value: drops },
+      // Every drop at uK; only the audio visualizer varies it.
+      uDropK: { value: flatDropK() },
       uMode: { value: toggles.heightView ? 1 : 0 },
       uDispersion: { value: toggles.dispersion ? 1 : 0 },
       uDeep: { value: new THREE.Color(WATER_COLORS.deep) },
@@ -188,8 +192,8 @@ export function WaterSurface({
 
     function addDrop(x: number, z: number, strength = 1) {
       drops[head].set(x, z, clock(), strength);
-      head = (head + 1) % MAX_DROPS;
-      count = Math.min(count + 1, MAX_DROPS);
+      head = (head + 1) % DEFAULT_DROP_CAPACITY;
+      count = Math.min(count + 1, DEFAULT_DROP_CAPACITY);
       uniforms.uDropCount.value = count;
     }
 

@@ -143,8 +143,11 @@ export function MenuListItem({
   /** Full-screen component to open on select (takes precedence over `detail`). */
   screen?: React.ComponentType<MenuScreenProps>;
   autoFocus?: boolean;
-  /** Leading glyph (e.g. `<MenuIcon name="trophy" />`); falls back to a plain square. */
-  icon?: React.ReactNode;
+  /**
+   * Leading glyph (e.g. `<MenuIcon name="trophy" />`). Omitted falls back
+   * to the placeholder square; an explicit `null` means no icon at all.
+   */
+  icon?: React.ReactNode | null;
   /**
    * `row` variant only: while the cursor is on the row (hover or focus), scale
    * the icon up and bump the label size, as the 360's game lists do — the
@@ -214,7 +217,10 @@ export function MenuListItem({
 
   useBackKey(open, close);
 
-  const icon = (
+  // An explicit `null` means the row has no icon at all, as the console's
+  // track lists had none. Omitting the prop keeps the placeholder square,
+  // which is what a row whose bitmap has not been redrawn wants (§6.2).
+  const icon = customIcon === null ? null : (
     // Dim the glyph along with the text when disabled (the SVG icons carry
     // their own colours, so `color` alone wouldn't reach them). With
     // `growOnFocus` the glyph scales from its left edge so it swells toward
@@ -268,9 +274,11 @@ export function MenuListItem({
             {/* Icon is scaled up past the band and shifted upward so it
                 straddles the split; the fixed-height wrapper keeps the
                 oversized glyph from stretching the band. */}
-            <span className="flex h-6 shrink-0 items-center [&_svg]:h-11 [&_svg]:w-11 [&_svg]:-translate-y-[10px]">
-              {icon}
-            </span>
+            {icon && (
+              <span className="flex h-6 shrink-0 items-center [&_svg]:h-11 [&_svg]:w-11 [&_svg]:-translate-y-[10px]">
+                {icon}
+              </span>
+            )}
             <span className="min-w-0 truncate text-[23px]">{label}</span>
           </span>
           {meta && <span className="shrink-0 text-[22px]">{meta}</span>}

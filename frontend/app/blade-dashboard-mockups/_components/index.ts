@@ -112,6 +112,32 @@ export { AudiobooksScreen } from "./AudiobooksScreen";
 export { ScrollColumn } from "./ScrollColumn";
 export { PicturesScreen } from "./PicturesScreen";
 export { PICTURES, PICTURES_DIR, pictureSrc, type Picture } from "./pictures";
+export { ALBUMS, albumSearchTitle, type Album } from "./albums";
+export {
+  albumTracks,
+  albumGenre,
+  albumHeading,
+  albumArtworkUrl,
+  formatTrackLength,
+  type Track,
+} from "./album-details";
+export { useAudioSpectrum } from "./use-audio-spectrum";
+export { AlbumScreen } from "./AlbumScreen";
+export { SongScreen, songScreenFor } from "./SongScreen";
+export { MusicPlayerScreen, musicPlayerFor } from "./MusicPlayerScreen";
+export { MusicVisualizer } from "./MusicVisualizer";
+export { WaterVisualizer } from "./WaterVisualizer";
+export {
+  VISUALIZER_BANDS,
+  VISUALIZER_STYLES,
+  type VisualizerStyle,
+} from "./visualizer-styles";
+export {
+  createOnsetDetector,
+  bandRadius,
+  bandWavenumber,
+  type DropEvent,
+} from "./audio-drops";
 export {
   ACHIEVEMENT_GAMES,
   ALL_GAMES_TITLE,
@@ -137,4 +163,10 @@ export {
   type BladeNavValue,
   type BladeSection,
 } from "./BladeNavContext";
-export { isSelectKey, isBackKey, isNativeButtonActivationKey } from "./keys";
+export {
+  isSelectKey,
+  isBackKey,
+  isNativeButtonActivationKey,
+  isYKey,
+  isXKey,
+} from "./keys";

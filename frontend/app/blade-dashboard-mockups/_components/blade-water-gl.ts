@@ -34,6 +34,8 @@ import {
   WATER_FRAGMENT_PRELUDE,
   WATER_VERTEX_SHADER,
   MAX_DROPS,
+  DEFAULT_DROP_CAPACITY,
+  flatDropK,
 } from "@/app/_water/water-field";
 import { CANVAS_HEIGHT, edgeDeltaTable } from "./blade-curve";
 import { BLADE_MOTION_MS, bladeEase } from "./blade-motion";
@@ -319,6 +321,8 @@ export class BladeWaterRenderer {
         uTime: { value: 0 },
         uDropCount: { value: 0 },
         uDrops: { value: this.drops },
+        // Every drop at uK; only the audio visualizer varies it.
+        uDropK: { value: flatDropK() },
         uResolution: { value: resolution },
         uPanel: { value: new THREE.Vector2(0, REFERENCE_WIDTH) },
         uMasked: { value: initial.panel ? 1 : 0 },
@@ -445,8 +449,10 @@ export class BladeWaterRenderer {
       t,
       1,
     );
-    this.dropHead = (this.dropHead + 1) % MAX_DROPS;
-    this.dropCount = Math.min(this.dropCount + 1, MAX_DROPS);
+    // Capacity, not the array size: this surface drops once every couple
+    // of seconds and has no use for the visualizer's larger budget.
+    this.dropHead = (this.dropHead + 1) % DEFAULT_DROP_CAPACITY;
+    this.dropCount = Math.min(this.dropCount + 1, DEFAULT_DROP_CAPACITY);
     this.waterMaterial.uniforms.uDropCount.value = this.dropCount;
   }
 

@@ -28,8 +28,33 @@
  * `fwidth` is core.
  */
 
-/** Ring buffer length; must match MAX_DROPS in the shader. */
-export const MAX_DROPS = 16;
+/**
+ * Size of the shader's drop array — the *ceiling*, not what any one
+ * surface uses.
+ *
+ * `surface()` breaks out of its loop at `uDropCount`, so a surface pays
+ * for the drops it actually holds and nothing for the empty tail. That
+ * makes the array cheap to oversize, and it has to be oversized: the
+ * audio visualizer needs dozens of simultaneous ripples, because
+ * `uDropCount` slots divided by a ripple's two-second life is the only
+ * drop rate it can sustain without recycling a wave that is still
+ * visible. Sixteen slots at a busy passage's rate recycled a slot every
+ * 110 ms, which chopped every ripple almost as soon as it started.
+ *
+ * Surfaces that drop slowly — the blade background, `/demo` — declare a
+ * smaller capacity of their own and keep their original cost.
+ */
+export const MAX_DROPS = 48;
+
+/** What a surface uses unless it says otherwise. */
+export const DEFAULT_DROP_CAPACITY = 16;
+
+/**
+ * A `uDropK` array that means "every drop uses uK". Every surface needs
+ * this: an unassigned uniform array reads as zero, and k = 0 flattens the
+ * field entirely. Only the audio visualizer writes anything else.
+ */
+export const flatDropK = () => new Float32Array(MAX_DROPS).fill(1);
 
 /**
  * The wave math, injected into both stages of both surfaces.
@@ -45,6 +70,15 @@ export const WATER_FIELD_CHUNK = /* glsl */ `
 uniform float uTime;
 uniform int   uDropCount;
 uniform vec4  uDrops[MAX_DROPS];   // xy: origin (world x,z), z: start time, w: strength
+/**
+ * Per-drop wavenumber, as a *multiplier* of uK rather than an absolute
+ * value. A vec4 has no room left for it, and a multiplier means the
+ * array never has to be resynchronised when uK itself is adjusted: 1.0
+ * is "whatever uK says", which is what every surface but the audio
+ * visualizer wants. Driving it per drop is what lets a bass onset make
+ * long, wide rings and a cymbal make tight ones.
+ */
+uniform float uDropK[MAX_DROPS];
 
 uniform float uAmp;          // ripple amplitude A
 uniform float uK;            // wavenumber 2*pi/lambda
@@ -74,20 +108,23 @@ uniform float uAlpha;        // < 1 only for that overlay
  * 2D surface; decay is the global fade times viscous damping, which eats
  * short waves faster than long ones.
  */
-vec2 ripplePacket(float r, float t, float strength) {
+vec2 ripplePacket(float r, float t, float strength, float k) {
   float u      = r - uSpeed * t;     // distance behind the wavefront
   float sigma  = uSigma0 + uSigmaGrowth * t;
   float s2     = sigma * sigma;
   float env    = exp(-(u * u) / (2.0 * s2));
   float rr     = r + uR0;
   float spread = inversesqrt(rr);
-  float decay  = exp(-t / uTau) * exp(-2.0 * uViscosity * uK * uK * t);
+  // Viscous damping goes as k^2, so a short-wavelength drop dies faster
+  // than a long one all on its own - which is physically right and is
+  // exactly what makes a cymbal's ripple brief and a kick's linger.
+  float decay  = exp(-t / uTau) * exp(-2.0 * uViscosity * k * k * t);
   float amp    = uAmp * strength * decay * env * spread;
-  float sn = sin(uK * u);
-  float cs = cos(uK * u);
+  float sn = sin(k * u);
+  float cs = cos(k * u);
   return vec2(
     amp * cs,
-    amp * (-uK * sn - (u / s2 + 0.5 / rr) * cs)
+    amp * (-k * sn - (u / s2 + 0.5 / rr) * cs)
   );
 }
 
@@ -99,7 +136,7 @@ vec2 ripplePacket(float r, float t, float strength) {
  * time. The derivative is the same product rule as above, with the phase
  * now k*r - omega*t.
  */
-vec2 rippleDispersive(float r, float t, float strength) {
+vec2 rippleDispersive(float r, float t, float strength, float carrier) {
   float rr     = r + uR0;
   float spread = inversesqrt(rr);
   float sigma  = uSigma0 + uSigmaGrowth * t;
@@ -107,7 +144,7 @@ vec2 rippleDispersive(float r, float t, float strength) {
   vec2 acc = vec2(0.0);
   for (int i = 0; i < DISP_MODES; i++) {
     float kf    = 0.6 + 0.6 * float(i);          // 0.6x .. 2.4x the carrier
-    float k     = uK * kf;
+    float k     = carrier * kf;
     float omega = sqrt(uGravity * k + uCapillary * k * k * k);
     float cg    = (uGravity + 3.0 * uCapillary * k * k) / (2.0 * omega);
     float u     = r - cg * t;                    // the envelope rides c_g
@@ -130,10 +167,10 @@ vec2 rippleDispersive(float r, float t, float strength) {
  * B(t) goes negative first (the crater the drop punches) and then
  * positive (the rebound column that pinches off a secondary droplet).
  */
-vec2 dropField(float r, float t, float strength) {
+vec2 dropField(float r, float t, float strength, float k) {
   vec2 acc = uDispersion > 0.5
-    ? rippleDispersive(r, t, strength)
-    : ripplePacket(r, t, strength);
+    ? rippleDispersive(r, t, strength, k)
+    : ripplePacket(r, t, strength, k);
 
   float B = uJetB * (t / uJetTau) * exp(1.0 - t / uJetTau)
           - uCraterC * exp(-t / uCraterTau);
@@ -182,7 +219,7 @@ vec3 surface(vec2 p) {
     if (t <= 0.0) continue;
     vec2  dp = p - d.xy;
     float r  = max(length(dp), 1e-4);
-    vec2  hd = dropField(r, t, d.w);
+    vec2  hd = dropField(r, t, d.w, uK * uDropK[i]);
     acc.x  += hd.x;
     acc.yz += hd.y * (dp / r);          // chain rule: radial -> x,z
   }

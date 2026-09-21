@@ -52,3 +52,5 @@ export const WIRE_SEGMENTS = 128;
  * `#define MAX_DROPS`.
  */
 export { MAX_DROPS } from "@/app/_water/water-field";
+/** This page drops on click and on a timer, so it keeps the default. */
+export { DEFAULT_DROP_CAPACITY } from "@/app/_water/water-field";
