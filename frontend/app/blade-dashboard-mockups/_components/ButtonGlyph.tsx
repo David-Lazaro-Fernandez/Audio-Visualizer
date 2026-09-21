@@ -1,7 +1,7 @@
 const BUTTON_COLORS: Record<"A" | "B" | "X" | "Y", { base: string; text: string }> = {
   X: { base: "#1E5C86", text: "#1a1a1a" },
   A: { base: "#43B039", text: "#1a1a1a" },
-  B: { base: "#B91625", text: "#1a1a1a" },
+  B: { base: "#FA3A2F", text: "#1a1a1a" },
   Y: { base: "#CBD527", text: "#1a1a1a" },
 };
 
@@ -71,7 +71,7 @@ export function ButtonGlyph({
         height: sizePx,
         background: `radial-gradient(circle at 50% 24%, ${light} 0%, ${base} 55%, ${dark} 100%)`,
         boxShadow:
-          "0 3px 6px rgba(0,0,0,.5),inset 0 -4px 5px rgba(0,0,0,.4),inset 0 2px 3px rgba(255,255,255,.3)",
+          "rgb(0 0 0) 0px 1px 5px, rgb(0 0 0 / 0%) 0px -4px 5px inset, rgba(255, 255, 255, 0.3) 0px 2px 3px inset",
       }}
     >
       <span

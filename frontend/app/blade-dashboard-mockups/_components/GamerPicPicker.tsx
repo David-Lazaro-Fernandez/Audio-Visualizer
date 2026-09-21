@@ -5,8 +5,9 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useGamerPic } from "./GamerPicContext";
 import { ButtonGlyph } from "./ButtonGlyph";
-import { LetterBadge } from "./LetterBadge";
-import { isBackKey } from "./keys";
+import type { ProfileStat } from "./GamerProfileCard";
+import { useBackKey } from "./back-stack";
+import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
 
 /** Columns in the picture grid — also tells `KeyboardNav` how Up/Down jump. */
@@ -18,28 +19,29 @@ const GRID_COLS = 4;
  * "Change Gamer Picture" screen, modelled on the 360 dashboard's own:
  * black header bar (title / current pic / clock), a two-pane body — light
  * gray picture grid on the left with the selection framed in green, and a
- * mid-gray pane on the right echoing the profile card + Xbox logo — and a
- * black footer with the A/B button legend.
+ * mid-gray pane on the right echoing the profile card (same gamertag and
+ * `stats` rows as the card that opened it) + Xbox logo — and a black
+ * footer with the A/B button legend.
  */
 export function GamerPicPicker({
   options,
+  defaultSrc,
   gamertag,
-  games,
-  score,
-  achievements,
+  stats,
 }: {
   options: string[];
+  /** The profile's own picture, shown until the user picks another. */
+  defaultSrc?: string;
   gamertag: string;
-  games: number;
-  score: number;
-  achievements: number;
+  stats: ProfileStat[];
 }) {
   const [open, setOpen] = useState(false);
-  // Selection lives in GamerPicContext so the rest of the blade can read it.
-  // `selected` is null until the user picks; fall back to the first option
-  // in render (no seeding effect — that raced the localStorage read).
+  // Selection lives in GamerPicContext so every card on every blade shows
+  // the same pick. `selected` is null until the user picks; fall back to
+  // the profile's picture, then the first option, in render (no seeding
+  // effect — that raced the localStorage read).
   const { selected, setSelected, hydrated } = useGamerPic();
-  const effective = selected ?? options[0] ?? null;
+  const effective = selected ?? defaultSrc ?? options[0] ?? null;
   // Until the stored value is read, show the placeholder instead of
   // flashing the default image and then swapping.
   const current = hydrated ? effective : null;
@@ -73,16 +75,7 @@ export function GamerPicPicker({
   };
 
   // Only registered while open, so ESC with nothing to go back from stays silent.
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (!isBackKey(e)) return;
-      playSound("back");
-      setOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  useBackKey(open, goBack);
 
   return (
     <>
@@ -95,6 +88,7 @@ export function GamerPicPicker({
             src={current}
             alt="Gamerpic"
             fill
+            sizes="76px"
             className="rounded-[6px] object-cover"
             style={{ boxShadow: "inset 0 0 0 1px rgba(0,0,0,.18)" }}
           />
@@ -150,6 +144,7 @@ export function GamerPicPicker({
                       src={effective}
                       alt=""
                       fill
+                      sizes="52px"
                       className="object-cover"
                       style={{ boxShadow: "0 0 0 1px rgba(255,255,255,.35)" }}
                     />
@@ -191,6 +186,7 @@ export function GamerPicPicker({
                               src={src}
                               alt=""
                               fill
+                              sizes="72px"
                               className="object-cover"
                               style={{
                                 boxShadow: "inset 0 0 0 1px rgba(0,0,0,.25)",
@@ -224,6 +220,7 @@ export function GamerPicPicker({
                             src={effective}
                             alt=""
                             fill
+                            sizes="76px"
                             className="object-cover"
                             style={{
                               boxShadow: "inset 0 0 0 1px rgba(0,0,0,.25)",
@@ -231,18 +228,15 @@ export function GamerPicPicker({
                           />
                         )}
                       </div>
-                      <div className="grid flex-1 grid-cols-[1fr_auto_auto] items-center gap-x-3 gap-y-[2px] text-[19px]">
-                        <span>Games</span>
-                        <span className="text-right">{games}</span>
-                        <span className="w-6" />
-                        <span>Gamerscore</span>
-                        <span className="text-right">{score}</span>
-                        <span className="flex w-6 justify-end">
-                          <LetterBadge>G</LetterBadge>
-                        </span>
-                        <span>Achievements</span>
-                        <span className="text-right">{achievements}</span>
-                        <span className="w-6" />
+                      <div className="grid flex-1 grid-cols-[auto_1fr] items-center gap-x-3 gap-y-[2px] text-[19px]">
+                        {stats.map(({ label, value }, index) => (
+                          <div key={index} className="contents">
+                            <span className="flex items-center">{label}</span>
+                            <span className="flex items-center justify-end">
+                              {value}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -292,7 +286,7 @@ export function GamerPicPicker({
               </div>
             </div>
           </div>,
-          document.body,
+          getPortalRoot(),
         )}
     </>
   );

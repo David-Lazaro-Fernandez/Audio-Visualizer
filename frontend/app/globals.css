@@ -29,3 +29,26 @@ body {
   0% { transform: scale(0.35); opacity: 0.5; }
   100% { transform: scale(1.6); opacity: 0; }
 }
+
+/* Blade transition (DESIGN.md §7.4): the previous section color fading off
+   the panel, and new panel content landing from the direction of travel
+   (`--blade-enter-x` is set inline, signed by direction). */
+@keyframes blade-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes blade-content-in {
+  from { opacity: 0; transform: translateX(var(--blade-enter-x, 0px)); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* The moving parts set their transition/animation inline (the values are
+   computed), which utility classes can't override — so reduced motion is
+   handled here, on the shared class, and cuts every part instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .blade-motion {
+    transition: none !important;
+    animation: none !important;
+  }
+}

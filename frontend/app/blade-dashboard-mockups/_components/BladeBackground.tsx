@@ -1,26 +1,60 @@
-import { PANEL_CLIP_PATH } from "./BladeEdges";
+"use client";
+
+import { useState } from "react";
+import { useBladeNav } from "./BladeNavContext";
+import { bladeTransition } from "./blade-motion";
+import type { SectionGradient } from "./blade-gradient";
+import {
+  BladeSurface,
+  BladeSurfacePaintedProvider,
+  useBladeSurfacePainted,
+} from "./BladeSurface";
 
 /**
  * DESIGN.md §3 Materiality: a soft concentric sheen baked into the radial
  * background, plus 2 looping ripple rings that "propagate from the center"
- * like waves. `animate` mirrors the design doc's recreation note that the
- * rings can be animated on a loop for a more faithful feel.
+ * like waves. The sheen is white and black at low alpha, so it works over
+ * any section color.
+ *
+ * This is the **CSS fallback** for those two layers. Where WebGL2 is
+ * available `BladeSurface` supersedes both with a real water sheet
+ * (§3.1) whose drops and swell do the same job physically, so whenever
+ * the shader is live this renders nothing. It stays because the shader is
+ * an upgrade, not a dependency: before hydration, without WebGL2, or
+ * after a lost context, this is where the blade's materiality comes from
+ * — the design the dashboard was built around, not a broken blade.
  */
-export function BladeBackground({ animate = true }: { animate?: boolean }) {
+export function BladeBackground({
+  animate = true,
+  clip = true,
+}: {
+  animate?: boolean;
+  /** Clip to the blade panel curve (default). Full-screen surfaces pass false. */
+  clip?: boolean;
+}) {
+  const { geometry } = useBladeNav();
+  const painted = useBladeSurfacePainted();
+  if (painted) return null;
   return (
-    // Clipped to the panel curve so the waves stay on the active blade and
-    // don't spill onto the collapsed tab gutters. Rendered above BladeEdges'
-    // opaque gradient, otherwise the rings would be hidden beneath it.
+    // Clipped to the open blade's panel curve so the waves stay on the
+    // active blade and don't spill onto the collapsed tab gutters. Rendered
+    // above BladeEdges' opaque gradient, otherwise the rings would be hidden
+    // beneath it. The clip glides with the panel on a blade switch (§7.4).
     <div
-      className="pointer-events-none absolute inset-0"
-      style={{ clipPath: PANEL_CLIP_PATH }}
+      className="blade-motion pointer-events-none absolute inset-0"
+      style={
+        clip
+          ? { clipPath: geometry.clipPath, transition: bladeTransition("clip-path") }
+          : undefined
+      }
     >
       <div
         className="absolute inset-0"
         style={{
           // Concentric light/dark bands so the waves actually read against
-          // the base green. Alternating bright + shadow rings, fading out
-          // toward the edges.
+          // the base color. Alternating bright + shadow rings, fading out
+          // toward the edges. Fallback-only now: the shader draws a water
+          // sheet instead (§3.1), so there is no twin to keep in step.
           background: [
             "radial-gradient(circle at 50% 44%, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 14%)",
             "radial-gradient(circle at 50% 44%, rgba(255,255,255,0) 18%, rgba(255,255,255,.18) 21%, rgba(255,255,255,0) 24.5%)",
@@ -43,5 +77,25 @@ export function BladeBackground({ animate = true }: { animate?: boolean }) {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * The materiality layer for a full-screen surface (§5.4), which renders
+ * "the same background unclipped" but has no panel and so no curve to
+ * mask to.
+ *
+ * Each surface is its own portal outside the canvas, so it owns its own
+ * shader and its own fallback verdict rather than inheriting the blade's
+ * — hence the local provider. The surface's root keeps its CSS
+ * `background` underneath as the floor, exactly as the blade canvas does.
+ */
+export function BladeScreenSurface({ gradient }: { gradient: SectionGradient }) {
+  const [painted, setPainted] = useState(false);
+  return (
+    <BladeSurfacePaintedProvider painted={painted}>
+      <BladeSurface gradient={gradient} onPaintedChange={setPainted} />
+      <BladeBackground clip={false} />
+    </BladeSurfacePaintedProvider>
   );
 }

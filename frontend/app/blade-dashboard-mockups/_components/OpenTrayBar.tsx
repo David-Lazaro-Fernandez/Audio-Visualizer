@@ -13,6 +13,10 @@ import { playSound } from "./sounds";
  * cap), so hover is tracked on the shared wrapper (`group`): hovering or
  * keyboard-focusing the pill tints both the pill and the circle, and
  * brightens the eject glyph, so the whole control reads as one item.
+ *
+ * The label and the eject glyph take their tints from the blade's theme
+ * variables (DESIGN.md §2.2), so the same bar sits on the green Games
+ * blade and the gold Xbox LIVE one.
  */
 export function OpenTrayBar({
   label,
@@ -37,20 +41,19 @@ export function OpenTrayBar({
           boxShadow: "rgba(0, 0, 0, 0.35) 0px 0px 8px 2px inset",
         }}
       >
-        <span className="text-[23px] text-[#17300a]">{label}</span>
+        <span className="text-[23px] text-(--blade-ink)">{label}</span>
       </button>
       <div
         className="absolute top-1/2 left-0 flex h-[84px] w-[84px] -translate-x-2 -translate-y-1/2 items-center justify-center rounded-full transition-colors duration-150 group-hover:bg-white/15 group-focus-within:bg-white/15"
         style={{
           zIndex: -5,
-          borderColor: "#000000",
-          border: "solid #5cb325 0.1px",
+          border: "solid var(--blade-glyph) 0.1px",
           boxShadow: "rgba(0, 0, 0, 0.35) 0px 0px 8px 2px inset",
         }}
       >
         <span className="flex items-center gap-[3px]">
-          <span className="h-0 w-0 border-y-[7px] border-r-[10px] border-y-transparent border-r-[#3e941d] transition-colors duration-150 group-hover:border-r-[#1f5c0c] group-focus-within:border-r-[#1f5c0c]" />
-          <span className="h-[14px] w-[3px] bg-[#3e941d] transition-colors duration-150 group-hover:bg-[#1f5c0c] group-focus-within:bg-[#1f5c0c]" />
+          <span className="h-0 w-0 border-y-[7px] border-r-[10px] border-y-transparent border-r-(--blade-glyph) transition-colors duration-150 group-hover:border-r-(--blade-glyph-hover) group-focus-within:border-r-(--blade-glyph-hover)" />
+          <span className="h-[14px] w-[3px] bg-(--blade-glyph) transition-colors duration-150 group-hover:bg-(--blade-glyph-hover) group-focus-within:bg-(--blade-glyph-hover)" />
         </span>
       </div>
     </div>

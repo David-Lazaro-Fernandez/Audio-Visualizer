@@ -21,7 +21,7 @@ export function MediaSlot({
           "inset 0 0 0 1px rgba(255,255,255,.65),inset 0 12px 24px rgba(255,255,255,.25)",
       }}
     >
-      <span className="font-[family-name:var(--font-ibm-plex-mono)] text-xs text-[#2b4a12] sm:text-sm">
+      <span className="font-[family-name:var(--font-ibm-plex-mono)] text-xs text-(--blade-watermark) sm:text-sm">
         {label}
       </span>
     </div>

@@ -116,3 +116,34 @@ export function tabGeometry(
     leftPct: (minX / 1280) * 100,
   };
 }
+
+/**
+ * The lazy S as a plain function of y, for the WebGL surface
+ * (`blade-water-gl.ts`). The shader has to mask the water sheet to the
+ * panel, and it gets no `clip-path` — but every edge in §1.1
+ * is the *same* curve shifted to a different top-x, so one table of
+ * x-deltas is enough: the panel's left edge is `leftX - d(y)` (mirrored)
+ * and its right edge is `rightX + d(y)`. That also makes the §7.4
+ * transition two scalars for the shader to ease, instead of 66 vertices.
+ *
+ * The curve is parametric (y is a bezier of t, not linear in it), so this
+ * resamples it onto a uniform y grid the shader can index directly.
+ * Deltas are in reference px, already scaled by `CURVE_SCALE`.
+ */
+export function edgeDeltaTable(samples: number): Float32Array {
+  const curve = sampleEdge(0, false);
+  const table = new Float32Array(samples);
+  let segment = 0;
+  for (let i = 0; i < samples; i++) {
+    const y = (i / (samples - 1)) * CANVAS_HEIGHT;
+    // The samples march down the curve in step with the table, so the
+    // segment cursor only ever moves forward.
+    while (segment < curve.length - 2 && curve[segment + 1].y < y) segment++;
+    const a = curve[segment];
+    const b = curve[segment + 1];
+    const span = b.y - a.y;
+    const t = span === 0 ? 0 : (y - a.y) / span;
+    table[i] = a.x + (b.x - a.x) * t;
+  }
+  return table;
+}
