@@ -2,6 +2,7 @@
 
 import { createPortal } from "react-dom";
 import type { BoxPlacement } from "./menu-box-placement";
+import { getPortalRoot } from "./portal";
 
 /**
  * The "box of content" a menu item opens on click (DESIGN.md §5.3
@@ -47,6 +48,6 @@ export function MenuDetailBox({
       </div>
       <div className="text-[15px] text-[#3a3a3a]">{children}</div>
     </div>,
-    document.body,
+    getPortalRoot(),
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useBladeNav } from "./BladeNavContext";
-import { isSelectKey } from "./keys";
+import { isNativeButtonActivationKey, isSelectKey } from "./keys";
 import { playSound } from "./sounds";
 
 /**
@@ -21,9 +21,10 @@ import { playSound } from "./sounds";
  * Movement is clamped at the ends (no wrap), plays the Select blip, and
  * uses real focus so `focus-visible` styles double as the cursor.
  *
- * A (the key) clicks the focused item. Space is left to the browser — the
- * items are native <button>s, so it already clicks them — except when
- * nothing is focused, where it would scroll the page instead. Back (ESC/B)
+ * A (the key) clicks the focused item. Space and Enter are left to the
+ * browser — the items are native <button>s, so it already clicks them —
+ * except when nothing is focused, where Space would scroll the page instead.
+ * Back (ESC/B)
  * is deliberately NOT handled here: each screen closes itself via
  * `isBackKey`, so Back is silent when there's nothing to leave.
  */
@@ -56,9 +57,9 @@ export function KeyboardNav() {
       }
 
       if (isSelectKey(e)) {
-        // Space on a focused <button> already clicks natively on keyup;
-        // don't double-fire it. Everything else we click ourselves.
-        if (e.key === " " && active instanceof HTMLButtonElement) return;
+        // Space/Enter on a focused <button> already click natively; don't
+        // double-fire them. Everything else we click ourselves.
+        if (isNativeButtonActivationKey(e) && active instanceof HTMLButtonElement) return;
         e.preventDefault();
         (item ?? (active instanceof HTMLButtonElement ? active : null))?.click();
       }
