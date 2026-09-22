@@ -3,13 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * A scrolling column with the console's "more below" cue: a small
- * down-pointing triangle under the column's right edge while the content
- * runs past the bottom. The scrollbar itself is hidden — the arrow and the
- * cursor (focus scrolls tiles into view) do its job in a 10-foot UI.
+ * A scrolling column with the more-below cue of the console: a small
+ * down-pointing triangle below the right edge of the column while the
+ * content continues past the bottom. The scrollbar is hidden. In a
+ * 10-foot UI the arrow and the cursor do its work, because a focus
+ * scrolls a tile into view.
  *
- * `footer` renders on the left of the arrow's row — the Audiobooks list's
- * "1 of 273" counter sits there, level with the arrow, as on the console.
+ * `footer` renders at the left of the row of the arrow. The "1 of 273"
+ * counter of the Audiobooks list is there, level with the arrow, as on
+ * the console.
  */
 export function ScrollColumn({
   children,
@@ -27,8 +29,9 @@ export function ScrollColumn({
     setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 1);
   };
 
-  // Content and viewport can both change size: re-measure after every
-  // render (setState bails out when nothing changed) and on resize.
+  // The content and the viewport can both change size. Measure again
+  // after each render and at each resize. `setState` does nothing when
+  // the value did not change.
   useEffect(update);
   useEffect(() => {
     window.addEventListener("resize", update);

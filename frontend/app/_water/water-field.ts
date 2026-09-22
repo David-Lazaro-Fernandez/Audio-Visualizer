@@ -1,48 +1,46 @@
 /**
- * The wave field: the GLSL every water surface in this app shares, plus
- * the CPU-side drop bookkeeping that feeds it.
+ * The wave field: the GLSL that each water surface in this app shares,
+ * with the drop bookkeeping on the CPU that feeds it.
  *
- * Two surfaces use it — the `/demo` page, which shades it as glossy water,
- * and the blade dashboard background, which composites only its relief
- * over the section gradient. They differ entirely in their *fragment*
- * shaders; the height field, its analytic radial derivative and the
- * displacement pass are identical, so they live here once.
+ * Two surfaces use it. The `/demo` page shades it as glossy water. The
+ * blade dashboard background composites only its relief over the section
+ * gradient. Their fragment shaders are fully different, but the height
+ * field, its analytic radial derivative and the displacement pass are the
+ * same, thus they are here one time.
  *
  * The model is a Gaussian-enveloped radial wave packet plus a separate
- * center jet, superposed over up to MAX_DROPS drops because the model is
- * linear. The derivative travels alongside the height and is computed
- * analytically so the fragment shader can build an exact normal rather
- * than differencing neighbours: the rings read through the reflection
- * angle, not the silhouette, and screen-space derivatives come out
- * faceted at any sane mesh density.
+ * center jet. The model is linear, thus up to MAX_DROPS drops superpose.
+ * The derivative travels with the height and is analytic, thus the
+ * fragment shader can build an exact normal. Differenced neighbours come
+ * out faceted at all usual mesh densities, because the rings read through
+ * the reflection angle and not through the silhouette.
  *
- * **ASCII only.** WebGL rejects shader source containing characters
- * outside the GLSL ES source character set, comments included, and it
- * rejects it in `shaderSource` before the compiler runs - so the failure
- * arrives as a compile error with a null info log. The math below is
- * commented with `sigma`, `tau`, `nu`, `lambda` rather than the Greek
- * letters the model is usually written with.
+ * **ASCII only.** WebGL rejects shader source that contains characters
+ * outside the GLSL ES source character set, comments included. It rejects
+ * the source in `shaderSource`, before the compiler runs, thus the error
+ * has a null info log. The math below uses `sigma`, `tau`, `nu` and
+ * `lambda` in place of the usual Greek letters.
  *
- * three.js compiles any non-RawShaderMaterial as GLSL ES 3.00 and aliases
- * `varying` and `gl_FragColor`, so `glslVersion` is left unset and
- * `fwidth` is core.
+ * three.js compiles each material that is not a RawShaderMaterial as GLSL
+ * ES 3.00 and aliases `varying` and `gl_FragColor`. Thus `glslVersion`
+ * stays unset and `fwidth` is a core function.
  */
 
 /**
- * Size of the shader's drop array — the *ceiling*, not what any one
- * surface uses.
+ * Size of the drop array in the shader. This is the ceiling, not the
+ * count that one surface uses.
  *
- * `surface()` breaks out of its loop at `uDropCount`, so a surface pays
- * for the drops it actually holds and nothing for the empty tail. That
- * makes the array cheap to oversize, and it has to be oversized: the
- * audio visualizer needs dozens of simultaneous ripples, because
- * `uDropCount` slots divided by a ripple's two-second life is the only
- * drop rate it can sustain without recycling a wave that is still
- * visible. Sixteen slots at a busy passage's rate recycled a slot every
- * 110 ms, which chopped every ripple almost as soon as it started.
+ * `surface()` leaves its loop at `uDropCount`, thus a surface pays for
+ * the drops it holds and pays nothing for the empty tail. Thus a large
+ * array is cheap, and the array must be large: the audio visualizer needs
+ * dozens of ripples at the same time. A ripple lives two seconds, thus
+ * `uDropCount` slots divided by two seconds is the highest drop rate that
+ * does not recycle a wave that is still visible. With 16 slots, a busy
+ * passage recycled a slot each 110 ms and cut each ripple almost at its
+ * start.
  *
- * Surfaces that drop slowly — the blade background, `/demo` — declare a
- * smaller capacity of their own and keep their original cost.
+ * Surfaces that drop slowly, such as the blade background and `/demo`,
+ * declare a smaller capacity and keep their initial cost.
  */
 export const MAX_DROPS = 48;
 
@@ -50,18 +48,18 @@ export const MAX_DROPS = 48;
 export const DEFAULT_DROP_CAPACITY = 16;
 
 /**
- * A `uDropK` array that means "every drop uses uK". Every surface needs
- * this: an unassigned uniform array reads as zero, and k = 0 flattens the
- * field entirely. Only the audio visualizer writes anything else.
+ * A `uDropK` array that makes each drop use uK. Each surface needs it: an
+ * unassigned uniform array reads as zero, and k = 0 makes the field fully
+ * flat. Only the audio visualizer writes other values.
  */
 export const flatDropK = () => new Float32Array(MAX_DROPS).fill(1);
 
 /**
- * The wave math, injected into both stages of both surfaces.
+ * The wave math. Both stages of both surfaces use it.
  *
- * `uLift` and `uAlpha` are here rather than in a fragment shader because
- * a wireframe overlay shares these exact sources and needs to sit above
- * the surface it traces; both are inert at 0 and 1.
+ * `uLift` and `uAlpha` are here and not in a fragment shader, because a
+ * wireframe overlay uses these same sources and must stay above the
+ * surface that it traces. At 0 and 1 the two uniforms do nothing.
  */
 export const WATER_FIELD_CHUNK = /* glsl */ `
 #define MAX_DROPS ${MAX_DROPS}
@@ -71,12 +69,11 @@ uniform float uTime;
 uniform int   uDropCount;
 uniform vec4  uDrops[MAX_DROPS];   // xy: origin (world x,z), z: start time, w: strength
 /**
- * Per-drop wavenumber, as a *multiplier* of uK rather than an absolute
- * value. A vec4 has no room left for it, and a multiplier means the
- * array never has to be resynchronised when uK itself is adjusted: 1.0
- * is "whatever uK says", which is what every surface but the audio
- * visualizer wants. Driving it per drop is what lets a bass onset make
- * long, wide rings and a cymbal make tight ones.
+ * Wavenumber of each drop, as a multiplier of uK and not as an absolute
+ * value. A vec4 has no space left for it. A multiplier also keeps the
+ * array correct when uK changes: 1.0 means "the value of uK", which is
+ * what each surface but the audio visualizer needs. The per-drop value
+ * lets a bass onset make long, wide rings and a cymbal make tight rings.
  */
 uniform float uDropK[MAX_DROPS];
 
@@ -102,11 +99,11 @@ uniform float uAlpha;        // < 1 only for that overlay
 /**
  * The single-carrier ripple packet: (height, dh/dr).
  *
- * env kills everything but the rings near the wavefront, which is what
- * keeps the water flat ahead of the front (nothing has arrived) and flat
- * behind the packet (it has settled). spread is geometric spreading on a
- * 2D surface; decay is the global fade times viscous damping, which eats
- * short waves faster than long ones.
+ * env removes all the rings but those near the wavefront. Thus the water
+ * stays flat in front of the wavefront, where nothing arrived, and flat
+ * behind the packet, where the water settled. spread is the geometric
+ * spreading on a 2D surface. decay is the global fade times the viscous
+ * damping, which removes short waves more quickly than long waves.
  */
 vec2 ripplePacket(float r, float t, float strength, float k) {
   float u      = r - uSpeed * t;     // distance behind the wavefront
@@ -115,9 +112,9 @@ vec2 ripplePacket(float r, float t, float strength, float k) {
   float env    = exp(-(u * u) / (2.0 * s2));
   float rr     = r + uR0;
   float spread = inversesqrt(rr);
-  // Viscous damping goes as k^2, so a short-wavelength drop dies faster
-  // than a long one all on its own - which is physically right and is
-  // exactly what makes a cymbal's ripple brief and a kick's linger.
+  // Viscous damping increases with k^2, thus a short-wavelength drop dies
+  // more quickly than a long one. This is physically correct, and it makes
+  // the ripple of a cymbal brief and the ripple of a kick long.
   float decay  = exp(-t / uTau) * exp(-2.0 * uViscosity * k * k * t);
   float amp    = uAmp * strength * decay * env * spread;
   float sn = sin(k * u);
@@ -130,11 +127,11 @@ vec2 ripplePacket(float r, float t, float strength, float k) {
 
 /**
  * Dispersive ripple packet. Real ripples sort by wavelength: short
- * capillary waves run ahead, which is what puts the fine rings on the
- * outside. Each mode gets its own group velocity from the dispersion
- * relation, so the single envelope splits into several that separate over
- * time. The derivative is the same product rule as above, with the phase
- * now k*r - omega*t.
+ * capillary waves move in front, which puts the fine rings on the
+ * outside. The dispersion relation gives each mode its own group
+ * velocity, thus the one envelope divides into several that move apart
+ * with time. The derivative uses the same product rule as above, but the
+ * phase is now k*r - omega*t.
  */
 vec2 rippleDispersive(float r, float t, float strength, float carrier) {
   float rr     = r + uR0;
@@ -163,9 +160,9 @@ vec2 rippleDispersive(float r, float t, float strength, float carrier) {
 /**
  * (height, dh/dr) for one drop: the ripple packet plus the center jet.
  *
- * The jet is not a solution of the wave equation, it is a separate term.
- * B(t) goes negative first (the crater the drop punches) and then
- * positive (the rebound column that pinches off a secondary droplet).
+ * The jet is not a solution of the wave equation. It is a separate term.
+ * B(t) is negative first, for the crater that the drop makes, then
+ * positive, for the rebound column that releases a second droplet.
  */
 vec2 dropField(float r, float t, float strength, float k) {
   vec2 acc = uDispersion > 0.5
@@ -179,17 +176,17 @@ vec2 dropField(float r, float t, float strength, float k) {
   acc.x += j;
   acc.y += j * (-r / (uJetS * uJetS));
 
-  // Hide the impact and keep only the travelling wave. Inside uQuiet a
-  // drop contributes nothing, which removes two different things at once:
-  // the crater/jet spike, which lives at r = 0 forever, and the newborn
-  // packet, whose whole amplitude sits inside r ~ sigma0 before it has
-  // spread. Because the front advances as r = c*t, a gate in r is also a
-  // fade-in in time, so a drop swells into view instead of appearing.
+  // Hide the impact and keep only the wave that travels. Inside uQuiet a
+  // drop adds nothing. This removes two things at the same time: the
+  // crater and jet spike, which stays at r = 0 for all time, and the new
+  // packet, whose full amplitude is inside r ~ sigma0 before it spreads.
+  // The wavefront advances as r = c*t, thus a gate in r is also a fade-in
+  // in time, and a drop swells into view instead of appearing.
   //
-  // The derivative has to follow the product rule or the normals - which
-  // are what the surface is actually shaded by - would disagree with the
-  // height. smoothstep's derivative is analytic, so this stays exact.
-  // Zero disables the gate, which is the default everywhere but the
+  // The derivative must obey the product rule. If it does not, the
+  // normals, which shade the surface, disagree with the height. The
+  // derivative of smoothstep is analytic, thus this stays exact. Zero
+  // disables the gate, which is the default on each surface but the
   // dashboard background.
   if (uQuiet > 0.0) {
     float x     = clamp(r / uQuiet, 0.0, 1.0);
@@ -203,12 +200,12 @@ vec2 dropField(float r, float t, float strength, float k) {
 }
 
 /**
- * (height, dh/dx, dh/dz) at a world xz, already height-scaled so the
- * gradient and the height can never disagree about the exaggeration.
+ * (height, dh/dx, dh/dz) at a world xz, with the height scale applied.
+ * Thus the gradient and the height always agree about the exaggeration.
  *
  * The loop bound is the compile-time MAX_DROPS with an early break, not
- * the uniform, because a uniform loop bound is not portable. r is clamped
- * before the division or the impact point itself comes out NaN.
+ * the uniform, because a uniform loop bound is not portable. Clamp r
+ * before the division, or the impact point comes out as NaN.
  */
 vec3 surface(vec2 p) {
   vec3 acc = vec3(0.0);
@@ -232,26 +229,17 @@ vec3 surfaceNormal(vec3 s) {
 `;
 
 /**
- * Displacement only. The normal used for shading is deliberately not
- * computed here; every fragment shader recomputes `surface()` per pixel.
+ * What a fragment shader needs before it can move a normal from
+ * `surfaceNormal` into the world space of the camera and the light.
  *
- * `surface()` is evaluated in the plane's *local* xz, not world xz, so a
- * surface is free to rotate its mesh (the blade background banks it 45
- * degrees) without the wave field rotating with it or drops landing
- * somewhere other than where they were spawned.
- */
-/**
- * What a fragment shader needs before it can take a normal from
- * `surfaceNormal` into the world space the camera and the light live in.
- *
- * three's *vertex* prefix declares `modelMatrix`; its *fragment* prefix
- * does not - it provides only `viewMatrix`, `cameraPosition` and
- * `isOrthographic`. A fragment shader that wants the model matrix has to
- * declare it itself, and three then populates it from the object's world
- * matrix; this is the same trick three's own
- * `transmission_pars_fragment` uses. It cannot live in
- * `WATER_FIELD_CHUNK`, because that chunk is injected into the vertex
- * stage too, where the declaration would collide with the prefix's.
+ * The vertex prefix of three declares `modelMatrix`. Its fragment prefix
+ * does not: it gives only `viewMatrix`, `cameraPosition` and
+ * `isOrthographic`. A fragment shader that needs the model matrix must
+ * declare it, and three then fills it from the world matrix of the
+ * object. The `transmission_pars_fragment` chunk of three uses the same
+ * method. The declaration cannot go in `WATER_FIELD_CHUNK`, because that
+ * chunk also goes into the vertex stage, where it would collide with the
+ * declaration in the prefix.
  */
 export const WATER_FRAGMENT_PRELUDE = /* glsl */ `
 uniform mat4 modelMatrix;
@@ -261,6 +249,15 @@ vec3 worldNormal(vec3 s) {
 }
 `;
 
+/**
+ * Displacement only. This stage does not compute the normal for shading.
+ * Each fragment shader computes `surface()` again for each pixel.
+ *
+ * `surface()` reads the local xz of the plane, not the world xz. Thus a
+ * surface can rotate its mesh, as the blade background does when it banks
+ * the sheet 45 degrees, and the wave field does not rotate with it. The
+ * drops stay at the positions where they started.
+ */
 export const WATER_VERTEX_SHADER = /* glsl */ `
 ${WATER_FIELD_CHUNK}
 

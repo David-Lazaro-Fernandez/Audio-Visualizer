@@ -8,36 +8,37 @@ import { useBladeNav, type BladeSection } from "./BladeNavContext";
 import { playSound, preloadSounds } from "./sounds";
 
 /**
- * DESIGN.md §1: the collapsed blades ARE the top-level navigation — "narrow,
- * curved vertical tabs... labeled with rotated text." That makes this a
- * real menu, so each tab is an <li><button> whose clickable area is the
- * tab's own curved silver shape (a plain <div> clipped with `clip-path:
- * polygon(...)` via `tabGeometry`, sampled from the same bezier curve
- * `BladeEdges` uses for the panel — no <svg> involved), not just a
- * floating text label sitting over an unrelated decorative element.
+ * DESIGN.md §1: the collapsed blades are the top-level navigation, as
+ * narrow curved vertical tabs with rotated text labels. Thus this is a
+ * real menu. Each tab is an <li><button> whose clickable area is the
+ * curved silver shape of the tab, and not a text label above an
+ * unrelated decoration. The shape is a plain <div> clipped with
+ * `clip-path: polygon(...)` from `tabGeometry`, sampled from the same
+ * bezier curve that `BladeEdges` uses for the panel. There is no <svg>.
  *
- * Where each tab sits follows from its index and the open blade
- * (`tabTopX` / `tabMirrored` in `blade-layout.ts`, §1.2): tabs up to and
- * including the open one fan to the left of the panel and are mirrored
- * (bow right, flare left); the rest fan to the right. Switching blades
- * therefore re-deals the hand — the panel slides and the tabs regroup,
- * gliding to their new spots at the shared blade tempo (§7.4): `left` /
- * `width` on the box and `clip-path` on the shape (the curve flips when a
- * tab crosses from one stack to the other).
+ * The position of each tab comes from its index and from the open blade
+ * (`tabTopX` and `tabMirrored` in `blade-layout.ts`, §1.2). The tabs up
+ * to and including the open blade fan to the left of the panel and are
+ * mirrored, which bows right and flares left. The other tabs fan to the
+ * right. Thus a blade switch deals the hand again: the panel slides and
+ * the tabs regroup and glide to their new positions at the shared blade
+ * tempo (§7.4). The box transitions `left` and `width`, and the shape
+ * transitions `clip-path`, because the curve mirrors when a tab moves to
+ * the other stack.
  *
- * The whole nav is one full-width (`inset-0`) layer stacked above the
- * content layer (z-20 vs. the content's z-10) rather than being split per
- * side — but `pointer-events-none` on the layer means its empty space
- * never hit-tests, so it doesn't swallow clicks meant for the content
- * underneath. Only the tab `<li>`s themselves opt back in with
+ * The nav is one full-width layer (`inset-0`) above the content layer,
+ * z-20 against z-10, and it is not divided by side.
+ * `pointer-events-none` on the layer keeps its empty space out of the
+ * hit test, thus it does not take a click that belongs to the content
+ * below. Only the tab `<li>` elements take pointer events again, with
  * `pointer-events-auto`.
  *
- * The blades and the "which blade am I on" index live in
- * `BladeNavContext`, shared with the Left/Right arrow handling in
- * `KeyboardNav`. Clicking a tab (or pressing Space/A on a focused one) goes
- * to that blade, which plays Page Right / Page Left by direction; hovering
- * any tab plays Select. The active tab wears its section's fill (§2.1);
- * the rest are neutral silver (§2.3).
+ * The blades and the index of the open blade are in `BladeNavContext`,
+ * which the Left and Right handling in `KeyboardNav` also uses. A click
+ * on a tab, or Space or A on a focused tab, opens that blade and plays
+ * Page Right or Page Left by direction. A hover on a tab plays Select.
+ * The active tab uses the fill of its section (§2.1) and the other tabs
+ * are neutral silver (§2.3).
  */
 const SILVER_FILL = "linear-gradient(90deg,#a9a9a9,#fbfbfb 30%,#dcdcdc 62%,#b6b6b6)";
 
@@ -109,8 +110,8 @@ function TabItem({
             clipPath: geom.clipPath,
             background: active ? blade.tabFill : SILVER_FILL,
             filter: "drop-shadow(0 0 1px rgba(255,255,255,.85))",
-            // Shape glides at the blade tempo; the hover brightness keeps
-            // the usual 150 ms (§7.1).
+            // The shape glides at the blade tempo. The hover brightness
+            // keeps the usual 150 ms (§7.1).
             transition: `${bladeTransition("clip-path")}, filter 150ms ease`,
           }}
         />

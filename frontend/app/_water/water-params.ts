@@ -1,12 +1,13 @@
 /**
- * The wave field's parameters: one table driving every surface's initial
- * uniform values, its slider panel and its reset button.
+ * The parameters of the wave field: one table that gives each surface its
+ * initial uniform values, its slider panel and its reset button.
  *
- * Shared because there are now two panels over the same field - the
- * `/demo` page's, and the blade dashboard's rotation/tuning overlay - and
- * a knob that exists in one and not the other is a knob that drifts.
- * Anything numeric the shader reads belongs here; view-level choices
- * (colors, camera, plane size) stay with the surface that owns them.
+ * The table is shared because two panels now control the same field: the
+ * panel of the `/demo` page and the tuning overlay of the blade
+ * dashboard. A knob that is in one panel and not in the other is a knob
+ * that drifts. Each numeric value that the shader reads belongs here.
+ * View-level choices, such as colors, camera and plane size, stay with
+ * the surface that owns them.
  */
 
 export interface WaterParamSpec {
@@ -14,9 +15,9 @@ export interface WaterParamSpec {
   min: number;
   max: number;
   step: number;
-  /** Shown before the fold; the spec's first-priority knobs. */
+  /** Shown before the fold: the knobs with the highest priority. */
   primary?: boolean;
-  /** What moving it does, for the panel's title text. */
+  /** What the knob does. The panel shows it as title text. */
   hint: string;
 }
 

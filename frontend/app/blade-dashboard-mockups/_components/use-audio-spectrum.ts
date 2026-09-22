@@ -3,23 +3,23 @@
 import { useEffect, useRef } from "react";
 
 /**
- * The frequency range the bands span. Below 30 Hz is mostly rumble, and
- * above 14 kHz there is rarely anything worth a whole band.
+ * The frequency range of the bands. Below 30 Hz the signal is usually
+ * rumble. Above 14 kHz there is rarely enough content for a full band.
  */
 const MIN_HZ = 30;
 const MAX_HZ = 14000;
 
 /**
- * Bands are spaced **logarithmically**, about a third of an octave each.
+ * The bands are spaced logarithmically, at near a third of an octave
+ * each.
  *
- * This is not a detail. Splitting the FFT's bins evenly — which is the
- * obvious thing, and what this did first — puts everything from 20 to
- * 470 Hz in a single band: the whole bass register, where a kick, a bass
- * line and most of the rhythm live, reduced to one twenty-eighth of the
- * display while twenty-seven bands share the upper harmonics. The result
- * looks unrelated to the music, because the part of the music you can
- * feel is not resolved at all. Log spacing gives 20–250 Hz ten bands of
- * its own.
+ * This is important. An equal division of the FFT bins is the obvious
+ * method, and this code used it first. That method puts all of 20 Hz to
+ * 470 Hz in one band. Thus the full bass register, which holds the
+ * kick, the bass line and most of the rhythm, gets one band of 28, and
+ * 27 bands share the upper harmonics. The result looks unrelated to the
+ * music, because the display does not resolve the part that a listener
+ * feels. Log spacing gives 20 Hz to 250 Hz ten bands.
  */
 export function bandHzRange(band: number, bands: number): [number, number] {
   const ratio = Math.pow(MAX_HZ / MIN_HZ, 1 / bands);
@@ -27,9 +27,9 @@ export function bandHzRange(band: number, bands: number): [number, number] {
 }
 
 /**
- * The FFT bin each band starts at. Forced strictly increasing: at the
+ * The FFT bin where each band starts. The values always increase. At the
  * bottom of the range several bands round to the same bin, and bands
- * sharing bins would read as one.
+ * that share bins look like one band.
  */
 function bandEdges(bands: number, binCount: number, nyquist: number) {
   const binHz = nyquist / binCount;
@@ -46,22 +46,23 @@ function bandEdges(bands: number, binCount: number, nyquist: number) {
 /**
  * A live spectrum from an `<audio>` element, for the visualizer (§6.16).
  *
- * This is the piece that makes the player real rather than a mock. The
- * store's 30-second previews are served with
- * `Access-Control-Allow-Origin: *`, so with `crossOrigin="anonymous"` on
- * the element its samples are readable and a Web Audio `AnalyserNode`
- * can see them. Without that header the graph would still play but
- * `getByteFrequencyData` would return nothing but zeros, which is the
- * usual reason a visualizer sits flat.
+ * This hook makes the player real and not a mock. The store serves its
+ * 30-second previews with `Access-Control-Allow-Origin: *`. Thus, with
+ * `crossOrigin="anonymous"` on the element, the samples are readable
+ * and a Web Audio `AnalyserNode` can see them. Without that header the
+ * graph plays, but `getByteFrequencyData` returns only zeros. That is
+ * the usual cause of a visualizer that stays flat.
  *
- * Returns a stable `Float32Array` of `bands` values, 0..1, **mutated in
- * place**. Deliberately not React state: this updates sixty times a
- * second, and re-rendering the player that often to move some bars would
- * be absurd. The visualizer reads the same array each frame.
+ * The hook returns one `Float32Array` of `bands` values, 0..1, and
+ * mutates it in place. It is not React state: the values change 60
+ * times a second, and a render of the player at that rate to move some
+ * bars is not acceptable. The visualizer reads the same array at each
+ * frame.
  *
- * One `AudioContext` per element, created lazily and closed on unmount.
- * A context can only be started from a user gesture, so it is resumed on
- * the first play rather than at mount.
+ * There is one `AudioContext` for each element. The hook creates it at
+ * the first use and closes it at the unmount. A context can start only
+ * from a user gesture, thus the hook resumes it at the first play and
+ * not at the mount.
  */
 export function useAudioSpectrum(
   audioRef: React.RefObject<HTMLAudioElement | null>,
@@ -82,27 +83,28 @@ export function useAudioSpectrum(
 
     const connect = () => {
       if (context) {
-        // Autoplay policy leaves a context suspended until a gesture.
+        // The autoplay policy keeps a context suspended until a gesture.
         if (context.state === "suspended") void context.resume();
         return;
       }
       try {
         context = new AudioContext();
         analyser = context.createAnalyser();
-        // 4096 gives ~12 Hz bins at 48 kHz. 1024's 47 Hz bins cannot tell
-        // 40 Hz from 80 Hz, which is two octaves of bass in one bin and
-        // makes log-spaced low bands pointless.
+        // 4096 gives bins of near 12 Hz at 48 kHz. The 47 Hz bins of
+        // 1024 cannot separate 40 Hz from 80 Hz. That is two octaves of
+        // bass in one bin, and it makes the log-spaced low bands
+        // useless.
         analyser.fftSize = 4096;
-        // Smoothing is left fairly low; the visualizer does its own
-        // rise-fast/fall-slow envelope on top.
+        // The smoothing stays low. The visualizer applies its own
+        // rise-fast, fall-slow envelope.
         analyser.smoothingTimeConstant = 0.6;
         bins = new Uint8Array(analyser.frequencyBinCount);
         edges = bandEdges(bands, bins.length, context.sampleRate / 2);
         context.createMediaElementSource(audio).connect(analyser);
         analyser.connect(context.destination);
       } catch {
-        // No Web Audio, or the element is already bound to a context:
-        // leave the visualizer on its synthetic signal.
+        // There is no Web Audio, or another context already uses the
+        // element. Keep the visualizer on its synthetic signal.
         context = null;
         analyser = null;
       }

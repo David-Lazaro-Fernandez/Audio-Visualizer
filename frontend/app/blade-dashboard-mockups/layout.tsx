@@ -26,16 +26,18 @@ export default function BladeDashboardMockupsLayout({
   children: React.ReactNode;
 }) {
   return (
-    // The games theme is the default for the whole section (DESIGN.md §2.2),
-    // including the portal root below, so full-screen surfaces stay green
-    // whichever blade is open; BladeCanvas overrides it per blade.
+    // The games theme is the default of the full section (DESIGN.md
+    // §2.2), and also of the portal root below. Thus a full-screen
+    // surface stays green at each open blade. BladeCanvas replaces the
+    // theme for each blade.
     <div
       className={`${convection.variable} ${ibmPlexMono.variable} font-[family-name:var(--font-convection)]`}
       style={themeVars(GAMES_THEME)}
     >
       {children}
-      {/* Portal target for full-screen surfaces, kept inside this element
-          so they inherit the blade fonts — see _components/portal.ts. */}
+      {/* The portal target of each full-screen surface. It is inside
+          this element, thus a surface takes the blade fonts. Refer to
+          _components/portal.ts. */}
       <div id={PORTAL_ROOT_ID} />
     </div>
   );

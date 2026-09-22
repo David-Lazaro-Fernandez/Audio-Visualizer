@@ -13,13 +13,13 @@ import {
 } from "./spectrogram-controls";
 
 /**
- * The spectrogram's tuning overlay (DESIGN.md §6.16). Mounted by the
- * Music Player only while the spectrogram is the visualizer on screen,
- * so it is never in the way of the other four.
+ * The tuning overlay of the spectrogram (DESIGN.md §6.16). The Music
+ * Player mounts it only while the spectrogram is the visualizer on the
+ * screen, thus it never covers the other visualizers.
  *
- * React state here is only so the panel can print the numbers and reset
- * them; the scene reads the store directly, which is what keeps a slider
- * drag from re-rendering the player sixty times.
+ * The React state here lets the panel print the numbers and reset them.
+ * The scene reads the store directly, thus a slider drag does not render
+ * the player 60 times.
  */
 export function SpectrogramControls() {
   const [values, setValues] = useState<SpectrogramState>({

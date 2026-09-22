@@ -21,42 +21,45 @@ import {
 /**
  * The three.js side of the water-drop surface (spec sections 6-8).
  *
- * The GPU owns every wave; this file only tracks *events*. A drop is four
- * floats — origin x, origin z, start time, strength — pushed into a ring
- * buffer of 16. Because the wave model is linear the shader just sums
- * them, so "more drops" costs one more loop iteration and nothing else.
- * A drop older than about 6*tau contributes nothing measurable, so
- * overwriting the oldest slot is invisible.
+ * The GPU owns each wave. This file tracks only the events. A drop is
+ * four floats, the origin x, the origin z, the start time and the
+ * strength, written into a ring buffer of 16. The wave model is linear,
+ * thus the shader sums the drops. One more drop costs one more loop
+ * iteration and nothing else. A drop that is older than near 6*tau adds
+ * no measurable height, thus a write over the oldest slot is not
+ * visible.
  *
- * Two things here are load-bearing and easy to break:
+ * Two parts here are necessary and easy to break:
  *
- * - The `uDrops` uniform keeps the *same array reference* for the life of
- *   the scene and its `Vector4`s are mutated in place. Assigning a new
- *   array breaks three's binding.
- * - Clicks raycast an infinite math `Plane`, never the mesh. three's
- *   raycaster tests the undisplaced CPU geometry, so hitting the mesh
- *   would report the flat plane anyway, just more slowly.
+ * - The `uDrops` uniform keeps the same array reference for the life of
+ *   the scene, and the code mutates its `Vector4`s in place. A new array
+ *   breaks the binding of three.
+ * - A click raycasts an infinite math `Plane` and never the mesh. The
+ *   raycaster of three tests the CPU geometry, which is not displaced,
+ *   thus a test against the mesh would report the flat plane and would
+ *   be slower.
  */
 
-/** What the control panel can ask the live scene to do. */
+/** The commands that the control panel can send to the live scene. */
 export interface WaterSceneApi {
-  /** Drop at a world xz, or somewhere random when omitted. */
+  /** Drop at a world xz, or at a random position with no arguments. */
   drop: (x?: number, z?: number) => void;
-  /** Forget every ripple and return the surface to flat. */
+  /** Remove each ripple and make the surface flat. */
   clear: () => void;
 }
 
-/** Fall acceleration. Real scale (980) is too fast to read, so section 7's slower value. */
+/** Fall acceleration. The true value, 980, is too fast to see, thus this
+ *  is the slower value from section 7. */
 const FALL_G = 60;
-/** Where a clicked drop starts its fall, in world units above the surface. */
+/** The height where a clicked drop starts, in world units. */
 const FALL_HEIGHT = 12;
-/** Upward kick on the droplet that pinches off the jet. */
+/** Upward speed of the droplet that the jet releases. */
 const SECONDARY_V0 = 7;
 const SECONDARY_STRENGTH = 0.35;
-/** Seconds between automatic drops, plus up to a second of jitter. */
+/** Seconds between two automatic drops, plus a maximum of one second of jitter. */
 const AUTO_INTERVAL = 2.2;
 
-/** A drop in flight, before it has touched the surface. */
+/** A drop in flight, before it touches the surface. */
 interface Projectile {
   mesh: THREE.Mesh;
   x: number;
@@ -65,11 +68,11 @@ interface Projectile {
   v0: number;
   t0: number;
   strength: number;
-  /** Primary drops throw a droplet back up off the jet; that one does not. */
+  /** A primary drop releases a droplet from the jet. That droplet does not. */
   spawnsSecondary: boolean;
 }
 
-/** A droplet waiting to be thrown up out of a jet that has not peaked yet. */
+/** A droplet that waits for its jet to reach the peak. */
 interface PendingSecondary {
   at: number;
   x: number;
@@ -77,9 +80,9 @@ interface PendingSecondary {
 }
 
 /**
- * A vertical sky gradient in the water's own palette, used as the scene
- * environment so the falling bead reflects the same sky the surface
- * shader reflects analytically.
+ * A vertical sky gradient in the palette of the water. It is the
+ * environment of the scene, thus the falling bead reflects the same sky
+ * that the surface shader reflects analytically.
  */
 function makeSkyEnvironment(): THREE.DataTexture {
   const width = 4;
@@ -90,7 +93,8 @@ function makeSkyEnvironment(): THREE.DataTexture {
   const data = new Uint8Array(width * height * 4);
   const scratch = new THREE.Color();
   for (let y = 0; y < height; y++) {
-    // Equirect rows run top (zenith) to bottom (below the horizon).
+    // Equirect rows run from the top, the zenith, to the bottom, which
+    // is below the horizon.
     const v = y / (height - 1);
     if (v < 0.5) scratch.copy(zenith).lerp(horizon, v / 0.5);
     else scratch.copy(horizon).lerp(deep, (v - 0.5) / 0.5);
@@ -125,7 +129,7 @@ export function WaterSurface({
   const uniformsRef = useRef<Record<string, THREE.IUniform> | null>(null);
   const wireRef = useRef<THREE.Mesh | null>(null);
   const autoRef = useRef(toggles.autoDrops);
-  /** Read when a jet peaks, so the droplet leaves from the live jet height. */
+  /** Read when a jet reaches its peak, thus the droplet starts at the current jet height. */
   const paramsRef = useRef(params);
   paramsRef.current = params;
 
@@ -134,7 +138,7 @@ export function WaterSurface({
     if (!mount) return;
 
     const pageStart = performance.now();
-    /** Seconds since mount. Kept small so float precision stays good. */
+    /** Seconds after the mount. It stays small, thus the float precision stays good. */
     const clock = () => (performance.now() - pageStart) / 1000;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -158,8 +162,8 @@ export function WaterSurface({
     controls.dampingFactor = 0.08;
     controls.minDistance = 6;
     controls.maxDistance = 90;
-    // Stay above the sheet: the surface is single-sided, and there is
-    // nothing to see from underneath a height field.
+    // Stay above the sheet. The surface is single-sided, and a height
+    // field shows nothing from below.
     controls.maxPolarAngle = Math.PI / 2 - 0.04;
 
     // --- drop bookkeeping (spec section 8) -------------------------------
@@ -174,7 +178,7 @@ export function WaterSurface({
       uTime: { value: 0 },
       uDropCount: { value: 0 },
       uDrops: { value: drops },
-      // Every drop at uK; only the audio visualizer varies it.
+      // Each drop uses uK. Only the audio visualizer changes it.
       uDropK: { value: flatDropK() },
       uMode: { value: toggles.heightView ? 1 : 0 },
       uDispersion: { value: toggles.dispersion ? 1 : 0 },
@@ -212,14 +216,14 @@ export function WaterSurface({
       fragmentShader: WATER_FRAGMENT_SHADER,
     });
     const mesh = new THREE.Mesh(geometry, material);
-    // The jet pushes vertices well above the plane the bounding sphere was
-    // computed from, so let the GPU decide what is on screen.
+    // The jet moves vertices far above the plane that gave the bounding
+    // sphere. Thus let the GPU decide what is on the screen.
     mesh.frustumCulled = false;
     scene.add(mesh);
 
-    // Coarse wireframe overlay for the technical read. It shares the exact
-    // same uniform objects, so every slider drives both meshes; only the
-    // lift and the alpha are its own.
+    // A coarse wireframe overlay for the technical view. It uses the same
+    // uniform objects, thus each slider drives both meshes. Only the lift
+    // and the alpha are its own.
     const wireGeometry = new THREE.PlaneGeometry(
       PLANE_SIZE,
       PLANE_SIZE,
@@ -292,8 +296,8 @@ export function WaterSurface({
 
     const half = PLANE_SIZE / 2;
     function dropAt(x?: number, z?: number) {
-      // A click near the horizon can intersect the plane hundreds of units
-      // out; keep every drop on the sheet we actually draw.
+      // A click near the horizon can intersect the plane hundreds of
+      // units away. Keep each drop on the sheet that the scene draws.
       const spread = half * 0.8;
       const px = THREE.MathUtils.clamp(
         x ?? (Math.random() * 2 - 1) * spread,
@@ -330,7 +334,7 @@ export function WaterSurface({
           projectiles.splice(i, 1);
           addDrop(p.x, p.z, p.strength);
           if (p.spawnsSecondary) {
-            // The jet has to rise before it can pinch off a droplet.
+            // The jet must rise before it can release a droplet.
             pending.push({ at: t + paramsRef.current.uJetTau, x: p.x, z: p.z });
           }
           continue;
@@ -364,7 +368,7 @@ export function WaterSurface({
     };
     const onPointerUp = (event: PointerEvent) => {
       if (event.button !== 0) return;
-      // Don't fire on the pointer-up that ends an orbit drag.
+      // Do not drop on the pointer-up that ends an orbit drag.
       const moved = Math.hypot(event.clientX - downX, event.clientY - downY);
       if (moved > 6 || performance.now() - downAt > 600) return;
       const rect = renderer.domElement.getBoundingClientRect();
@@ -383,8 +387,8 @@ export function WaterSurface({
       const { clientWidth, clientHeight } = mount;
       if (!clientWidth || !clientHeight) return;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      // updateStyle must stay on: it is what gives the canvas its CSS
-      // size, without which it lays out at its device-pixel size.
+      // Keep updateStyle on. It gives the canvas its CSS size. Without
+      // that size the canvas lays out at its device-pixel size.
       renderer.setSize(clientWidth, clientHeight);
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
@@ -431,13 +435,15 @@ export function WaterSurface({
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-    // Built once. Params and toggles reach the live scene through the two
-    // effects below, so nothing here re-runs and no shader recompiles.
+    // Built one time. The params and the toggles reach the live scene
+    // through the two effects below, thus this effect does not run again
+    // and no shader is recompiled.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sliders write straight into the uniform objects: no React re-render of
-  // the scene, no material rebuild, no shader recompile.
+  // The sliders write directly into the uniform objects. React does not
+  // render the scene again, no material is rebuilt and no shader is
+  // recompiled.
   useEffect(() => {
     const uniforms = uniformsRef.current;
     if (!uniforms) return;

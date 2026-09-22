@@ -16,33 +16,34 @@ import {
 import type { SectionGradient } from "./blade-gradient";
 
 /**
- * The WebGL half of DESIGN.md §2.1 / §3.1 / §7.4: a `<canvas>` that
- * paints the section gradient and, over it, the water sheet whose drops
- * and swell replaced the concentric sheen, the CSS ripple rings and the
- * specular gloss (`blade-water-gl.ts`).
+ * The WebGL half of DESIGN.md §2.1, §3.1 and §7.4: a `<canvas>` that
+ * paints the section gradient with the water sheet above it. The drops
+ * and the swell of that sheet replaced the concentric sheen, the CSS
+ * ripple rings and the specular gloss (`blade-water-gl.ts`).
  *
- * It is strictly an *upgrade* over the CSS surface, never a replacement
- * the page depends on. The CSS gradient stays on the element underneath,
- * so the surface is already correct before hydration, on a browser
- * without WebGL2, and after a lost context — the canvas simply fails to
- * appear. Only once a first frame has actually been drawn does this
- * publish `painted`, which the layers that have a CSS twin (`BladeEdges`'
- * panel fill and gloss, `BladeBackground`'s sheen and rings) read in order
- * to stand down and let the shader show through. Flipping the flag only
- * after the first draw is what keeps the handover from flashing.
+ * The canvas is an upgrade of the CSS surface and never a replacement
+ * that the page needs. The CSS gradient stays on the element below,
+ * thus the surface is correct before the hydration, on a browser with
+ * no WebGL2, and after a lost context: only the canvas is absent. This
+ * component publishes `painted` only after it draws the first frame.
+ * The layers that have a CSS twin, which are the panel fill and the
+ * gloss of `BladeEdges` and the sheen and the rings of
+ * `BladeBackground`, read that flag and stop drawing, thus the shader
+ * shows. The flag changes only after the first draw, thus the handover
+ * does not flash.
  *
- * The fallback is not a like-for-like picture of the water - CSS cannot
- * draw a banked sheet - but it is the surface the dashboard was designed
- * around, so a browser without WebGL2 gets a complete blade rather than a
- * broken one.
+ * The fallback is not an equal image of the water, because CSS cannot
+ * draw a banked sheet. But it is the surface that the dashboard was
+ * designed around, thus a browser with no WebGL2 gets a complete blade
+ * and not a broken one.
  *
- * Never a cursor stop and never hit-tested: it is `aria-hidden` and
- * `pointer-events-none`, so the tab shapes above it keep their own
- * clickable areas (§1.1).
+ * The canvas is never a cursor stop and is never hit-tested. It is
+ * `aria-hidden` and `pointer-events-none`, thus the tab shapes above it
+ * keep their own clickable areas (§1.1).
  */
 const BladeSurfacePaintedContext = createContext(false);
 
-/** Whether the shader is live, so a CSS twin layer can stand down. */
+/** Whether the shader is live. A CSS twin layer reads this and stops drawing. */
 export function useBladeSurfacePainted(): boolean {
   return useContext(BladeSurfacePaintedContext);
 }
@@ -66,20 +67,20 @@ export function BladeSurface({
   panel = null,
   onPaintedChange,
 }: {
-  /** The open section's gradient (§2.1). Crossfades on change (§7.4). */
+  /** The gradient of the open section (§2.1). A change crossfades (§7.4). */
   gradient: SectionGradient;
   /**
-   * The panel's edges in reference px (§1.2). The water is masked to the
-   * curve between them and glides with it on a blade switch, so the
-   * swell stays on the open blade and never spills onto the collapsed
-   * tab gutters. Omit on a full-screen surface, which has no panel and
-   * so carries the water unclipped (§5.4).
+   * The edges of the panel in reference px (§1.2). The mask holds the
+   * water inside the curve between them and glides with it during a
+   * blade switch. Thus the swell stays on the open blade and does not go
+   * onto the collapsed tab gutters. Omit this prop on a full-screen
+   * surface: it has no panel, thus its water is not clipped (§5.4).
    */
   panel?: PanelEdges | null;
   onPaintedChange?: (painted: boolean) => void;
 }) {
   const [painted, setPainted] = useState(false);
-  /** Bumped to rebuild the context after it is lost and restored. */
+  /** Incremented to rebuild the context after a loss and a restore. */
   const [generation, setGeneration] = useState(0);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -88,8 +89,9 @@ export function BladeSurface({
   const runningRef = useRef(false);
   const reducedRef = useRef(false);
 
-  // Read by the mount effect, which must not re-run on every parent
-  // update or it would tear the GL context down mid-transition.
+  // The mount effect reads this. That effect must not run again at each
+  // update of the parent, or it would destroy the GL context during a
+  // transition.
   const stateRef = useRef<SurfaceState>({ gradient, panel });
   stateRef.current = { gradient, panel };
 
@@ -107,8 +109,8 @@ export function BladeSurface({
     }
     const now = performance.now();
     renderer.draw(now);
-    // The ripples loop forever, so only a reduced-motion surface is ever
-    // allowed to stop asking for frames.
+    // The ripples continue without an end, thus only a reduced-motion
+    // surface can stop the request for frames.
     if (reducedRef.current && renderer.settled(now)) {
       runningRef.current = false;
       return;
@@ -133,9 +135,8 @@ export function BladeSurface({
     try {
       renderer = new BladeWaterRenderer(canvas, stateRef.current);
     } catch (error) {
-      // No WebGL2, or a driver that will not compile the program. The CSS
-      // surface underneath is already correct, so there is nothing to do
-      // but leave it showing.
+      // There is no WebGL2, or the driver cannot compile the program. The
+      // CSS surface below is correct, thus keep it on the screen.
       if (process.env.NODE_ENV !== "production") {
         console.warn("Blade surface falling back to CSS:", error);
       }
@@ -152,15 +153,15 @@ export function BladeSurface({
     };
 
     measure();
-    // Paint before handing over, so the CSS layers never stand down onto
-    // an empty canvas.
+    // Paint before the handover, thus the CSS layers never stop drawing
+    // onto an empty canvas.
     renderer.draw(performance.now());
     setPainted(true);
 
     const observer = new ResizeObserver(measure);
     observer.observe(canvas);
-    // A ResizeObserver does not fire when only the pixel ratio changes,
-    // which is what happens when the window moves between displays.
+    // A ResizeObserver does not fire when only the pixel ratio changes.
+    // That occurs when the window moves to another display.
     window.addEventListener("resize", measure);
 
     const onMotionChange = () => {
@@ -170,8 +171,8 @@ export function BladeSurface({
     };
     motion.addEventListener("change", onMotionChange);
 
-    // A lost context hands the surface straight back to CSS; a restored
-    // one rebuilds this effect from scratch.
+    // A lost context returns the surface to CSS. A restored context
+    // builds this effect again.
     const onLost = (event: Event) => {
       event.preventDefault();
       setPainted(false);
@@ -194,12 +195,13 @@ export function BladeSurface({
       renderer.dispose();
       setPainted(false);
     };
-    // `generation` is a rebuild trigger, not a value the effect reads.
+    // `generation` is a trigger for a rebuild, not a value that the
+    // effect reads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generation, request]);
 
-  // Primitives, so a fresh `panel` object each render does not restart the
-  // transition (§7.4) on every parent update.
+  // Primitives, thus a new `panel` object at each render does not start
+  // the transition (§7.4) again at each update of the parent.
   const leftX = panel?.leftX ?? null;
   const rightX = panel?.rightX ?? null;
   useEffect(() => {

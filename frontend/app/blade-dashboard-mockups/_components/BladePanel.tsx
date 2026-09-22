@@ -12,26 +12,26 @@ import { ButtonLegendBar, type LegendButton } from "./ButtonLegendBar";
 import { MenuBoundary } from "./MenuBoundary";
 
 /**
- * The open blade's panel content (DESIGN.md §1): header band with the
- * section title, the body, and the legend band. One is declared per blade
- * and only the one whose `blade` label matches the open blade renders, so
- * the page can describe every blade up front while the tabs and Left/Right
- * decide which is on screen.
+ * The panel content of the open blade (DESIGN.md §1): the header band
+ * with the section title, the body and the legend band. Each blade
+ * declares one panel, and only the panel whose `blade` label is the open
+ * blade renders. Thus the page can declare each blade, and the tabs and
+ * the Left and Right keys select the panel on the screen.
  *
- * The layer is the same full-bleed box as the tab layer above it (z-10 vs.
- * z-20) — the panel bounds are internal padding taken from the open
- * blade's geometry (§1.2), not the layer's own box, so both layers share
- * one simple shape instead of each being cropped to a sub-region. Padding
- * glides with the panel when the blade changes, and the freshly mounted
- * content lands a beat later from the direction of travel (§7.4:
- * `blade-content-in`, offset by `--blade-enter-x`), so the chrome is seen
- * moving first and the content settling onto it.
+ * This layer is the same full-bleed box as the tab layer above it, z-10
+ * against z-20. The bounds of the panel are internal padding from the
+ * geometry of the open blade (§1.2) and not the box of the layer. Thus
+ * both layers use one simple shape, and neither is cropped to a
+ * sub-region. The padding glides with the panel at a blade change, and
+ * the new content arrives after a short delay from the direction of the
+ * move (§7.4: `blade-content-in`, with the offset `--blade-enter-x`).
+ * Thus the user sees the chrome move first and the content arrive on it.
  *
- * The body is one keyboard column (`data-nav-list="column"`): Up/Down run
- * from the gamerpic, down the menu rows, and on to Open Tray at the
- * bottom. A blade that hasn't been built yet can be declared with no
- * children: it shows its title over an empty panel with every legend slot
- * dimmed (§7.2), rather than borrowing another blade's content.
+ * The body is one keyboard column (`data-nav-list="column"`). Up and
+ * Down move from the gamer picture, down the menu rows, to the Open Tray
+ * at the bottom. A blade with no design yet declares a panel with no
+ * children: it shows its title on an empty panel with each legend slot
+ * dimmed (§7.2) and does not use the content of another blade.
  */
 const IDLE_LEGEND: { left: LegendButton[]; right: LegendButton[] } = {
   left: [
@@ -49,7 +49,7 @@ export function BladePanel({
   legend = IDLE_LEGEND,
   children,
 }: {
-  /** The `label` of the blade this panel belongs to. */
+  /** The `label` of the blade that owns this panel. */
   blade: string;
   legend?: { left: LegendButton[]; right: LegendButton[] };
   children?: React.ReactNode;

@@ -9,9 +9,10 @@ export interface LegendButton {
 }
 
 /**
- * DESIGN.md §6.5 Button legend bar: a persistent 4-slot grammar — left side
- * is contextual (Y/X), right side is navigation (B/A). "Slots never
- * disappear — they dim," so ghosted entries stay in place via `disabled`.
+ * The button legend bar of DESIGN.md §6.5: a grammar of four slots that
+ * is always present. The left side is contextual, with Y and X. The
+ * right side is navigation, with B and A. A slot never disappears: it
+ * dims. Thus an inactive entry stays in position and uses `disabled`.
  */
 export function ButtonLegendBar({
   left,

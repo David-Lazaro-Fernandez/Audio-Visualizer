@@ -3,43 +3,46 @@ import { MCLA_ACHIEVEMENTS } from "./mcla-achievements";
 import { MW3_ACHIEVEMENTS } from "./mw3-achievements";
 
 /**
- * Data for the Achievements screen (DESIGN.md §6.10): the titles the
- * signed-in gamer has achievements in, and each title's achievement list.
+ * The data of the Achievements screen (DESIGN.md §6.10): the titles that
+ * the signed-in gamer has achievements in, and the achievement list of
+ * each title.
  *
  * Modern Warfare 3, Halo 3 and Midnight Club: Los Angeles are the real
- * lists (`mw3-achievements.ts`, `halo3-achievements.ts`,
- * `mcla-achievements.ts`: 76, 79 and 55 achievements with their 64 px art
- * under `public/assets/achievements/`); which of them are unlocked is
- * mock, carried as `unlocked` on each scraped entry. Only achievements
- * with art are listed, since the icons are full-colour bitmaps not redrawn
- * in the menu-icon finish (§6.2); a title with no scraped list is left out
- * rather than shown as an empty grid.
+ * lists (`mw3-achievements.ts`, `halo3-achievements.ts` and
+ * `mcla-achievements.ts`, with 76, 79 and 55 achievements and their
+ * 64 px art under `public/assets/achievements/`). The unlocked state is
+ * mock data and is the `unlocked` field of each scraped entry. The
+ * screen lists only an achievement that has art, because the icons are
+ * full-colour bitmaps and are not redrawn in the menu-icon finish
+ * (§6.2). A title with no scraped list is not in the screen, because an
+ * empty grid is not acceptable.
  *
- * "All Games" is not a title of its own: `allGames()` folds every title's
- * list into one so the screen can show it through the same summary + grid.
+ * "All Games" is not a title. `allGames()` folds the list of each title
+ * into one list, thus the screen shows it through the same summary and
+ * the same grid.
  */
 export interface Achievement {
   name: string;
-  /** How to earn it; read out with the name and kept for the detail screen. */
+  /** How to earn the achievement. The summary shows it with the name, and the detail screen keeps it. */
   description?: string;
-  /** Gamerscore the achievement is worth. */
+  /** The Gamerscore of the achievement. */
   score: number;
-  /** Unlocked achievements show their art; locked ones are an empty tile. */
+  /** An unlocked achievement shows its art. A locked achievement is an empty tile. */
   unlocked: boolean;
-  /** Achievement art under `public/assets/`. Required: no art, no entry. */
+  /** The achievement art, under `public/assets/`. It is necessary: an entry with no art is not listed. */
   image: string;
 }
 
 export interface AchievementGame {
   title: string;
-  /** Title artwork under `public/assets/`; placeholder until provided. */
+  /** The title artwork, under `public/assets/`. The screen shows the placeholder until the art is available. */
   image?: string;
   achievements: Achievement[];
 }
 
 export const ALL_GAMES_TITLE = "All Games";
 
-/** A scraped list (`img` / `gamerPoints` / `unlocked`) as the screen's `Achievement`s. */
+/** Converts a scraped list, with `img`, `gamerPoints` and `unlocked`, to the `Achievement`s of the screen. */
 function fromScraped(
   entries: {
     img: string;
@@ -76,7 +79,7 @@ export const ACHIEVEMENT_GAMES: AchievementGame[] = [
   },
 ];
 
-/** The "All Games" view: every title's achievements in one list. */
+/** The "All Games" view: the achievements of each title in one list. */
 export function allGames(games: AchievementGame[]): AchievementGame {
   return {
     title: ALL_GAMES_TITLE,
@@ -84,7 +87,7 @@ export function allGames(games: AchievementGame[]): AchievementGame {
   };
 }
 
-/** "N achievements" and the earned / total Gamerscore for a title (or for All Games). */
+/** The count of achievements and the earned and total Gamerscore of a title, or of All Games. */
 export function achievementTotals(game: AchievementGame) {
   const total = game.achievements.reduce((sum, a) => sum + a.score, 0);
   const earned = game.achievements

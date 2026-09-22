@@ -5,9 +5,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        // Album artwork from the iTunes Search API. Served from is1- to
-        // is5-ssl.mzstatic.com, with the size baked into the path, so the
-        // pathname has to stay open (`album-details.ts` rewrites it).
+        // The album artwork from the iTunes Search API. The hosts are
+        // is1-ssl.mzstatic.com to is5-ssl.mzstatic.com, and the path
+        // holds the size. Thus the pathname must stay open, because
+        // `album-details.ts` changes it.
         protocol: "https",
         hostname: "*.mzstatic.com",
         pathname: "/image/thumb/**",

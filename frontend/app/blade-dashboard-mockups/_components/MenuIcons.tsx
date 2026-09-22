@@ -1,17 +1,21 @@
 /**
- * Menu row icons (DESIGN.md §6.2 "small monochrome icon (left) + label"),
- * modelled on the 360 dashboard: trophy, controller, arcade stick, disc
- * (Games blade), the globe-with-controller of "Connect to Xbox LIVE"
- * (Xbox LIVE blade), disc-with-note, camera, camcorder and the
- * Marketplace "m" roundel (Media blade), and the two stacked game cards
- * with a controller of the Achievements screen's "All Games" filter, and
- * the same trophy under a padlock for a locked achievement tile. All share one finish — translucent
- * white (50%) with a lighter white edge, inked details in translucent
- * black, and a soft drop shadow — so the section colour shows through and
- * the set looks the same on every blade. Plain SVG, no client code, so they
- * render on the server and pass into `MenuListItem` as a node. Full-colour
- * bitmaps (Media Center's Windows flag) are not drawn here; those rows take
- * an image node instead.
+ * The icons of the menu rows (DESIGN.md §6.2: a small monochrome icon on
+ * the left with a label). They follow the console dashboard. The set is:
+ * the trophy, the controller, the arcade stick and the disc for the
+ * Games blade; the globe with a controller of "Connect to Xbox LIVE" for
+ * the Xbox LIVE blade; the disc with a note, the camera, the camcorder
+ * and the Marketplace "m" roundel for the Media blade; the two stacked
+ * game cards with a controller for the "All Games" filter of the
+ * Achievements screen; and the same trophy under a padlock for a locked
+ * achievement tile.
+ *
+ * All the icons use one finish: translucent white at 50%, a lighter
+ * white edge, inked details in translucent black, and a soft drop
+ * shadow. Thus the section colour shows through and the set looks the
+ * same on each blade. They are plain SVG with no client code, thus they
+ * render on the server and go into `MenuListItem` as a node. This file
+ * does not draw the full-colour bitmaps, such as the Windows flag of
+ * Media Center. Those rows take an image node.
  */
 export type MenuIconName =
   | "trophy"
@@ -26,13 +30,13 @@ export type MenuIconName =
   | "allGames"
   | "lockedTrophy";
 
-/** Body fill: white at 50%, so the blade's gradient tints the glyph. */
+/** The body fill: white at 50%, thus the gradient of the blade tints the glyph. */
 const FILL = "rgba(255,255,255,.5)";
-/** Edge: a slightly stronger white so the silhouette holds on pale panels. */
+/** The edge: a stronger white, thus the silhouette stays visible on a pale panel. */
 const EDGE = "rgba(255,255,255,.7)";
-/** Inked details (iris, reel hubs, the "m"): translucent black, blade-neutral. */
+/** The inked details, such as the iris, the reel hubs and the "m": translucent black, neutral on each blade. */
 const INK = "rgba(0,0,0,.32)";
-/** Dashed/secondary strokes that used to be pale green. */
+/** The dashed and secondary strokes. They were pale green before. */
 const LIGHT = "rgba(255,255,255,.75)";
 
 export function MenuIcon({
@@ -59,8 +63,8 @@ export function MenuIcon({
 }
 
 const ICONS: Record<MenuIconName, React.ReactNode> = {
-  /* Goblet: wide rounded rim tapering into a narrow stem, small ear-loop
-     handles at the rim, and a flat plinth. */
+  /* A goblet: a wide rounded rim that becomes a narrow stem, with small
+     loop handles at the rim and a flat base. */
   trophy: (
     <>
       {/* ear handles (rings), drawn first so the cup overlaps them */}
@@ -77,10 +81,11 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* 360 pad silhouette, leaning left like the dashboard's: a solid body with
-     two grips and a concave arch between them, and a single hole where the
-     guide button sits. No face buttons or d-pad. The hole is a reverse-wound
-     subpath so the blade shows through it. */
+  /* The silhouette of a console pad, leaning left as on the dashboard: a
+     solid body with two grips, a concave arch between them and one hole
+     for the guide button. There are no face buttons and no d-pad. The
+     hole is a subpath wound in the opposite direction, thus the blade
+     shows through it. */
   controller: (
     <g transform="rotate(-18 16 16)">
       <path
@@ -99,9 +104,10 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </g>
   ),
 
-  /* Arcade stick: a tapered rod with a rounded top standing straight up on
-     a thick slab. The whole piece leans ~20° to the left like the
-     dashboard's, so the base tilts and the stick stays perpendicular to it. */
+  /* An arcade stick: a tapered rod with a rounded top, vertical on a
+     thick slab. The full glyph leans near 20 degrees to the left, as on
+     the dashboard, thus the base tilts and the stick stays perpendicular
+     to the base. */
   joystick: (
     <g transform="rotate(-20 16 16)">
       {/* slab thickness: darker underside peeking out below */}
@@ -119,9 +125,9 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </g>
   ),
 
-  /* Disc split down the middle: the left half is solid (with the centre
-     hole cut out), the right half is only a dashed outline of the rim and
-     the hole — the dashboard's "loading/streaming" disc. */
+  /* A disc divided at the middle. The left half is solid, with the
+     centre hole removed. The right half is only a dashed outline of the
+     rim and the hole. This is the loading disc of the dashboard. */
   disc: (
     <>
       {/* solid left half: outer rim down, then back up around the hole */}
@@ -147,10 +153,11 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Globe with a controller tucked against its lower right, the 360's
-     "Connect to Xbox LIVE" glyph: a sphere with one meridian ellipse and
-     two latitude lines, and a small pad (two grips, arched top) overlapping
-     its bottom edge, drawn last so it sits in front. */
+  /* A globe with a controller at its lower right: the "Connect to Xbox
+     LIVE" glyph of the console. The globe is a sphere with one meridian
+     ellipse and two latitude lines. The small pad has two grips and an
+     arched top and overlaps the bottom edge. The code draws the pad
+     last, thus the pad is in front. */
   globe: (
     <>
       <circle cx="14" cy="13.5" r="10" />
@@ -162,9 +169,9 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Music: a full disc (centre hole cut out) with an eighth note standing
-     against its upper right, the note drawn last so its head overlaps the
-     rim. */
+  /* Music: a full disc with the centre hole removed, and an eighth note
+     at its upper right. The code draws the note last, thus the head of
+     the note overlaps the rim. */
   music: (
     <>
       <path
@@ -178,8 +185,8 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Pictures: a compact camera — body, raised viewfinder hump, lens with a
-     dark iris and a small flash window. */
+  /* Pictures: a small camera. It has a body, a raised viewfinder, a lens
+     with a dark iris, and a small flash window. */
   pictures: (
     <>
       <path d="M10.5 9.5l1.4-2.6a1 1 0 0 1 .9-.5h6.4a1 1 0 0 1 .9.5l1.4 2.6H26a2 2 0 0 1 2 2V24a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V11.5a2 2 0 0 1 2-2z" />
@@ -190,8 +197,8 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Videos: a reel-to-reel camcorder — two film reels on top, a body, and a
-     lens cone pointing right. */
+  /* Videos: a reel-to-reel camcorder. It has two film reels on top, a
+     body, and a lens cone that points right. */
   videos: (
     <>
       <circle cx="9.5" cy="9" r="4.4" />
@@ -204,7 +211,7 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Video Store: the Marketplace roundel — a sphere with a lowercase "m"
+  /* Video Store: the Marketplace roundel, a sphere with a lowercase "m"
      inked across it. */
   videoStore: (
     <>
@@ -220,10 +227,11 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* All Games (Achievements screen): two game cards fanned behind each
-     other, with a small controller resting in front of their lower edge —
-     the 360's "every title on the console" glyph. The controller is the
-     `controller` silhouette above, scaled down and drawn last. */
+  /* All Games, on the Achievements screen: two game cards fanned one
+     behind the other, with a small controller in front of their lower
+     edge. This is the glyph of the console for each title. The
+     controller is the `controller` silhouette above, smaller and drawn
+     last. */
   allGames: (
     <>
       <rect x="9" y="3.5" width="12" height="16" rx="1.6" transform="rotate(-14 15 11.5)" />
@@ -237,9 +245,9 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
       </g>
     </>
   ),
-  /* The trophy above, with a padlock sitting over its cup: a locked
-     achievement (§6.10). The lock is inked so it reads as a mark on the
-     glyph rather than a second object. */
+  /* The trophy above, with a padlock over its cup: a locked achievement
+     (§6.10). The lock is inked, thus it looks like a mark on the glyph
+     and not like a second object. */
   lockedTrophy: (
     <>
       <g opacity=".55">

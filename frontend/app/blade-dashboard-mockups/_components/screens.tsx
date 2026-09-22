@@ -7,22 +7,25 @@ import { MyGamesScreen } from "./MyGamesScreen";
 import { PicturesScreen } from "./PicturesScreen";
 
 /**
- * Full-screen destinations a menu row can open. Rows reference them by key
- * (`screen: "games-library"`) so the page can stay a server component and
- * pass plain data; `LibraryMenu` resolves the key to a component at render
- * time. Resolving lazily (a function, not a module-level map) keeps the
- * import cycle screens → GamesLibraryScreen → LibraryMenu → screens
- * harmless: nothing is dereferenced while modules are still loading.
+ * The full-screen destinations that a menu row can open. A row names one
+ * by key (`screen: "games-library"`), thus the page can stay a server
+ * component and pass plain data. `LibraryMenu` then resolves the key to
+ * a component at render time. The resolution is lazy, through a function
+ * and not a module-level map. Thus the import cycle screens to
+ * GamesLibraryScreen to LibraryMenu to screens is safe: nothing reads a
+ * value while the modules load.
  *
- * Screens stack: Games blade → "games-library" → "my-games". The blade's
- * Achievements row opens "achievements" directly. Media blade → "music" →
- * "audiobooks" (from the Music screen's Hard Drive row); the Media blade's
- * Pictures row opens "pictures" directly.
+ * The screens stack. The Games blade opens "games-library", which opens
+ * "my-games". The Achievements row of the blade opens "achievements"
+ * directly. The Media blade opens "music", and the Hard Drive row of the
+ * Music screen opens "audiobooks". The Pictures row of the Media blade
+ * opens "pictures" directly.
  *
- * Not every screen can live here. A key names a destination that exists
- * exactly once, and the album (§6.14) and song (§6.15) screens exist once
- * per album and per track, so their rows pass a component bound to their
- * data instead — see `LibraryMenuItem.screen`, which accepts either.
+ * Some screens cannot be here. A key names a destination that exists one
+ * time. The album screen (§6.14) and the song screen (§6.15) exist one
+ * time for each album and for each track. Thus their rows pass a
+ * component that is bound to their data. Refer to
+ * `LibraryMenuItem.screen`, which accepts both forms.
  */
 export type ScreenKey =
   | "games-library"

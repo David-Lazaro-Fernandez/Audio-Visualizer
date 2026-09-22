@@ -17,25 +17,27 @@ import { getPortalRoot } from "./portal";
 import { XboxLiveBanner } from "./XboxLiveBanner";
 
 /**
- * The "Games Library" screen the Games blade's Played Games row opens.
- * Full-screen on the same green and concentric wave sheen as the blade
- * (BladeScreenSurface, unclipped); darker header/legend bands top and bottom;
- * two columns in between — a stack of raised buttons on the left topped by
- * the Xbox LIVE banner, and a borderless description pane on the right
- * that follows the cursor (title + one or two sentences).
+ * The Games Library screen, which the Played Games row of the Games
+ * blade opens. It is full-screen, on the same green and the same
+ * concentric wave sheen as the blade (BladeScreenSurface, with no clip).
+ * There are darker header and legend bands at the top and the bottom,
+ * and two columns between them: a stack of raised buttons on the left
+ * with the Xbox LIVE banner above them, and a borderless description
+ * pane on the right that follows the cursor with a title and one or two
+ * sentences.
  *
- * State is shown through contrast only: the highlighted row goes
- * near-white, live rows are mid-green, disabled rows keep their shape but
- * drop to low-contrast green (§7.2). The legend is Y/X unbound on the
- * left, Back B / Select A on the right.
+ * The state shows through contrast only. The highlighted row is almost
+ * white, a live row is mid-green, and a disabled row keeps its shape and
+ * becomes the low-contrast green (§7.2). The legend has Y and X unbound
+ * on the left, and Back B and Select A on the right.
  *
- * Keyboard: its own `data-nav-list` column so Up/Down step the rows;
- * `aria-modal` keeps Left/Right from flipping blades underneath. Focus
- * moves to the first live row on open and back to the opener on close.
- * The Back key itself is handled by the row that opened this screen
- * (`MenuListItem`), which owns the open state and plays the Back sound —
- * which is why this screen takes no props (it satisfies `MenuScreenProps`
- * by simply ignoring `onClose`).
+ * Keyboard: the screen has its own `data-nav-list` column, thus Up and
+ * Down step the rows. `aria-modal` stops Left and Right from switching
+ * the blades below. The focus moves to the first live row at the open
+ * and returns to the row that opened the screen at the close. That row
+ * handles the Back key (`MenuListItem`), owns the open state and plays
+ * the Back sound. Thus this screen takes no props: it satisfies
+ * `MenuScreenProps` and ignores `onClose`.
  */
 const GAMES_LIBRARY_ITEMS: LibraryMenuItem[] = [
   {
@@ -73,7 +75,7 @@ const GAMES_LIBRARY_ITEMS: LibraryMenuItem[] = [
   },
 ];
 
-/** Same radial green as the Games blade canvas. */
+/** The same radial green as the canvas of the Games blade. */
 const BACKGROUND = gradientCss(GAMES_GRADIENT);
 
 
@@ -99,7 +101,7 @@ export function GamesLibraryScreen() {
     >
       <BladeScreenSurface gradient={GAMES_GRADIENT} />
 
-      {/* Header and legend sit at z-0, beneath the content band's shadow. */}
+      {/* The header and the legend are at z-0, below the shadow of the content band. */}
       <BladeChromeBand
         edge="top"
         className="relative z-0 px-[12%] pt-8 pb-5 md:pt-10 md:pb-6"

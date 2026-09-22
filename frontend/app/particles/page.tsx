@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * `/particles`. A server component holding one client island — every
- * interesting part is a browser API (Web Audio, WebGL, fetch), so the
- * page itself only names the route and owns the metadata.
+ * `/particles`. A server component that holds one client island. The
+ * work uses browser APIs only (Web Audio, WebGL, fetch). Thus the page
+ * only names the route and holds the metadata.
  */
 export default function Page() {
   return <ParticlesPage />;

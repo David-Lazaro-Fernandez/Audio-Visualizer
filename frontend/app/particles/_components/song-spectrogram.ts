@@ -1,40 +1,40 @@
 "use client";
 
 /**
- * Offline spectrogram of a song preview: decode the whole clip, then walk
- * an FFT across it to get a time x frequency grid of levels.
+ * Offline spectrogram of a song preview. The code decodes the full clip,
+ * then moves an FFT across it to get a grid of levels in time and
+ * frequency.
  *
- * Deliberately **not** an `AnalyserNode`. That only reports what is
- * passing through it right now, so it can only ever build a rolling
- * window of the last second or two — which is what the Music Player's
- * visualizers do (DESIGN.md §6.16). This page wants the *whole* interval
- * at once, as one object you can turn around and look at, so the
- * transform has to be done by hand over the decoded samples. An
- * `OfflineAudioContext` would not help: its graph still has no way to
- * hand back per-frame spectra.
+ * This is not an `AnalyserNode`. An analyser reports only the audio that
+ * passes through it now, thus it can build only a rolling window of the
+ * last second or two. The visualizers of the Music Player work in that
+ * way (DESIGN.md §6.16). This page needs the full interval at one time,
+ * as one object that a user can turn and examine. Thus the transform
+ * uses the decoded samples directly. An `OfflineAudioContext` does not
+ * help, because its graph cannot return a spectrum for each frame.
  *
- * Only a **one-second window** is analysed, not the whole preview. Thirty
- * seconds of hip-hop at 46 ms a slice is a wall of detail that averages
- * into mush; one second is a bar or two, where you can actually see the
- * kick, the snare and the hats as separate events.
+ * The code analyses a window of one second and not the full preview. 30
+ * seconds of hip-hop at 46 ms a slice gives too much detail, and the
+ * detail averages into mush. One second is one or two bars, where a user
+ * can see the kick, the snare and the hats as separate events.
  *
- * That makes the hop matter. At a 2048-sample window with no overlap one
- * second is only 21 slices, which is a coarse time axis for something
- * whose whole subject is time. So the windows overlap eightfold: window
- * *length* sets frequency resolution and *hop* sets time resolution, and
- * they are independent — 2048 keeps 21 Hz bins for the bass while a hop
- * of 256 gives a slice every 5.8 ms.
+ * Thus the hop is important. With a window of 2048 samples and no
+ * overlap, one second is only 21 slices, which is a coarse time axis for
+ * a display about time. Thus the windows overlap eight times. The length
+ * of the window sets the frequency resolution and the hop sets the time
+ * resolution, and the two are independent: 2048 keeps 21 Hz bins for the
+ * bass, and a hop of 256 gives a slice each 5.8 ms.
  *
- * The window also *follows playback*, so the transform is incremental:
- * see `SlidingSpectrogram` below.
+ * The window also follows the playback, thus the transform is
+ * incremental. Refer to `SlidingSpectrogram` below.
  */
 
-/** Window length. 2048 at 44.1 kHz is ~21 Hz resolution and ~46 ms. */
+/** Window length. 2048 at 44.1 kHz gives near 21 Hz bins and near 46 ms. */
 const FFT_SIZE = 2048;
-/** Frequency range the bands cover, log-spaced, as elsewhere in the app. */
+/** Frequency range of the bands, log-spaced, as in the rest of the app. */
 const MIN_HZ = 30;
 const MAX_HZ = 16000;
-/** Level floor and ceiling in dBFS; anything quieter than the floor is 0. */
+/** Lowest and highest level in dBFS. A level below the floor becomes 0. */
 const MIN_DB = -85;
 const MAX_DB = -5;
 
@@ -42,10 +42,9 @@ const MAX_DB = -5;
 /**
  * In-place iterative radix-2 FFT.
  *
- * Twiddles are precomputed rather than advanced by repeated complex
- * multiplication: the recurrence is shorter to write but drifts over a
- * thousand steps, and the drift lands in exactly the high bins a
- * spectrogram is read for.
+ * The twiddle factors are precomputed. A recurrence of complex
+ * multiplications is shorter to write, but it drifts across a thousand
+ * steps, and the drift occurs in the high bins that a spectrogram shows.
  */
 function makeFft(size: number) {
   const half = size >> 1;
@@ -92,9 +91,9 @@ function makeFft(size: number) {
 }
 
 /**
- * Bin index for each band edge, log-spaced and forced strictly
- * increasing: at the bottom of the range several bands round to the same
- * bin, and bands sharing bins would read as one.
+ * Bin index of each band edge, log-spaced and always increasing. At the
+ * bottom of the range several bands round to the same bin, and bands
+ * that share bins look like one band.
  */
 function bandEdges(bands: number, binCount: number, nyquist: number) {
   const binHz = nyquist / binCount;
@@ -109,7 +108,7 @@ function bandEdges(bands: number, binCount: number, nyquist: number) {
   return edges;
 }
 
-/** Mono mix of a decoded buffer; a spectrogram has no use for stereo. */
+/** Mono mix of a decoded buffer. A spectrogram does not need stereo. */
 function toMono(buffer: AudioBuffer) {
   const length = buffer.length;
   const mono = new Float32Array(length);
@@ -123,17 +122,17 @@ function toMono(buffer: AudioBuffer) {
   return mono;
 }
 
-/** Length of the window analysed, in seconds. */
+/** Length of the analysed window, in seconds. */
 export const WINDOW_SECONDS = 1;
 
 export interface AnalyseOptions {
   bands?: number;
   /**
-   * Samples between windows. Smaller overlaps more and buys time
-   * resolution; at 256 the windows overlap eightfold.
+   * Samples between two windows. A smaller value gives more overlap and
+   * more time resolution. At 256 the windows overlap eight times.
    */
   hop?: number;
-  /** Seconds into the clip to start at. */
+  /** The start position in the clip, in seconds. */
   startTime?: number;
   /** Seconds to analyse. */
   seconds?: number;
@@ -142,15 +141,15 @@ export interface AnalyseOptions {
 /**
  * Fetches and decodes a preview.
  *
- * Split from the transform so that moving the window costs nothing: the
- * decoded buffer is the expensive part — a network round trip and an
- * AAC decode — and re-running it every time a slider moves would make
- * choosing which second to look at unusable.
+ * This is separate from the transform, thus a move of the window costs
+ * nothing. The decoded buffer is the expensive part: a network round
+ * trip and an AAC decode. A decode at each move of a slider would make
+ * the selection of a second unusable.
  *
- * The clip is fetched as an ArrayBuffer rather than played through an
- * element: `decodeAudioData` needs the whole encoded file, and Apple
- * serves these with `Access-Control-Allow-Origin: *`, so it can be read
- * cross-origin without a proxy.
+ * The code fetches the clip as an ArrayBuffer and does not play it
+ * through an element. `decodeAudioData` needs the full encoded file, and
+ * Apple serves these files with `Access-Control-Allow-Origin: *`, thus a
+ * cross-origin read needs no proxy.
  */
 export async function decodePreview(previewUrl: string): Promise<AudioBuffer> {
   const response = await fetch(previewUrl);
@@ -159,8 +158,8 @@ export async function decodePreview(previewUrl: string): Promise<AudioBuffer> {
 
   const context = new AudioContext();
   try {
-    // An AudioBuffer outlives the context that decoded it, and this one
-    // is never used to play anything.
+    // An AudioBuffer stays valid after the context closes, and this
+    // context does not play anything.
     return await context.decodeAudioData(encoded);
   } finally {
     void context.close();
@@ -168,26 +167,27 @@ export async function decodePreview(previewUrl: string): Promise<AudioBuffer> {
 }
 
 /**
- * A one-second window over a decoded buffer that can slide with
- * playback.
+ * A window of one second over a decoded buffer. The window can slide
+ * with the playback.
  *
- * The transform is incremental rather than a single pass, because the
- * window follows what is being heard. Recomputing all 165 slices every
- * frame would be pure waste: at a 256-sample hop each slice is 5.8 ms,
- * so at 60 fps only about three slices are *new* per frame. Those three
- * get an FFT and the rest simply age, which is the same trick the Music
- * Player's spectrogram uses on live audio (DESIGN.md §6.16) — except
- * here the samples are already in hand, so the window can also be thrown
- * anywhere in the clip instantly.
+ * The transform is incremental and not one pass, because the window
+ * follows the audio that the user hears. To compute all 165 slices at
+ * each frame is waste: at a hop of 256 samples a slice is 5.8 ms, thus
+ * at 60 fps only near three slices are new at each frame. The code
+ * computes an FFT for those three slices, and the other slices only
+ * become older. The spectrogram of the Music Player uses the same method
+ * on live audio (DESIGN.md §6.16). Here the samples are already
+ * available, thus the window can also move to any position in the clip
+ * immediately.
  *
- * Slices live in a ring and `head` is the newest. Callers read
- * `levels` through it rather than being handed a re-sorted copy, since
- * the consumer is a draw loop that is walking every cell anyway.
+ * The slices are in a ring and `head` is the newest slice. A caller
+ * reads `levels` through `head` and does not get a sorted copy, because
+ * the caller is a draw loop that reads each cell.
  */
 export class SlidingSpectrogram {
   readonly frames: number;
   readonly bands: number;
-  /** `frames * bands` levels in 0..1, row-major, in **ring** order. */
+  /** `frames * bands` levels in 0..1, row-major, in ring order. */
   readonly levels: Float32Array;
   readonly bandHz: Float32Array;
   readonly clipDuration: number;
@@ -202,14 +202,14 @@ export class SlidingSpectrogram {
   private readonly im = new Float64Array(FFT_SIZE);
   private readonly binCount = FFT_SIZE >> 1;
 
-  /** Ring index of the newest slice. */
+  /** Index of the newest slice in the ring. */
   private ringHead = 0;
-  /** Absolute slice index of the newest slice; slice i starts at i * hop. */
+  /** Absolute index of the newest slice. Slice i starts at i * hop. */
   private newest = -1;
   /**
-   * Bumped on every change. The draw loop compares this rather than
-   * `head`, because a refill can land on the same ring index it was
-   * already on and would otherwise go unnoticed.
+   * Incremented at each change. The draw loop compares this value and
+   * not `head`, because a refill can end on the same ring index. Such a
+   * refill would not be visible in `head`.
    */
   private revision = 0;
 
@@ -227,8 +227,8 @@ export class SlidingSpectrogram {
     this.edges = bandEdges(bands, this.binCount, buffer.sampleRate / 2);
     this.fft = makeFft(FFT_SIZE);
 
-    // Hann window, so a tone that does not sit exactly on a bin does not
-    // smear its energy across the whole spectrum.
+    // Hann window, thus a tone that is not exactly on a bin does not
+    // spread its energy across the full spectrum.
     this.window = new Float64Array(FFT_SIZE);
     for (let i = 0; i < FFT_SIZE; i++) {
       this.window[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (FFT_SIZE - 1));
@@ -241,33 +241,33 @@ export class SlidingSpectrogram {
     }
   }
 
-  /** Ring index of the newest slice; the oldest is the one after it. */
+  /** Index of the newest slice in the ring. The next slice is the oldest. */
   get head() {
     return this.ringHead;
   }
 
-  /** Changes whenever the levels do; see `revision`. */
+  /** Changes at each change of the levels. Refer to `revision`. */
   get version() {
     return this.revision;
   }
 
-  /** Seconds into the clip that the oldest slice held starts at. */
+  /** The start of the oldest slice, in seconds into the clip. */
   get startTime() {
     const oldest = Math.max(0, this.newest - this.frames + 1);
     return (oldest * this.hop) / this.sampleRate;
   }
 
-  /** Seconds the window spans. */
+  /** Length of the window, in seconds. */
   get duration() {
     return (this.frames * this.hop) / this.sampleRate;
   }
 
-  /** The last slice index the clip has samples for. */
+  /** The last slice index that the clip has samples for. */
   private get lastSlice() {
     return Math.max(0, Math.floor((this.samples.length - FFT_SIZE) / this.hop));
   }
 
-  /** Throws the whole window somewhere else in the clip. */
+  /** Moves the full window to another position in the clip. */
   fill(startTime: number) {
     const first = Math.max(
       0,
@@ -285,14 +285,14 @@ export class SlidingSpectrogram {
   }
 
   /**
-   * Slides the window so its newest slice is the latest one whose audio
-   * has already been heard at `time`.
+   * Slides the window. The newest slice becomes the last slice whose
+   * audio the user heard at `time`.
    *
-   * A slice covers FFT_SIZE samples from its start, so the newest one
-   * that has fully sounded is `(time * rate - FFT_SIZE) / hop`. Jumping
-   * further than the window is wide — a seek, or a tab that was
-   * backgrounded — costs less as a refill than as a loop of single
-   * slices, so it falls back to `fill`.
+   * A slice covers FFT_SIZE samples from its start, thus the newest
+   * slice that sounded fully is `(time * rate - FFT_SIZE) / hop`. A jump
+   * that is longer than the window, after a seek or a backgrounded tab,
+   * costs less as a refill than as a loop of single slices. Thus the
+   * method calls `fill` for such a jump.
    */
   advanceTo(time: number) {
     const target = Math.min(
@@ -312,7 +312,7 @@ export class SlidingSpectrogram {
     this.revision++;
   }
 
-  /** One FFT, banded into `row` of the ring. */
+  /** One FFT, put into the bands of `row` in the ring. */
   private computeInto(slice: number, row: number) {
     const offset = slice * this.hop;
     const { re, im, window, samples } = this;
@@ -331,7 +331,7 @@ export class SlidingSpectrogram {
       for (let bin = from; bin < to; bin++) {
         power += re[bin] * re[bin] + im[bin] * im[bin];
       }
-      // Mean power over the band, then dBFS against the window's gain.
+      // Mean power in the band, then dBFS against the gain of the window.
       const mean = power / (to - from);
       const db = 10 * Math.log10(mean / (this.binCount * this.binCount) + 1e-12);
       this.levels[base + band] = Math.max(0, Math.min(1, (db - MIN_DB) / span));

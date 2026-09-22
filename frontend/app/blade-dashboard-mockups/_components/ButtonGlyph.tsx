@@ -5,7 +5,7 @@ const BUTTON_COLORS: Record<"A" | "B" | "X" | "Y", { base: string; text: string 
   Y: { base: "#CBD527", text: "#1a1a1a" },
 };
 
-/** Mixes `hex` toward white (amount > 0) or black (amount < 0) by `amount` (0-1). */
+/** Mixes `hex` toward white when `amount` is positive, or toward black when it is negative. The range is 0 to 1. */
 function shade(hex: string, amount: number) {
   const n = parseInt(hex.slice(1), 16);
   const target = amount > 0 ? 255 : 0;
@@ -18,14 +18,15 @@ function shade(hex: string, amount: number) {
 }
 
 /**
- * DESIGN.md §2.3/§6.5: controller button legends always use the physical
- * button colors (A green, B red, X blue, Y yellow). Rendered as a glossy
- * sphere — radial-gradient base + two blurred highlight ellipses (a strong
- * one near the top, a thin one near the bottom) — to read as a real button
- * cap rather than a flat swatch. `disabled` swaps this out entirely for a
- * flat #E2E2E2-at-70%-opacity disc with a solid #9B9B9B ring and a
- * darker-gray letter, since a disabled slot isn't a pressable colored
- * button anymore but still identifies which button it is.
+ * DESIGN.md §2.3 and §6.5: a controller button legend always uses the
+ * physical button colours, which are green for A, red for B, blue for X
+ * and yellow for Y. The glyph is a glossy sphere: a radial-gradient base
+ * with two blurred highlight ellipses, a strong one near the top and a
+ * thin one near the bottom. Thus it looks like a real button cap and not
+ * like a flat colour. With `disabled` the glyph becomes a flat #E2E2E2
+ * disc at 70% opacity, with a solid #9B9B9B ring and a darker gray
+ * letter. A disabled slot is not a button that a user can press, but it
+ * must still identify its button.
  */
 export function ButtonGlyph({
   letter,

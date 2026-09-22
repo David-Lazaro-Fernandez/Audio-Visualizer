@@ -147,6 +147,14 @@ export {
   type VisualizerStyle,
 } from "./visualizer-styles";
 export {
+  bladePulse,
+  pushBladePulse,
+  PULSE_BLOOM,
+  PULSE_HUE_DEG,
+  PULSE_LIFT,
+} from "./blade-pulse";
+export { useBladePulse, bassBandCount } from "./use-blade-pulse";
+export {
   createOnsetDetector,
   bandRadius,
   bandWavenumber,

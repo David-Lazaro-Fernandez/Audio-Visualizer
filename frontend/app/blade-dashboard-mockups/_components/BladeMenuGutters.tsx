@@ -6,13 +6,14 @@ import { bladeTransition } from "./blade-motion";
 const GUTTER_FILL = "linear-gradient(180deg,#c9c9c9,#ececec 45%,#c4c4c4)";
 
 /**
- * The collapsed tab stack sits on a neutral gray field, not the active
- * section's color (DESIGN.md §2.3: "only the active section's color is
- * saturated"). This sits behind BladeEdges, absolutely positioned like it,
- * and stops exactly at the panel's edges so it only reaches the menu
- * (tab) area — never the active content in the center. The edges follow
- * the open blade (§1.2), so the gutters widen and narrow as the panel
- * slides, at the shared blade tempo (§7.4).
+ * The collapsed tab stack sits on a neutral gray field and not on the
+ * colour of the active section (DESIGN.md §2.3: only the colour of the
+ * active section is saturated). This component is behind BladeEdges,
+ * with the same absolute position, and it stops exactly at the edges of
+ * the panel. Thus it covers only the tab area and never the active
+ * content in the centre. The edges follow the open blade (§1.2), thus
+ * the gutters become wider and narrower as the panel moves, at the
+ * shared blade tempo (§7.4).
  */
 export function BladeMenuGutters() {
   const { geometry } = useBladeNav();

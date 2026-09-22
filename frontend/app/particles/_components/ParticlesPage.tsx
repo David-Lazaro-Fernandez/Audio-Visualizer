@@ -17,44 +17,43 @@ import {
 import { artworkAt, lookupSong, type Song } from "./song-lookup";
 
 /**
- * `/particles` — paste any Apple Music song and see the interval we take
- * from it as a cloud of particles in three dimensions.
+ * `/particles`. A user pastes an Apple Music song, and the page shows
+ * the analysed interval as a cloud of particles in three dimensions.
  *
- * The flow is three steps, and each can fail in its own way, so each
- * reports separately: resolve the link to a preview (`song-lookup.ts`),
- * decode the preview and transform a window of it
+ * The flow has three steps. Each step can fail in its own way, thus each
+ * step reports separately. The steps are: resolve the link to a preview
+ * (`song-lookup.ts`), decode the preview and transform a window of it
  * (`song-spectrogram.ts`), and draw the grid (`ParticleField.tsx`).
  *
- * Only one second is analysed, and while the preview plays that second
- * **is** the second being heard: the window chases playback and the
- * cloud scrolls through the song. Paused, the slider throws the window
- * anywhere in the clip — the decoded buffer is kept, so that re-runs the
- * transform only, a few milliseconds, rather than re-fetching and
- * re-decoding.
+ * The page analyses one second. While the preview plays, that second is
+ * the second that the user hears: the window follows the playback and
+ * the cloud scrolls through the song. During a pause the slider moves
+ * the window to any position in the clip. The page keeps the decoded
+ * buffer, thus a move runs the transform again, which takes some
+ * milliseconds, and does not fetch and decode the clip again.
  *
- * Four readings of the same window. **Curl** carries particles in a
- * divergence-free noise field, integrated on the GPU. **Sphere** throws
- * them along fixed trajectories computed in closed form from their age.
- * **Grid** lays the spectrogram out as a landscape. **Core** draws no
- * particles at all: one fullscreen quad, raymarched, the shape generated
- * from noise rather than stored. All four are driven by the same sliding
- * transform, so switching costs nothing but a remount of the scene.
+ * There are four views of the same window. Curl carries the particles in
+ * a divergence-free noise field, integrated on the GPU. Sphere emits
+ * them along fixed trajectories in closed form from their age. Grid
+ * shows the spectrogram as a landscape. Core draws no particles: it is
+ * one fullscreen quad, raymarched, and it generates the shape from noise
+ * instead of storing it. The same sliding transform drives all four,
+ * thus a change of view costs only a remount of the scene.
  *
- * Core is the one to watch for performance here. Marching costs per
- * pixel, and full screen at 2x is an order of magnitude more pixels than
- * the player's tile, so its Resolution knob matters on this page in a
- * way it does not there.
+ * Watch the performance of Core on this page. The march costs for each
+ * pixel, and a full screen at 2x has ten times more pixels than the tile
+ * of the player. Thus its Resolution knob is more important here.
  *
- * Playback position reaches the scene through a **ref, not state**. It
- * changes every frame, and re-rendering this page sixty times a second
- * would be absurd; the scene reads the same object inside its own loop
- * and drives the transform from it. Which is also why the slider is
- * disabled during playback rather than tracking it: keeping a React
- * slider in step with the audio would mean exactly the per-frame render
- * this avoids.
+ * The playback position reaches the scene through a ref and not through
+ * state. It changes at each frame, and a render of this page 60 times a
+ * second is not acceptable. The scene reads the same object in its own
+ * loop and drives the transform from it. This is also why the slider is
+ * disabled during the playback and does not follow it. A React slider
+ * that followed the audio would cause the render at each frame that this
+ * page prevents.
  */
 
-/** What the page opens on, so there is something to look at immediately. */
+/** The song at the start, thus the page shows something immediately. */
 const DEFAULT_SONG =
   "https://music.apple.com/us/song/sing-about-me-im-dying-of-thirst/1440819132";
 
@@ -71,13 +70,13 @@ export function ParticlesPage() {
   const [playing, setPlaying] = useState(false);
   const [start, setStart] = useState(0);
   const [view, setView] = useState<"curl" | "sphere" | "grid" | "core">("curl");
-  /** Kept so moving the window does not refetch or re-decode. */
+  /** Kept, thus a move of the window does not fetch or decode again. */
   const bufferRef = useRef<AudioBuffer | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  /** Playback position in seconds. Mutated in place; never state. */
+  /** Playback position in seconds. It is mutated in place, not state. */
   const timeRef = useRef(0);
-  /** Whether the window should chase playback. Mirrors `playing`. */
+  /** Whether the window must follow the playback. It copies `playing`. */
   const followRef = useRef(false);
 
   const load = useCallback(async (value: string) => {
@@ -101,7 +100,7 @@ export function ParticlesPage() {
     }
   }, []);
 
-  /** Throws the window elsewhere in the clip. Milliseconds of work. */
+  /** Moves the window to another position in the clip. It takes milliseconds. */
   const moveWindow = useCallback(
     (seconds: number) => {
       setStart(seconds);
@@ -114,8 +113,8 @@ export function ParticlesPage() {
     void load(DEFAULT_SONG);
   }, [load]);
 
-  // Feed the scene the playback clock while something is playing. The
-  // scene itself decides when a new slice is due, so this only reports
+  // Send the playback clock to the scene while a track plays. The scene
+  // decides when a new slice is necessary, thus this code only reports
   // the time.
   useEffect(() => {
     followRef.current = playing;
@@ -131,11 +130,11 @@ export function ParticlesPage() {
   }, [playing]);
 
   /**
-   * Feeds the curl field and the core. Neither knows anything about
-   * spectrograms — each asks for the current levels once a frame, and
-   * advancing the offline window is this page's business. It is the same
-   * function the dashboard supplies from a live analyser, which is why
-   * the scenes are shared rather than reimplemented per route.
+   * Supplies the curl field and the core. Neither of them knows about
+   * spectrograms. Each asks for the current levels one time a frame, and
+   * this page advances the offline window. The dashboard supplies the
+   * same function from a live analyser. Thus the two routes share the
+   * scenes and do not write them two times.
    */
   const sampleWindow = useCallback(
     (out: Float32Array) => {
@@ -156,9 +155,9 @@ export function ParticlesPage() {
       audio.pause();
       return;
     }
-    // Start at the window being looked at, not at the top of the clip:
-    // otherwise pressing play shows nothing for however many seconds
-    // until the playhead reaches it.
+    // Start at the window on the screen and not at the start of the
+    // clip. If it started at the clip, play would show nothing until the
+    // playhead reached the window.
     if (audio.currentTime < start || audio.currentTime > start + WINDOW_SECONDS) {
       audio.currentTime = start;
       timeRef.current = start;

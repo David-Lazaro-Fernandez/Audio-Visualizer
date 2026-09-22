@@ -11,35 +11,36 @@ import {
 } from "./BladeSurface";
 
 /**
- * DESIGN.md §3 Materiality: a soft concentric sheen baked into the radial
- * background, plus 2 looping ripple rings that "propagate from the center"
- * like waves. The sheen is white and black at low alpha, so it works over
- * any section color.
+ * Materiality, DESIGN.md §3: a soft concentric sheen in the radial
+ * background, with two ripple rings that repeat and appear to move out
+ * from the centre as waves do. The sheen is white and black at a low
+ * alpha, thus it works over each section colour.
  *
- * This is the **CSS fallback** for those two layers. Where WebGL2 is
- * available `BladeSurface` supersedes both with a real water sheet
- * (§3.1) whose drops and swell do the same job physically, so whenever
- * the shader is live this renders nothing. It stays because the shader is
- * an upgrade, not a dependency: before hydration, without WebGL2, or
- * after a lost context, this is where the blade's materiality comes from
- * — the design the dashboard was built around, not a broken blade.
+ * This component is the CSS fallback for those two layers. Where WebGL2
+ * is available, `BladeSurface` replaces both with a water sheet (§3.1)
+ * whose drops and swell do the same work physically. Thus this component
+ * renders nothing while the shader is live. It stays because the shader
+ * is an upgrade and not a dependency: before the hydration, with no
+ * WebGL2, or after a lost context, this component gives the blade its
+ * materiality. It is the design of the dashboard and not a broken blade.
  */
 export function BladeBackground({
   animate = true,
   clip = true,
 }: {
   animate?: boolean;
-  /** Clip to the blade panel curve (default). Full-screen surfaces pass false. */
+  /** Clip to the curve of the blade panel. A full-screen surface passes false. */
   clip?: boolean;
 }) {
   const { geometry } = useBladeNav();
   const painted = useBladeSurfacePainted();
   if (painted) return null;
   return (
-    // Clipped to the open blade's panel curve so the waves stay on the
-    // active blade and don't spill onto the collapsed tab gutters. Rendered
-    // above BladeEdges' opaque gradient, otherwise the rings would be hidden
-    // beneath it. The clip glides with the panel on a blade switch (§7.4).
+    // Clipped to the panel curve of the open blade, thus the waves stay
+    // on the active blade and do not go onto the collapsed tab gutters.
+    // It renders above the opaque gradient of BladeEdges, or that
+    // gradient would hide the rings. The clip glides with the panel
+    // during a blade switch (§7.4).
     <div
       className="blade-motion pointer-events-none absolute inset-0"
       style={
@@ -51,10 +52,11 @@ export function BladeBackground({
       <div
         className="absolute inset-0"
         style={{
-          // Concentric light/dark bands so the waves actually read against
-          // the base color. Alternating bright + shadow rings, fading out
-          // toward the edges. Fallback-only now: the shader draws a water
-          // sheet instead (§3.1), so there is no twin to keep in step.
+          // Concentric light and dark bands, thus the waves are visible
+          // against the base colour. The bright rings and the shadow
+          // rings alternate and fade out toward the edges. This is now a
+          // fallback only: the shader draws a water sheet (§3.1), thus
+          // there is no twin layer to keep equal.
           background: [
             "radial-gradient(circle at 50% 44%, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 14%)",
             "radial-gradient(circle at 50% 44%, rgba(255,255,255,0) 18%, rgba(255,255,255,.18) 21%, rgba(255,255,255,0) 24.5%)",
@@ -81,14 +83,15 @@ export function BladeBackground({
 }
 
 /**
- * The materiality layer for a full-screen surface (§5.4), which renders
- * "the same background unclipped" but has no panel and so no curve to
- * mask to.
+ * The materiality layer of a full-screen surface (§5.4). It renders the
+ * same background without a clip, because the surface has no panel and
+ * thus no curve to mask to.
  *
- * Each surface is its own portal outside the canvas, so it owns its own
- * shader and its own fallback verdict rather than inheriting the blade's
- * — hence the local provider. The surface's root keeps its CSS
- * `background` underneath as the floor, exactly as the blade canvas does.
+ * Each surface is its own portal outside the canvas, thus it owns its
+ * shader and its own fallback decision and does not use those of the
+ * blade. This is the reason for the local provider. The root of the
+ * surface keeps its CSS `background` below as the floor, as the blade
+ * canvas does.
  */
 export function BladeScreenSurface({ gradient }: { gradient: SectionGradient }) {
   const [painted, setPainted] = useState(false);

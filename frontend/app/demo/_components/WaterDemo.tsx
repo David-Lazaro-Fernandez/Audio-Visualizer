@@ -11,14 +11,15 @@ import {
 } from "./water-params";
 
 /**
- * Wires the slider panel to the live three.js scene.
+ * Connects the slider panel to the live three.js scene.
  *
- * React owns the *numbers*, because the panel has to print them and the
- * reset button has to restore them. It does not own the simulation: the
- * scene is built once and every change is written into the uniform
- * objects it already holds, so moving a slider never remounts the canvas
- * or recompiles a shader. Commands that are events rather than state
- * (drop now, clear the water) go the other way, through `apiRef`.
+ * React owns the numbers, because the panel must print them and the
+ * reset button must restore them. React does not own the simulation. The
+ * code builds the scene one time and writes each change into the uniform
+ * objects that the scene holds. Thus a slider does not remount the
+ * canvas and does not recompile a shader. Commands that are events and
+ * not state, such as drop now and clear the water, go in the other
+ * direction through `apiRef`.
  */
 export function WaterDemo() {
   const [params, setParams] = useState<Record<WaterParamKey, number>>(() => ({

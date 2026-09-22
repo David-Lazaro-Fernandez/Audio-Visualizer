@@ -1,34 +1,37 @@
 /**
- * DESIGN.md §7.4 Blade transition. Switching blades re-deals the hand: the
- * panel slides to its new edges, the tabs regroup on either side, the
- * gutters widen or narrow, the section color crossfades and the new
- * content lands from the direction of travel. Every moving part shares
- * this one duration and easing so they arrive together.
+ * The blade transition of DESIGN.md §7.4. A blade switch deals the hand
+ * again: the panel slides to its new edges, the tabs regroup on the two
+ * sides, the gutters become wider or narrower, the section color
+ * crossfades, and the new content arrives from the direction of travel.
+ * Each moving part uses this one duration and this one easing, thus they
+ * arrive together.
  *
  * The geometry animates as plain CSS transitions on `clip-path`, `left`,
- * `width` and padding: every edge is sampled from the same curve at the
- * same step count (`blade-curve.ts`), so the polygons have matching vertex
- * counts and the browser can interpolate them. Gradients can't be
- * interpolated, so color changes crossfade a fading copy of the previous
- * one instead (`BladeEdges`). Content entry uses the `blade-content-in`
- * keyframes in `app/globals.css`, offset by `--blade-enter-x`.
+ * `width` and the padding. The code samples each edge from the same
+ * curve at the same step count (`blade-curve.ts`), thus the polygons
+ * have equal vertex counts and the browser can interpolate them. CSS
+ * cannot interpolate two gradients, thus a colour change fades out a
+ * copy of the previous colour (`BladeEdges`). The content entry uses the
+ * `blade-content-in` keyframes in `app/globals.css`, with the offset
+ * `--blade-enter-x`.
  */
 export const BLADE_MOTION_MS = 350;
 /**
- * The easing as control points, not just a string: the WebGL surface
- * (`blade-water-gl.ts`) eases the panel mask and the color crossfade
- * itself, and it has to land on exactly the same curve the CSS transitions
- * use or the shader's half of the blade switch would drift out of step
- * with the clip-path glide. The CSS value is derived from these numbers.
+ * The easing as control points and not only as a string. The WebGL
+ * surface (`blade-water-gl.ts`) eases the panel mask and the colour
+ * crossfade itself, and it must use exactly the curve of the CSS
+ * transitions. If it did not, the shader and the clip-path glide would
+ * move apart during a blade switch. The CSS value comes from these
+ * numbers.
  */
 export const BLADE_MOTION_BEZIER = [0.4, 0, 0.2, 1] as const;
 export const BLADE_MOTION_EASE = `cubic-bezier(${BLADE_MOTION_BEZIER.join(",")})`;
 
 /**
- * `cubic-bezier(x1,y1,x2,y2)` evaluated at `t`, the way the browser does
- * it: solve the x-polynomial for the bezier parameter by Newton-Raphson,
- * then read y off it. Four iterations is well inside a pixel for these
- * control points.
+ * `cubic-bezier(x1,y1,x2,y2)` at `t`, computed as the browser computes
+ * it. The function solves the x-polynomial for the bezier parameter with
+ * the Newton-Raphson method, then reads y. Four iterations give an error
+ * of less than one pixel for these control points.
  */
 export function cubicBezierEase(
   t: number,
@@ -54,14 +57,14 @@ export function cubicBezierEase(
   return axis(y1, y2, u);
 }
 
-/** Progress along the blade tempo's own easing. */
+/** Progress along the easing of the blade tempo. */
 export const bladeEase = (t: number) => cubicBezierEase(t, BLADE_MOTION_BEZIER);
 
-/** `transition` shorthand for the given properties at the blade tempo. */
+/** A `transition` shorthand for the given properties, at the blade tempo. */
 export const bladeTransition = (...properties: string[]) =>
   properties
     .map((p) => `${p} ${BLADE_MOTION_MS}ms ${BLADE_MOTION_EASE}`)
     .join(", ");
 
-/** How far new panel content travels as it lands, in px. */
+/** The distance that new panel content travels as it arrives, in px. */
 export const CONTENT_ENTER_PX = 28;

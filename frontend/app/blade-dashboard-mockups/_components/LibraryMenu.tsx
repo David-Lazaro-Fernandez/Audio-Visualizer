@@ -9,47 +9,52 @@ export interface LibraryMenuItem {
   meta?: string;
   variant?: "row" | "button" | "brand";
   disabled?: boolean;
-  /** Greyed like `disabled` but still a cursor stop; see `MenuListItem`. */
+  /** Grey as `disabled` is, but still a cursor stop. Refer to `MenuListItem`. */
   unavailable?: boolean;
   detailTitle?: string;
   detail?: React.ReactNode;
   /**
-   * Full-screen destination opened on select; wins over `detail`.
+   * The full-screen destination that Select opens. It has priority over
+   * `detail`.
    *
-   * Normally a key from `screens.tsx`, so the page can stay a server
-   * component and pass plain data. A screen that needs *arguments* - the
-   * album screen, which exists once per album - cannot be named by a
-   * string, so a bound component is accepted too.
+   * It is usually a key from `screens.tsx`, thus the page can stay a
+   * server component and pass plain data. A screen that needs arguments,
+   * such as the album screen, which exists one time for each album,
+   * cannot have a name as a string. Thus this prop also accepts a bound
+   * component.
    */
   screen?: ScreenKey | React.ComponentType<MenuScreenProps>;
   icon?: React.ReactNode;
-  /** Blurb shown in the pane beside the menu while this row is highlighted. */
+  /** The text that the pane beside the menu shows while this row is highlighted. */
   description?: string;
   /**
-   * Title the pane shows above the blurb (`showTitle`) when it should differ
-   * from the row label — the Xbox LIVE blade's "Connect to Xbox LIVE" row
-   * is described under the heading "Xbox LIVE".
+   * The title that the pane shows above the text (`showTitle`) when that
+   * title must be different from the label of the row. The pane
+   * describes the "Connect to Xbox LIVE" row of the Xbox LIVE blade
+   * under the heading "Xbox LIVE".
    */
   descriptionTitle?: string;
-  /** Action for rows with no `detail`/`screen` (e.g. launch a game); see `MenuListItem`. */
+  /** The action of a row with no `detail` and no `screen`, such as a row that launches a game. Refer to `MenuListItem`. */
   onSelect?: () => void;
-  /** `rows` layout: right-pointing cursor chevron at the row's end; see `MenuListItem`. */
+  /** `rows` layout: a right-pointing chevron at the end of the row while the cursor is on it. Refer to `MenuListItem`. */
   chevron?: boolean;
 }
 
-/** What the description pane needs to know about the highlighted row. */
+/** What the description pane must know about the highlighted row. */
 export type HighlightedItem = Pick<
   LibraryMenuItem,
   "label" | "description" | "descriptionTitle"
 >;
 
 /**
- * "Which row is the cursor on" — shared between the menu and the
- * description pane beside it (the 360 shows the highlighted item's blurb to
- * the right: "Track your gaming accomplishments."). Both are grid cells of
- * the page, so the state lives in a context above them rather than in
- * either one. Providers nest: a full-screen menu mounts its own so its rows
- * drive its own pane, not the blade's behind it.
+ * The row that the cursor is on. The menu and the description pane
+ * beside it share this state. The console shows the text of the
+ * highlighted item at the right, for example "Track your gaming
+ * accomplishments." The menu and the pane are two grid cells of the
+ * page, thus the state is in a context above them and not in one of
+ * them. The providers nest: a full-screen menu mounts its own provider,
+ * thus its rows drive its own pane and not the pane of the blade behind
+ * it.
  */
 interface HighlightValue {
   item: HighlightedItem | null;
@@ -59,9 +64,10 @@ interface HighlightValue {
 const HighlightContext = createContext<HighlightValue | null>(null);
 
 /**
- * The row the cursor is on, for panes other than `LibraryMenuDescription`
- * that follow it (e.g. My Games' "1 of 6" counter and detail panel). Null
- * when no provider is mounted or nothing is highlighted yet.
+ * The row that the cursor is on, for a pane that is not
+ * `LibraryMenuDescription`, such as the "1 of 6" counter and the detail
+ * panel of My Games. It is null when no provider is mounted, and null
+ * until the cursor lands on a row.
  */
 export function useHighlightedItem(): HighlightedItem | null {
   return useContext(HighlightContext)?.item ?? null;
@@ -71,7 +77,7 @@ export function LibraryMenuProvider({
   initialItem = null,
   children,
 }: {
-  /** What the pane shows before the cursor has landed on anything — usually the first live row. */
+  /** What the pane shows before the cursor lands on a row. It is usually the first live row. */
   initialItem?: HighlightedItem | null;
   children: React.ReactNode;
 }) {
@@ -87,26 +93,27 @@ export function LibraryMenuProvider({
 }
 
 /**
- * "My library / Achievements / Friends / Friends playing now" is a
- * navigable menu (DESIGN.md §6.2), so it belongs in an <aside><nav><ul>
- * rather than a plain stack of <div>s.
+ * A list such as "My library / Achievements / Friends / Friends playing
+ * now" is a navigable menu (DESIGN.md §6.2). Thus it is an
+ * <aside><nav><ul> and not a stack of <div>s.
  *
- * `layout="rows"` (default) is the blade's divider-separated list;
- * `layout="buttons"` is the spaced stack of raised buttons used by
- * full-screen menus like the Games Library (rows default to the `button`
- * variant there).
+ * `layout="rows"`, the default, is the divider-separated list of the
+ * blade. `layout="buttons"` is the stack of raised buttons with gaps
+ * that a full-screen menu uses, such as the Games Library. In that
+ * layout a row uses the `button` variant by default.
  *
- * `iconOnly` (rows layout) draws each row as just its icon, labelled for
- * assistive tech only — the Achievements screen's column of title art.
+ * `iconOnly`, in the rows layout, draws each row as its icon only, with
+ * a label for assistive technology. The column of title art on the
+ * Achievements screen uses it.
  *
- * `autoFocusFirst` drops the keyboard cursor on the first row when the page
- * loads, like the 360's highlighted default item. The rows are
- * `data-nav-item`s; the enclosing `data-nav-list` is left to the caller so
- * the cursor can travel from neighbouring items (e.g. the gamerpic) into
- * this menu in one column. Hovering or focusing a row publishes it to
- * `LibraryMenuProvider` (if one is mounted).
+ * `autoFocusFirst` puts the keyboard cursor on the first row at the page
+ * load, as the console highlights a default item. Each row is a
+ * `data-nav-item`. The caller owns the `data-nav-list` around the menu,
+ * thus the cursor can move from an adjacent item, such as the gamer
+ * picture, into this menu in one column. A hover or a focus on a row
+ * publishes it to `LibraryMenuProvider`, if a provider is mounted.
  *
- * `className` styles the `<aside>` — the Music screen paints its source
+ * `className` styles the `<aside>`. The Music screen paints its source
  * list on a darker slab (§6.11).
  */
 export function LibraryMenu({
@@ -122,11 +129,11 @@ export function LibraryMenu({
   items: LibraryMenuItem[];
   layout?: "rows" | "buttons";
   autoFocusFirst?: boolean;
-  /** `rows` layout: swell the highlighted row's icon and label (see `MenuListItem`). */
+  /** `rows` layout: make the icon and the label of the highlighted row larger. Refer to `MenuListItem`. */
   growOnFocus?: boolean;
-  /** `rows` layout: icon-only rows, the label kept as `aria-label` (see `MenuListItem`). */
+  /** `rows` layout: rows with an icon only. The label stays as the `aria-label`. Refer to `MenuListItem`. */
   iconOnly?: boolean;
-  /** `buttons` layout: single-band raised rows (see `MenuListItem`), as in a browse list. */
+  /** `buttons` layout: raised rows with one band, as in a browse list. Refer to `MenuListItem`. */
   compact?: boolean;
   ariaLabel?: string;
   className?: string;
@@ -177,11 +184,12 @@ export function LibraryMenu({
 }
 
 /**
- * The blurb beside the menu; tracks whichever row the cursor is on.
- * `showTitle` adds the row's label above the text, as the Games Library
- * does ("My Games" / "You have 1 game on your console…"), or the row's own
- * `descriptionTitle` when it sets one. `children` render between the title
- * and the blurb — the Music screen's source artwork (§6.11).
+ * The text beside the menu. It follows the row that the cursor is on.
+ * `showTitle` adds the label of the row above the text, as the Games
+ * Library does with "My Games" and "You have 1 game on your console".
+ * It uses the `descriptionTitle` of the row when the row sets one.
+ * `children` render between the title and the text, such as the source
+ * artwork of the Music screen (§6.11).
  */
 export function LibraryMenuDescription({
   className,

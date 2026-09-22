@@ -5,17 +5,17 @@ import type { TuningSpec } from "@/app/_ui/TuningPanel";
 /**
  * Live tuning for the particle sphere.
  *
- * A module-level store rather than React state, for the same reason the
- * dashboard's overlays use one: the thing that needs these values is a
- * three.js scene inside a `useEffect`, and the scene must not be torn
- * down to change a number. One-way — the panel writes, the scene reads
- * and subscribes.
+ * This is a module-level store and not React state, for the same reason
+ * as the overlays of the dashboard: a three.js scene in a `useEffect`
+ * reads these values, and a change to a number must not tear down the
+ * scene. The flow is one-way: the panel writes, the scene reads and
+ * subscribes.
  *
- * The knobs are expressed as things you can picture, not as the
- * quantities the shader happens to want. **Reach** is how far the
- * loudest particles get, in world units, and the emitter divides it by
- * the settle time to get a speed; exposing the speed instead would mean
- * every change to the drag silently rescaled the whole cloud.
+ * The knobs are quantities that a user can imagine, not the quantities
+ * that the shader needs. Reach is the distance that the loudest
+ * particles travel, in world units, and the emitter divides it by the
+ * settle time to get a speed. If the panel showed the speed, each change
+ * to the drag would rescale the full cloud.
  */
 
 export const SPHERE_SPECS = {
@@ -109,7 +109,7 @@ export const SPHERE_DEFAULTS: SphereState = {
 let state: SphereState = { ...SPHERE_DEFAULTS };
 const listeners = new Set<(state: SphereState) => void>();
 
-/** The values as they stand, for a scene that has just been built. */
+/** The current values, for a scene that starts now. */
 export function sphereState(): Readonly<SphereState> {
   return state;
 }
@@ -125,7 +125,7 @@ export function resetSphereControls() {
   for (const listener of listeners) listener(state);
 }
 
-/** Returns an unsubscribe. The scene calls this on mount. */
+/** Subscribes and returns the unsubscribe function. The scene calls it on mount. */
 export function subscribeSphere(
   listener: (state: SphereState) => void,
 ): () => void {

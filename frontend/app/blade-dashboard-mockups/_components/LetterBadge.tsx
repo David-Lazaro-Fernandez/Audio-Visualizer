@@ -1,7 +1,8 @@
 /**
- * Swaps a single letter for a circular badge glyph — e.g. the "G" in
- * "Gamerscore" — sized in `em` so it scales with the surrounding text and
- * sits inline via a <span>: `<LetterBadge>G</LetterBadge>amerscore`.
+ * Replaces one letter with a circular badge glyph, such as the "G" of
+ * "Gamerscore". The size is in `em`, thus the badge scales with the text
+ * around it. It is a <span> and stays inline:
+ * `<LetterBadge>G</LetterBadge>amerscore`.
  */
 export function LetterBadge({ children }: { children: string }) {
   return (

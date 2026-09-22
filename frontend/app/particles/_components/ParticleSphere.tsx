@@ -11,57 +11,60 @@ import {
 } from "./sphere-controls";
 
 /**
- * The song as particles thrown off a sphere.
+ * The song as particles emitted from a sphere.
  *
- * Where the grid view lays the spectrogram out as a landscape, this one
- * *emits* it. Every slice of the transform fires a particle for each band
- * that had energy, and the particle is born on a small sphere, travels
- * outward along its own direction, and dies. So the frequency content
- * becomes a shell of shells rather than a surface.
+ * The grid view shows the spectrogram as a landscape. This view emits
+ * it. Each slice of the transform emits one particle for each band that
+ * had energy. A particle starts on a small sphere, travels outward along
+ * its own direction and then dies. Thus the frequency content becomes a
+ * set of shells and not a surface.
  *
- * The mapping is what makes it readable:
+ * The mapping is what makes the view readable:
  *
- * - **Direction is frequency.** Latitude comes from the band — bass at
- *   the south pole, treble at the north — so a band always leaves in the
- *   same ring. Longitude advances by the golden angle on every emission,
- *   which fills each ring evenly instead of stacking particles along one
- *   meridian.
- * - **Speed is level.** A loud band throws its particle hard and it gets
- *   far out; a quiet one barely leaves the core. Radius therefore reads
- *   as loudness, the way height did in the grid.
- * - **Life is time.** A particle fades over a fixed lifetime, so the
- *   distance of a shell from the centre is also how long ago it sounded.
+ * - The direction is the frequency. The latitude comes from the band,
+ *   with the bass at the south pole and the treble at the north pole,
+ *   thus a band always leaves in the same ring. The longitude advances
+ *   by the golden angle at each emission, which fills each ring equally
+ *   and does not stack the particles on one meridian.
+ * - The speed is the level. A loud band emits its particle with a high
+ *   speed and the particle travels far. A quiet band emits a particle
+ *   that stays near the core. Thus the radius shows the loudness, as the
+ *   height does in the grid.
+ * - The life is the time. A particle fades across a constant lifetime,
+ *   thus the distance of a shell from the centre is also the time after
+ *   the sound.
  *
- * **The simulation is stateless on the GPU.** A particle's attributes —
- * birth, direction, speed, lifetime, level — are written once when it is
- * emitted, and the vertex shader derives its position from
- * `uTime - aBirth`. Nothing is integrated on the CPU and nothing is
- * rewritten per frame, which is the only way this is affordable:
- * re-uploading a 24,000-particle pool every frame would be 38 MB/s of
- * bus traffic to move points that follow a closed-form path anyway.
- * Emission writes a contiguous run of the ring, so only that run is
- * uploaded (`addUpdateRange`).
+ * The simulation is stateless on the GPU. The code writes the attributes
+ * of a particle, which are the birth, the direction, the speed, the
+ * lifetime and the level, one time at the emission. The vertex shader
+ * then derives the position from `uTime - aBirth`. The CPU integrates
+ * nothing and rewrites nothing at each frame. This is the only
+ * affordable method: to upload a pool of 24,000 particles at each frame
+ * is 38 MB/s of bus traffic for points that follow a closed-form path.
+ * An emission writes a continuous range of the ring, thus the code
+ * uploads only that range (`addUpdateRange`).
  *
- * Keep the GLSL ASCII-only: WebGL rejects source containing characters
- * outside the GLSL ES set, comments included, and reports it before the
- * compiler runs.
+ * Use only ASCII characters in the GLSL. WebGL rejects source that
+ * contains characters outside the GLSL ES set, comments included, and it
+ * rejects the source before the compiler runs.
  */
 
 /**
- * Particles in the pool. About 11,000 are alive at a time with these
- * settings, so this leaves a little over twofold headroom for a dense
- * passage.
+ * Particles in the pool. With these settings near 11,000 are alive at a
+ * time, thus the pool has more than two times the necessary capacity for
+ * a dense passage.
  */
 const POOL = 24000;
 /**
- * Radius, lifetime, speed, drag, swirl and the emission floor are all
- * live-adjustable from `sphere-controls.ts` — the shape of this thing is
- * the point of the page, so it is not worth burying in constants.
+ * The radius, the lifetime, the speed, the drag, the swirl and the
+ * emission floor are all adjustable at run time from
+ * `sphere-controls.ts`. The shape is the subject of the page, thus these
+ * values must not be constants.
  */
 
-/** Jitter on a particle's lifetime, as a fraction, so shells are ragged. */
+/** Jitter on the lifetime of a particle, as a fraction, thus the shells are ragged. */
 const LIFE_JITTER = 0.25;
-/** Golden angle, for filling each latitude ring evenly over time. */
+/** Golden angle. It fills each latitude ring equally with time. */
 const GOLDEN_ANGLE = 2.399963;
 
 const VERTEX = /* glsl */ `
@@ -79,7 +82,7 @@ uniform float uSwirl;
 varying vec3 vColor;
 varying float vFade;
 
-/** The level scale shared with the dashboard's visualizers. */
+/** The level scale that the visualizers of the dashboard also use. */
 vec3 ramp(float t) {
   vec3 blue   = vec3(0.298, 0.780, 1.000);
   vec3 violet = vec3(0.706, 0.361, 1.000);
@@ -92,8 +95,9 @@ vec3 ramp(float t) {
 
 void main() {
   float age = uTime - aBirth;
-  // Unborn or already dead: collapse it rather than branch around the
-  // rest, so every invocation still writes gl_Position.
+  // The particle is not born yet, or it is dead. Collapse it here and
+  // do not branch around the code below, thus each invocation writes
+  // gl_Position.
   if (age < 0.0 || age > aLife) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     gl_PointSize = 0.0;
@@ -102,12 +106,12 @@ void main() {
     return;
   }
 
-  // Exponential drag: quick away from the core, then settling. The cloud
-  // gets an outer edge instead of expanding without limit.
+  // Exponential drag: fast at the start, then slow. Thus the cloud has
+  // an outer edge and does not expand without a limit.
   float reach = aSpeed * uDrag * (1.0 - exp(-age / uDrag));
 
-  // A slow twist about the polar axis, so the shells shear past each
-  // other and the sphere does not read as a frozen diagram.
+  // A slow twist about the polar axis, thus the shells move past each
+  // other and the sphere does not look like a static diagram.
   float spin = uSwirl * age;
   float c = cos(spin);
   float s = sin(spin);
@@ -124,7 +128,8 @@ void main() {
   gl_PointSize =
     uSize * (0.45 + aLevel) * (1.0 - 0.45 * t) * (320.0 / max(1.0, -viewPos.z));
 
-  // Newest particles are brightest, so the leading shell is "now".
+  // The newest particles are the brightest, thus the first shell is the
+  // current moment.
   vColor = ramp(aLevel) * (0.55 + 0.75 * (1.0 - t));
   vFade = (1.0 - t) * (0.35 + 0.65 * aLevel);
 }
@@ -135,7 +140,7 @@ varying vec3 vColor;
 varying float vFade;
 
 void main() {
-  // Round, soft-edged points; a square particle reads as a pixel bug.
+  // Round points with soft edges. A square particle looks like a bug.
   float d = length(gl_PointCoord - vec2(0.5));
   float alpha = (1.0 - smoothstep(0.34, 0.5, d)) * vFade;
   if (alpha <= 0.01) discard;
@@ -150,9 +155,9 @@ export function ParticleSphere({
   className,
 }: {
   analyser: SlidingSpectrogram;
-  /** Playback position in seconds, mutated in place, never state. */
+  /** Playback position in seconds. It is mutated in place, not state. */
   timeRef: { current: number };
-  /** Whether the window should chase playback right now. */
+  /** Whether the window must follow the playback now. */
   followRef: { current: boolean };
   className?: string;
 }) {
@@ -166,7 +171,7 @@ export function ParticleSphere({
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     } catch {
-      return; // No WebGL2.
+      return; // There is no WebGL2.
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x05040a, 1);
@@ -180,7 +185,7 @@ export function ParticleSphere({
     const speeds = new Float32Array(POOL);
     const lives = new Float32Array(POOL);
     const levels = new Float32Array(POOL);
-    // Born long ago with a short life, so every slot starts dead.
+    // An old birth with a short life, thus each slot starts dead.
     births.fill(-1e6);
     lives.fill(1);
 
@@ -190,7 +195,7 @@ export function ParticleSphere({
     const speedAttr = new THREE.BufferAttribute(speeds, 1);
     const lifeAttr = new THREE.BufferAttribute(lives, 1);
     const levelAttr = new THREE.BufferAttribute(levels, 1);
-    // `position` carries the unit direction; the shader derives the rest.
+    // `position` holds the unit direction. The shader derives the rest.
     geometry.setAttribute("position", dirAttr);
     geometry.setAttribute("aBirth", birthAttr);
     geometry.setAttribute("aSpeed", speedAttr);
@@ -207,11 +212,11 @@ export function ParticleSphere({
       uSwirl: { value: config.swirl },
     };
 
-    // The shader derives a position from a particle's age, so changing the
-    // settle time re-shapes particles that are already in flight rather
-    // than only the next ones. For a tuning control that is the right
-    // trade: you see the whole cloud respond instead of waiting a
-    // lifetime for the old ones to clear.
+    // The shader derives a position from the age of a particle, thus a
+    // change to the settle time also changes the particles that are in
+    // flight. For a tuning control this is correct: the full cloud
+    // answers immediately, and you do not wait one lifetime for the old
+    // particles to die.
     const unsubscribe = subscribeSphere((next) => {
       config = { ...next };
       uniforms.uSize.value = config.size;
@@ -236,7 +241,7 @@ export function ParticleSphere({
     // --- emission --------------------------------------------------------
     let cursor = 0;
     let emissions = 0;
-    /** Lowest and highest pool slot written this frame. */
+    /** The lowest and the highest pool slot written at this frame. */
     let dirtyFrom = POOL;
     let dirtyTo = 0;
 
@@ -246,9 +251,9 @@ export function ParticleSphere({
       dirtyFrom = Math.min(dirtyFrom, slot);
       dirtyTo = Math.max(dirtyTo, slot);
 
-      // Latitude is frequency, uniform in cos so the sphere is covered
-      // evenly rather than bunching at the poles. A little jitter gives
-      // each ring thickness.
+      // The latitude is the frequency. It is uniform in cos, thus the
+      // particles cover the sphere equally and do not collect at the
+      // poles. A small jitter gives each ring a thickness.
       const u = analyser.bands > 1 ? band / (analyser.bands - 1) : 0.5;
       const cosTheta = Math.max(
         -1,
@@ -262,9 +267,9 @@ export function ParticleSphere({
       directions[slot * 3 + 1] = cosTheta;
       directions[slot * 3 + 2] = sinTheta * Math.sin(phi);
       births[slot] = at;
-      // Speed comes from the reach you asked for, divided by the settle
-      // time — so "max reach" stays a distance you can see rather than a
-      // number that drifts whenever the drag is changed.
+      // The speed is the selected reach divided by the settle time. Thus
+      // the max reach stays a visible distance and does not change when
+      // the drag changes.
       const fraction =
         config.quietReach + level * (1 - config.quietReach);
       speeds[slot] = (fraction * config.reach) / Math.max(0.01, config.drag);
@@ -273,7 +278,7 @@ export function ParticleSphere({
       levels[slot] = level;
     };
 
-    /** Fires one slice of the ring. */
+    /** Emits the particles of one slice into the ring. */
     const emitSlice = (row: number, at: number) => {
       const base = row * analyser.bands;
       for (let band = 0; band < analyser.bands; band++) {
@@ -286,8 +291,8 @@ export function ParticleSphere({
       if (dirtyTo < dirtyFrom) return;
       for (const attribute of attributes) {
         attribute.clearUpdateRanges();
-        // One contiguous run unless the ring wrapped, in which case the
-        // whole buffer is cheaper than reasoning about two ranges.
+        // One continuous range, if the ring did not wrap. After a wrap
+        // the full buffer is less complex than two ranges.
         attribute.addUpdateRange(
           dirtyFrom * attribute.itemSize,
           (dirtyTo - dirtyFrom + 1) * attribute.itemSize,
@@ -328,15 +333,15 @@ export function ParticleSphere({
 
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      // The shader's clock. Kept relative to mount so a highp float does
-      // not lose its grip on the fractions after a few minutes.
+      // The clock of the shader. It is relative to the mount, thus a
+      // highp float keeps its fractions after some minutes.
       const clock = (now - origin) / 1000;
       uniforms.uTime.value = clock;
 
       if (followRef.current) analyser.advanceTo(timeRef.current);
 
-      // Fire every slice that arrived since the last frame, so particle
-      // density stays proportional to time rather than to frame rate.
+      // Emit each slice that arrived after the last frame, thus the
+      // particle density follows the time and not the frame rate.
       const head = analyser.head;
       if (head !== lastHead) {
         if (lastHead < 0) {
@@ -344,8 +349,8 @@ export function ParticleSphere({
         } else {
           const frames = analyser.frames;
           let steps = (head - lastHead + frames) % frames;
-          // A jump bigger than the window is a seek; one slice is enough
-          // to restart from rather than firing a whole window at once.
+          // A jump that is longer than the window is a seek. One slice is
+          // sufficient to restart, thus do not emit a full window.
           if (steps > frames / 2) steps = 1;
           for (let i = steps; i >= 1; i--) {
             emitSlice((head - i + 1 + frames) % frames, clock);
@@ -370,7 +375,7 @@ export function ParticleSphere({
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-    // Rebuilt only for a different song; the refs are stable.
+    // Rebuilt only for another song. The refs are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyser]);
 

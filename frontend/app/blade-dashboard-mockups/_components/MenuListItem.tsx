@@ -9,83 +9,96 @@ import { useBackKey } from "./back-stack";
 import { playSound } from "./sounds";
 
 /**
- * DESIGN.md §6.2 List item (menu row): "small monochrome icon (left) +
- * label, separated by thin divider lines." Rendered as a real <button> so
- * it's hoverable/focusable, since these are navigable menu items. The
- * `button` variant is the doc's "prominent rows may be rendered as raised
- * buttons" case; `disabled` washes the row out per §7.2 ("disabled ≠
- * hidden") using the native disabled state instead of just dimming it.
- * `unavailable` is the console's third state (§7.2): the row is faded like
- * a disabled one but stays a cursor stop, so the pane can explain why it
- * can't be used yet (the Music screen's "Music Player" row before a source
- * is chosen). It is `aria-disabled`, highlights and sounds like a live row,
- * and does nothing on Select.
+ * The list item, or menu row, of DESIGN.md §6.2: a small monochrome icon
+ * on the left with a label, and thin divider lines between the rows. It
+ * is a real <button>, thus it takes hover and focus, because these are
+ * navigable menu items.
  *
- * When `detail` is given, clicking the row opens a master-detail box
- * (§5.3) positioned via `placeMenuBox` against the measured menu boundary
- * — it renders beside the row, falls back to below it, or not at all if
- * neither fits the container. When `screen` is given instead, clicking
- * opens that component full-screen (e.g. the Games Library) and hands it
- * `onClose`; the row keeps owning the open/closed state and the Back key.
+ * The `button` variant is the raised button of the design guide. The
+ * `disabled` variant fades the row as §7.2 requires, disabled is not
+ * hidden, and it uses the native disabled state and not only a dim
+ * class. The `unavailable` variant is the third state of the console
+ * (§7.2): the row fades as a disabled row does, but it stays a cursor
+ * stop, thus the pane can explain why the row is not usable yet. The
+ * Music Player row of the Music screen uses it before a user selects a
+ * source. Such a row is `aria-disabled`, it highlights and sounds as a
+ * live row, and Select does nothing on it.
  *
- * Sound: hovering a live row plays Select; opening its detail box or
- * screen plays Select A; closing it (re-click, ×, or ESC/B) plays Back.
- * Back keys are only listened for while something is open, so they're
- * silent when there's nothing to go back from — and via `useBackKey` only
- * the topmost open surface answers, so ESC inside My Games doesn't also
- * close the Games Library underneath it.
+ * With `detail`, a click on the row opens a master-detail box (§5.3).
+ * `placeMenuBox` positions the box against the measured menu boundary:
+ * beside the row, else below the row, else not at all if the container
+ * is too small. With `screen`, a click opens that component full-screen,
+ * such as the Games Library, and gives it `onClose`. The row keeps the
+ * open state and the Back key.
  *
- * `chevron` (row variant) draws a small right-pointing triangle at the
- * row's end while the cursor is on it — the console's "there is a list to
- * the right of this" cue (Audiobooks' category rows). `compact` (button
- * variant) drops the empty top band so the raised skin is a single band
- * the height of its label: the item rows of a browse list (Audiobooks'
- * album list), where the two-band button would be too tall.
+ * Sound: a hover on a live row plays Select. An open of its detail box
+ * or its screen plays Select A. A close, by a second click, by the ×, or
+ * by ESC or B, plays Back. The code listens for a Back key only while
+ * something is open, thus there is no sound when there is nothing to
+ * close. Also, with `useBackKey` only the topmost open surface answers,
+ * thus ESC in My Games does not also close the Games Library below it.
  *
- * Keyboard: every row is a `data-nav-item` so `KeyboardNav` can step the
- * cursor through them with the arrows; plain `focus` (not `focus-visible`)
- * mirrors the hover look so the cursor stays visible even when it was put
- * there by a mouse click or programmatically (e.g. a screen focusing its
- * first row on open). `autoFocus` puts the cursor here on load.
+ * `chevron`, on the row variant, draws a small right-pointing triangle
+ * at the end of the row while the cursor is on it. This is the cue of
+ * the console for a list to the right, as on the category rows of
+ * Audiobooks. `compact`, on the button variant, removes the empty top
+ * band, thus the raised skin is one band at the height of its label.
+ * The item rows of a browse list use it, such as the album list of
+ * Audiobooks, where the two-band button is too tall.
+ *
+ * Keyboard: each row is a `data-nav-item`, thus `KeyboardNav` can move
+ * the cursor through the rows with the arrow keys. The row uses plain
+ * `focus` and not `focus-visible`, thus the cursor looks the same as a
+ * hover and stays visible after a mouse click or after code moves it,
+ * as a screen does when it focuses its first row. `autoFocus` puts the
+ * cursor on the row at load.
  */
 export interface MenuScreenProps {
   onClose: () => void;
 }
 
 /*
- * Raised-button skin (the Games Library rows), stacked in two bands: an
- * empty top band that stays transparent so the blade green shows through,
- * and a bottom band that IS the row — icon + label on the left, value on
- * the right (space-between) — over a left-to-right gradient from
- * transparent to #ffffff63 (white at ~39%). The icon is taller than the band and pokes
- * up into the top one. A 1px #5a5a5a border plus an inner shadow on the
- * top, left and right edges only (three one-sided inset shadows: offset
- * toward the edge, negative spread so each stays on its own side; the
- * bottom edge is left clean) give the bevel. Cursor (hover / focus): the
- * whole button takes a left-to-right wash in pale grey #d9d9d9, transparent
- * at the left edge, 80% at the middle, 90% at three quarters and solid at
- * the right (Figma reference node 170:22), under the same bands and with
- * the same inner shadow. Like the list-row wash it sits on a `::before`
- * layer that fades in over 150 ms, since gradients can't interpolate;
- * `isolate` + `-z-10` keep it under the bands. Plain `focus` (not
- * `focus-visible`) so a mouse-clicked row stays lit like the console
- * cursor. Disabled: same shape, the border and band fade
- * (`group-disabled`) and the text drops to low-contrast green (§7.2).
- * Spelled out as full literal class strings because Tailwind only
- * generates what it can read verbatim.
+ * The raised-button skin, used by the Games Library rows. It has two
+ * bands. The top band is empty and transparent, thus the blade green
+ * shows through. The bottom band is the row: the icon and the label on
+ * the left and the value on the right, with `space-between`, over a
+ * left-to-right gradient from transparent to #ffffff63, which is white
+ * at near 39%. The icon is taller than the band and goes up into the top
+ * band.
+ *
+ * The bevel is a 1 px #5a5a5a border plus an inner shadow on the top,
+ * the left and the right edges only. There are three one-sided inset
+ * shadows: each one has an offset toward its edge and a negative spread,
+ * thus each stays on its own side. The bottom edge stays clean.
+ *
+ * The cursor, which is a hover or a focus, gives the full button a
+ * left-to-right wash in pale grey #d9d9d9: transparent at the left edge,
+ * 80% at the middle, 90% at three quarters and solid at the right (Figma
+ * reference node 170:22). The wash goes under the same bands and takes
+ * the same inner shadow. As with the wash of a list row, it is on a
+ * `::before` layer that fades in across 150 ms, because a gradient
+ * cannot interpolate. `isolate` and `-z-10` keep the layer under the
+ * bands. The row uses plain `focus` and not `focus-visible`, thus a row
+ * that a mouse clicked stays lit, as the cursor of the console does.
+ *
+ * A disabled row keeps the same shape. Its border and its band fade
+ * (`group-disabled`) and its text becomes the low-contrast green (§7.2).
+ *
+ * The classes are full literal strings, because Tailwind generates only
+ * what it can read verbatim.
  */
-/** The raised skin's 1px border, shared with static surfaces like the My Games detail panel. */
+/** The 1 px border of the raised skin. Static surfaces such as the My Games detail panel also use it. */
 export const RAISED_BORDER = "border border-[#5a5a5a]";
-/** The raised skin's bevel: one-sided inset shadows on the top, left and right edges only. */
+/** The bevel of the raised skin: one-sided inset shadows on the top, the left and the right edges only. */
 export const RAISED_INSET_SHADOW =
   "shadow-[inset_0_8px_8px_-4px_rgba(0,0,0,.2),inset_8px_0_8px_-4px_rgba(0,0,0,.2),inset_-8px_0_8px_-4px_rgba(0,0,0,.2)]";
 
-// Kept as literals (not composed from the constants above) so Tailwind can
-// see the hover:/focus:/disabled: variants verbatim.
+// These are literals and not compositions of the constants above, thus
+// Tailwind can read the hover:, focus: and disabled: variants verbatim.
 const BUTTON_SKIN = [
   "group relative isolate overflow-hidden border border-[#5a5a5a] bg-transparent text-[#17300a]",
   "shadow-[inset_0_8px_8px_-4px_rgba(0,0,0,.2),inset_8px_0_8px_-4px_rgba(0,0,0,.2),inset_-8px_0_8px_-4px_rgba(0,0,0,.2)]",
-  // Cursor wash (see the JSDoc above): fades in on a ::before layer.
+  // The cursor wash. It fades in on a ::before layer. Refer to the JSDoc above.
   "before:pointer-events-none before:absolute before:inset-0 before:-z-10",
   "before:bg-[linear-gradient(90deg,rgba(217,217,217,0)_0%,rgba(217,217,217,.8)_50%,rgba(217,217,217,.9)_75%,rgba(217,217,217,1)_100%)]",
   "before:opacity-0 before:transition-opacity before:duration-150 hover:before:opacity-100 focus:before:opacity-100",
@@ -100,13 +113,14 @@ const BUTTON_BAND =
   "flex w-full items-center justify-between gap-3.5 px-[14px] py-2 bg-[linear-gradient(90deg,#ffffff00_0%,#ffffff63_100%)] group-disabled:opacity-40";
 
 /*
- * Row cursor (DESIGN.md §7.1): a horizontal light wash in pale grey
- * #d9d9d9, transparent at both ends and peaking at 50% just left of centre
- * (Figma reference node 166:13, with the peak raised from .4 to .5: stops
- * 0 → .2 → .3 → .5, mirrored). It lives
- * on a `::before` layer so it can fade in over the 150 ms tempo — gradients
- * themselves cannot interpolate. `isolate` + `-z-10` keep the layer under
- * the icon and label but above the row's own (transparent) background.
+ * The row cursor (DESIGN.md §7.1): a horizontal light wash in pale grey
+ * #d9d9d9. It is transparent at the two ends and its peak is 50%, a
+ * short distance left of the centre (Figma reference node 166:13, with
+ * the peak raised from .4 to .5: the stops are 0, .2, .3 and .5, then
+ * mirrored). The wash is on a `::before` layer, thus it can fade in
+ * across the 150 ms tempo, because a gradient cannot interpolate.
+ * `isolate` and `-z-10` keep the layer below the icon and the label and
+ * above the transparent background of the row.
  */
 const ROW_CURSOR_WASH = [
   "relative isolate before:pointer-events-none before:absolute before:inset-0 before:-z-10",
@@ -136,41 +150,44 @@ export function MenuListItem({
   meta?: string;
   variant?: "row" | "button" | "brand";
   disabled?: boolean;
-  /** `row` variant: faded like `disabled` but still focusable and described; Select is a no-op. */
+  /** `row` variant: faded as `disabled` is, but focusable and described. Select does nothing. */
   unavailable?: boolean;
   detailTitle?: string;
   detail?: React.ReactNode;
-  /** Full-screen component to open on select (takes precedence over `detail`). */
+  /** The full-screen component that Select opens. It has priority over `detail`. */
   screen?: React.ComponentType<MenuScreenProps>;
   autoFocus?: boolean;
   /**
-   * Leading glyph (e.g. `<MenuIcon name="trophy" />`). Omitted falls back
-   * to the placeholder square; an explicit `null` means no icon at all.
+   * The glyph at the start of the row, such as `<MenuIcon name="trophy" />`.
+   * With no value the row shows the placeholder square. An explicit
+   * `null` means that the row has no icon.
    */
   icon?: React.ReactNode | null;
   /**
-   * `row` variant only: while the cursor is on the row (hover or focus), scale
-   * the icon up and bump the label size, as the 360's game lists do — the
-   * highlighted title swells out of the list. Off by default so the blade's
-   * own menus keep their fixed rhythm.
+   * `row` variant only. While the cursor is on the row, by a hover or a
+   * focus, the icon becomes larger and the label size increases, as in
+   * the game lists of the console: the highlighted title swells out of
+   * the list. It is off by default, thus the menus of the blade keep
+   * their constant rhythm.
    */
   growOnFocus?: boolean;
   /**
-   * `row` variant only: draw just the (large) icon, centred, and keep the
-   * label for assistive tech as the button's `aria-label` — the
-   * Achievements screen's game filter is a column of title art with no
-   * text. `meta` is not shown either.
+   * `row` variant only. The row draws only the large icon, centred, and
+   * keeps the label for assistive technology as the `aria-label` of the
+   * button. The game filter of the Achievements screen is a column of
+   * title art with no text. The row also does not show `meta`.
    */
   iconOnly?: boolean;
-  /** `row` variant only: a right-pointing triangle at the row's end while the cursor is on it. */
+  /** `row` variant only: a right-pointing triangle at the end of the row while the cursor is on it. */
   chevron?: boolean;
-  /** `button` variant only: single band, no empty top band — the compact skin of browse-list items. */
+  /** `button` variant only: one band and no empty top band. This is the compact skin of a browse-list item. */
   compact?: boolean;
-  /** Fires when the cursor lands here (hover or focus), e.g. to update a description pane. */
+  /** Called when the cursor arrives, by a hover or a focus. It can update a description pane. */
   onHighlight?: () => void;
   /**
-   * Fires on select (click / Enter / Space / A) for rows that have neither a
-   * `detail` box nor a `screen` — e.g. launching a game. Plays Select A.
+   * Called on a select, which is a click, Enter, Space or A, for a row
+   * that has no `detail` box and no `screen`. A row that launches a game
+   * uses it. It plays Select A.
    */
   onSelect?: () => void;
 }) {
@@ -217,14 +234,15 @@ export function MenuListItem({
 
   useBackKey(open, close);
 
-  // An explicit `null` means the row has no icon at all, as the console's
-  // track lists had none. Omitting the prop keeps the placeholder square,
-  // which is what a row whose bitmap has not been redrawn wants (§6.2).
+  // An explicit `null` means that the row has no icon, as the track
+  // lists of the console had none. With no prop the row keeps the
+  // placeholder square, which a row with a bitmap that is not redrawn
+  // yet needs (§6.2).
   const icon = customIcon === null ? null : (
-    // Dim the glyph along with the text when disabled (the SVG icons carry
-    // their own colours, so `color` alone wouldn't reach them). With
-    // `growOnFocus` the glyph scales from its left edge so it swells toward
-    // the label instead of into the row's padding.
+    // Fade the glyph with the text on a disabled row. The SVG icons have
+    // their own colours, thus `color` alone does not change them. With
+    // `growOnFocus` the glyph scales from its left edge, thus it grows
+    // toward the label and not into the padding of the row.
     <span
       className={`flex shrink-0 ${disabled || unavailable ? "opacity-40" : ""} ${
         growOnFocus
@@ -266,14 +284,15 @@ export function MenuListItem({
         onClick={handleClick}
         className={`flex w-full flex-col rounded-[10px] text-left transition-[background-color,border-color,box-shadow,color] duration-150 active:brightness-95 ${BUTTON_SKIN}`}
       >
-        {/* empty top band (dropped by `compact`) */}
+        {/* The empty top band. `compact` removes it. */}
         {!compact && <span aria-hidden="true" className="block h-[26px] w-full" />}
-        {/* bottom band: the row itself */}
+        {/* The bottom band, which is the row. */}
         <span className={`${BUTTON_BAND} ${compact ? "py-[11px]" : ""}`}>
           <span className="flex min-w-0 items-center gap-3.5">
-            {/* Icon is scaled up past the band and shifted upward so it
-                straddles the split; the fixed-height wrapper keeps the
-                oversized glyph from stretching the band. */}
+            {/* The icon is larger than the band and moves up, thus it
+                crosses the split between the two bands. The wrapper has a
+                fixed height, thus the large glyph does not stretch the
+                band. */}
             {icon && (
               <span className="flex h-6 shrink-0 items-center [&_svg]:h-11 [&_svg]:w-11 [&_svg]:-translate-y-[10px]">
                 {icon}
@@ -322,9 +341,9 @@ export function MenuListItem({
         onMouseEnter={handleHover}
         onFocus={handleFocus}
         onClick={handleClick}
-        // Text and divider tints come from the blade's theme variables
-        // (DESIGN.md §2.2, `blade-theme.ts`) so the same row sits on any
-        // section color.
+        // The text tint and the divider tint come from the theme
+        // variables of the blade (DESIGN.md §2.2, `blade-theme.ts`),
+        // thus the same row works on each section colour.
         className={`group flex w-full items-center gap-3.5 border-b-[3px] border-(--blade-rule) px-[13px] py-[11px] text-left transition-colors duration-150 focus:outline-none disabled:pointer-events-none disabled:opacity-45 ${ROW_CURSOR_WASH} ${
           growOnFocus ? "hover:gap-7 focus:gap-7" : ""
         } ${iconOnly ? "justify-center" : ""}`}
@@ -347,8 +366,9 @@ export function MenuListItem({
           <span className="shrink-0 text-[20px] text-(--blade-ink-soft)">{meta}</span>
         )}
         {!iconOnly && chevron && (
-          // CSS-shape triangle like the Open Tray eject mark (§6.6), in the
-          // glyph tint; fades in with the wash so it reads as part of the cursor.
+          // A CSS-shape triangle, as the eject mark of the Open Tray
+          // (§6.6), in the glyph tint. It fades in with the wash, thus it
+          // is part of the cursor.
           <span
             aria-hidden="true"
             className="block h-0 w-0 shrink-0 border-y-[9px] border-l-[11px] border-y-transparent border-l-(--blade-glyph) opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100"

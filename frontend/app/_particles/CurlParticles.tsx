@@ -19,49 +19,50 @@ import {
 import { useDrift } from "@/app/_ui/use-drift";
 
 /**
- * The song's particles carried by a **curl noise flow field**.
+ * The particles of the song, carried by a curl noise flow field.
  *
- * The other sphere view computes a particle's position from its age in
- * closed form, which is cheap but rules this out: a flow field has to be
- * *integrated*, `p += v(p, t) * dt`, and the result depends on the whole
- * path taken. So this one keeps state — and keeps it on the GPU, because
- * integrating 25,600 particles on the CPU would mean 16 MB/s of position
- * uploads and 8.6M noise evaluations a second in JavaScript.
+ * The other sphere view computes the position of a particle from its age
+ * in closed form. That is cheap, but it is not possible here: a flow
+ * field must be integrated, `p += v(p, t) * dt`, and the result depends
+ * on the full path. Thus this view keeps state, and it keeps the state on
+ * the GPU. To integrate 25,600 particles on the CPU would need 16 MB/s of
+ * position uploads and 8.6M noise evaluations a second in JavaScript.
  *
- * State lives in a float texture that is ping-ponged: a fragment shader
- * reads the current positions, advances them, and writes the next ones;
- * the point cloud's vertex shader then reads positions back out of that
- * texture. One 160x160 pass a frame.
+ * The state is in a float texture that is ping-ponged. A fragment shader
+ * reads the current positions, advances them and writes the next
+ * positions. The vertex shader of the point cloud then reads the
+ * positions from that texture. This is one 160x160 pass a frame.
  *
- * **All of the state fits in one RGBA texture**, which is why there is no
- * second pass and no multiple-render-target plumbing:
+ * All the state fits in one RGBA texture. Thus there is no second pass
+ * and no multiple-render-target plumbing:
  *
- * - `xyz` is position, which has to be integrated.
- * - `w` is *brightness*, not age. It is born equal to the band's level
- *   and decays exponentially, so one channel carries the birth loudness,
- *   the fade, and the test for death all at once. Storing age and level
- *   separately would have needed a fifth channel.
- * - Velocity is not stored at all. It is a property of the *field*, so it
- *   is a function of position and time: an outward push scaled by
- *   brightness, plus the curl. Which also means radius still reads as
- *   loudness — a bright particle is pushed hard while it is bright.
- * - Everything else is a function of the particle's index: its band is
- *   `index % bands`, its birth direction follows from that, and its
- *   lifetime from a hash.
+ * - `xyz` is the position, which must be integrated.
+ * - `w` is the brightness, not the age. It starts at the level of the
+ *   band and decays exponentially, thus one channel holds the loudness at
+ *   birth, the fade and the test for death. Age and level in separate
+ *   channels would have needed a fifth channel.
+ * - The velocity is not stored. It is a property of the field, thus it is
+ *   a function of the position and the time: an outward push scaled by
+ *   the brightness, plus the curl. Thus the radius also shows the
+ *   loudness, because a bright particle gets a strong push while it is
+ *   bright.
+ * - The other values are functions of the index of the particle. Its band
+ *   is `index % bands`, its birth direction comes from the band, and its
+ *   lifetime comes from a hash.
  *
- * Respawning happens on the GPU too. A dead particle looks up its own
- * band in a small spectrum texture and comes back if that band currently
- * has energy, so the cloud's density tracks the music without the CPU
- * emitting anything.
+ * The respawn also occurs on the GPU. A dead particle reads its own band
+ * in a small spectrum texture and comes back if that band has energy now.
+ * Thus the density of the cloud follows the music and the CPU emits
+ * nothing.
  *
- * Shared by two surfaces: the `/particles` page, where the spectrum
- * comes from an offline transform of a decoded preview, and the blade
- * dashboard's Music Player (DESIGN.md §6.16), where it comes from a live
- * `AnalyserNode`. Neither is baked in — the caller hands over a `sample`
- * function that fills a band array, which is the only thing the field
- * needs from a song.
+ * Two surfaces use this component. On the `/particles` page the spectrum
+ * comes from an offline transform of a decoded preview. In the Music
+ * Player of the blade dashboard (DESIGN.md §6.16) it comes from a live
+ * `AnalyserNode`. Neither source is built in: the caller gives a `sample`
+ * function that fills a band array, which is all that the field needs
+ * from a song.
  *
- * Keep the GLSL ASCII-only; see `curl-noise.ts`.
+ * Use only ASCII characters in the GLSL. Refer to `curl-noise.ts`.
  */
 
 /** Pool is SIDE x SIDE, one texel of state per particle. */
@@ -71,8 +72,8 @@ const POOL = SIDE * SIDE;
 const DEAD = 0.02;
 /** Sampling radius for the curl's central differences. */
 const CURL_EPS = 0.35;
-/** Largest step integrated in one frame, so a backgrounded tab cannot
- *  fling every particle to infinity when it wakes up. */
+/** Largest step integrated in one frame. It prevents a backgrounded tab
+ *  from throwing each particle to infinity when it becomes active. */
 const MAX_DT = 0.05;
 
 const FULLSCREEN_VERTEX = /* glsl */ `
@@ -107,12 +108,12 @@ varying vec2 vUv;
 /** Where a particle is born: latitude from its band, longitude from its index. */
 vec3 birthDirection(float index, float band) {
   float u = uBands > 1.0 ? band / (uBands - 1.0) : 0.5;
-  // Uniform in cos, so the sphere is covered evenly instead of bunching
-  // at the poles. The jitter gives each band's ring some thickness.
+  // Uniform in cos, thus the particles cover the sphere equally and do
+  // not collect at the poles. The jitter gives each ring a thickness.
   float cosTheta = clamp(-1.0 + 2.0 * u + (hash11(index * 1.7) - 0.5) * uSpread, -1.0, 1.0);
   float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
-  // Golden angle, so successive indices fill the ring rather than
-  // stacking along one meridian.
+  // Golden angle, thus subsequent indices fill the ring and do not stack
+  // on one meridian.
   float phi = index * 2.399963;
   return vec3(sinTheta * cos(phi), cosTheta, sinTheta * sin(phi));
 }
@@ -126,23 +127,24 @@ void main() {
   float band = mod(index, uBands);
   float level = texture2D(uSpectrum, vec2((band + 0.5) / uBands, 0.5)).r;
 
-  // Per-particle lifetime, so shells are ragged rather than in lockstep.
+  // A different lifetime for each particle, thus the shells are ragged
+  // and do not move together.
   float life = uLife * (0.6 + 0.8 * hash11(index));
   brightness *= exp(-uDt / max(0.05, life));
 
   if (brightness < ${DEAD.toFixed(3)}) {
     if (level >= uFloor) {
-      // Respawn: the band sounding now decides whether this particle
-      // comes back, and how bright.
+      // Respawn: the band that sounds now decides if this particle comes
+      // back, and how bright it is.
       p = birthDirection(index, band) * uCore;
       brightness = level;
     } else {
       brightness = 0.0;
     }
   } else {
-    // Velocity from the field, not from stored state. The outward push
-    // scales with brightness, so a loud particle travels further before
-    // it fades - radius still reads as loudness.
+    // The velocity comes from the field, not from stored state. The
+    // outward push scales with the brightness, thus a loud particle moves
+    // further before it fades and the radius shows the loudness.
     vec3 outward = normalize(p + vec3(1e-5));
     vec3 flow = curlNoise(p * uCurlScale + vec3(0.0, 0.0, uTime * uFlow), ${CURL_EPS.toFixed(2)});
     p += (outward * uRadial * brightness + flow * uCurlStrength) * uDt;
@@ -164,19 +166,18 @@ varying vec3 vColor;
 varying float vFade;
 
 /*
- * The shared four-stop ramp ('app/_glsl/ramp.ts'), read here as a
- * **frequency** scale rather than a level one: blue is bass, red is
- * treble.
+ * The shared four-stop ramp ('app/_glsl/ramp.ts'). Here it is a
+ * frequency scale and not a level scale: blue is bass, red is treble.
  *
- * That is a deliberate break from the other visualizers, where the same
- * stops mean loudness. Colouring by level made the field unreadable:
- * brightness decays over a particle's life, so every particle swept the
- * whole ramp as it died and the colour ended up encoding *age*,
- * identically for every band. Hue is also the only channel that
- * survives the flow - a particle carries its band wherever the curl
- * drags it, where its birth latitude is advected away within a fraction
- * of a lifetime. Loudness moves to intensity, which is what it was
- * competing with.
+ * This is different from the other visualizers, where the same stops
+ * show loudness. Colour by level made the field unreadable. The
+ * brightness decays during the life of a particle, thus each particle
+ * moved through the full ramp as it died and the colour showed only the
+ * age, equally for each band. Hue is also the only channel that stays
+ * correct in the flow: a particle keeps its band wherever the curl moves
+ * it, but its birth latitude is advected away in a fraction of a
+ * lifetime. Loudness moves to the intensity, which is the channel it
+ * competed with.
  */
 ${RAMP_CHUNK}
 
@@ -197,9 +198,9 @@ void main() {
   gl_PointSize = uSize * (0.45 + brightness) * (320.0 / max(1.0, -viewPos.z));
 
   // Hue from the band, intensity from the level. The gain is low because
-  // the points blend additively: what you see in the dense core is the
-  // *sum* of everything behind it, so a per-particle colour near 1 turns
-  // the middle of the cloud into flat white and throws the hue away.
+  // the points blend additively: the dense core shows the sum of all the
+  // points behind it. Thus a per-particle colour near 1 makes the middle
+  // of the cloud flat white and removes the hue.
   vColor = ramp(aBand) * uGain * (0.35 + 0.9 * brightness);
   vFade = 0.3 + 0.7 * brightness;
 }
@@ -227,25 +228,27 @@ export function CurlParticles({
   /** How many frequency bands the spectrum has. */
   bands: number;
   /**
-   * Fills `out` with the current levels, 0..1 per band. Called once a
-   * frame; whatever a caller has to do to produce them — advance an
-   * offline window, read a live analyser — happens in here.
+   * Fills `out` with the current levels, 0..1 for each band. The
+   * component calls it one time a frame. The caller does the necessary
+   * work in the function: advance an offline window, or read a live
+   * analyser.
    */
   sample: (out: Float32Array) => void;
   paused?: boolean;
   /**
-   * Whether dragging orbits the camera. The dashboard turns it off: its
-   * visualizer sits inside a 10-foot UI where a pointer-grabbing canvas
-   * has no business, and drifts the view itself instead.
+   * Whether a drag orbits the camera. The dashboard sets it to false: its
+   * visualizer is in a 10-foot UI, where a canvas must not take the
+   * pointer. The dashboard drifts the view instead.
    */
   orbit?: boolean;
   /**
-   * Classes for the mount, which **must** end up with a height: the
-   * canvas is sized from this element, so a block div with none leaves
-   * the renderer at its default 300x150 and the scene comes up short of
-   * its container. Hence a default rather than `undefined` — the other
-   * visualizers return a `<canvas>` carrying its own `h-full w-full`, so
-   * omitting it here failed quietly instead of not rendering at all.
+   * Classes for the mount. They must give the element a height, because
+   * the canvas takes its size from this element. A block div with no
+   * height leaves the renderer at its default 300x150, and the scene is
+   * smaller than its container. Thus there is a default value and not
+   * `undefined`. The other visualizers return a `<canvas>` that has its
+   * own `h-full w-full`, thus an omitted class name here gave a small
+   * scene and no error.
    */
   className?: string;
 }) {
@@ -256,12 +259,12 @@ export function CurlParticles({
   sampleRef.current = sample;
 
   /**
-   * The drift lives with the scene, not with the panel.
+   * The drift runs with the scene, not with the panel.
    *
-   * The dashboard mounts this visualizer with no overlay at all, and the
-   * field still has to breathe there — so whoever is showing the field
+   * The dashboard mounts this visualizer with no overlay, and the field
+   * must still breathe there. Thus the component that shows the field
    * runs the walk, and a panel, when there is one, is only a switch on
-   * the same store flag.
+   * the same flag in the store.
    */
   const [drifting, setDrifting] = useState(curlDrifting);
   useEffect(() => subscribeCurlDrifting(setDrifting), []);
@@ -289,9 +292,9 @@ export function CurlParticles({
     renderer.domElement.style.display = "block";
     renderer.domElement.style.touchAction = "none";
 
-    // Positions need real range and precision, so full float if the driver
-    // will render to it and half float otherwise. Half is enough here:
-    // the cloud lives inside a few tens of units.
+    // Positions need range and precision. Use full float if the driver
+    // can render to it, else half float. Half float is sufficient here,
+    // because the cloud stays in a few tens of units.
     const type = renderer.extensions.has("EXT_color_buffer_float")
       ? THREE.FloatType
       : THREE.HalfFloatType;
@@ -309,11 +312,11 @@ export function CurlParticles({
 
     let read = makeTarget();
     let write = makeTarget();
-    // Cleared to *zero*, which is brightness zero: every particle starts
-    // dead and waits for its band to sound. The clear colour has to be
-    // set to transparent black first — clearing with the scene's colour
-    // would leave alpha at 1, so every particle would come up alive at
-    // the origin and be flung out on the first frame.
+    // Clear to zero, which is brightness zero: each particle starts dead
+    // and waits for its band to sound. Set the clear colour to
+    // transparent black first. A clear with the colour of the scene
+    // leaves alpha at 1, thus each particle would start alive at the
+    // origin and move out on the first frame.
     renderer.setClearColor(0x000000, 0);
     for (const target of [read, write]) {
       renderer.setRenderTarget(target);
@@ -381,15 +384,15 @@ export function CurlParticles({
       depthWrite: false,
     });
 
-    // One point per texel; `position` is unused because the vertex shader
-    // reads the real one out of the state texture.
+    // One point for each texel. `position` is not used, because the
+    // vertex shader reads the true position from the state texture.
     const lookup = new Float32Array(POOL * 2);
     const bandOf = new Float32Array(POOL);
     for (let i = 0; i < POOL; i++) {
       lookup[i * 2] = ((i % SIDE) + 0.5) / SIDE;
       lookup[i * 2 + 1] = (Math.floor(i / SIDE) + 0.5) / SIDE;
-      // Must agree with the simulation's own `index % uBands`: point i
-      // reads texel i, because the lookup above is built in that order.
+      // This must agree with `index % uBands` in the simulation. Point i
+      // reads texel i, because the lookup above is in that order.
       bandOf[i] = bands > 1 ? (i % bands) / (bands - 1) : 0.5;
     }
     const drawGeometry = new THREE.BufferGeometry();
@@ -434,9 +437,9 @@ export function CurlParticles({
 
     const resize = () => {
       const { clientWidth, clientHeight } = mount;
-      // Nothing to size to yet. Bailing keeps the renderer at its own
-      // default instead of collapsing to zero, and the ResizeObserver
-      // calls back as soon as layout gives the mount a box.
+      // There is no size yet. A return keeps the renderer at its own
+      // default and prevents a collapse to zero. The ResizeObserver calls
+      // again when the layout gives the mount a box.
       if (!clientWidth || !clientHeight) return;
       renderer.setSize(clientWidth, clientHeight);
       camera.aspect = clientWidth / clientHeight;
@@ -457,8 +460,8 @@ export function CurlParticles({
       previous = now;
 
       if (pausedRef.current) {
-        // Hold the picture: no new levels, no integration, nothing to
-        // upload. Still rendered, so the canvas does not go blank.
+        // Hold the picture: no new levels, no integration and no upload.
+        // The component still renders, thus the canvas does not go blank.
         controls?.update();
         renderer.render(scene, camera);
         return;
@@ -475,7 +478,7 @@ export function CurlParticles({
       renderer.render(simulateScene, simulateCamera);
       renderer.setRenderTarget(null);
 
-      // Swap, so the pass that just wrote becomes the one that is read.
+      // Swap, thus the pass that wrote becomes the pass that is read.
       const swap = read;
       read = write;
       write = swap;
@@ -484,8 +487,8 @@ export function CurlParticles({
       if (controls) {
         controls.update();
       } else {
-        // No orbiting here, so the view drifts on its own: a static
-        // three-quarter shot of a particle cloud reads as a still image.
+        // There is no orbit here, thus the view drifts on its own. A
+        // static three-quarter view of a cloud looks like a still image.
         const angle = simulateUniforms.uTime.value * 0.08;
         camera.position.set(Math.sin(angle) * 34, 6, Math.cos(angle) * 34);
         camera.lookAt(0, 0, 0);
@@ -509,7 +512,7 @@ export function CurlParticles({
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-    // Rebuilt only if the band count or the orbit mode changes; the
+    // Rebuilt only when the band count or the orbit mode changes. The
     // spectrum source reaches the loop through a ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bands, orbit]);

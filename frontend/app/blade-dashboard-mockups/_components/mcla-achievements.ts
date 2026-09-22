@@ -1,15 +1,17 @@
 /**
- * Midnight Club: Los Angeles (Xbox 360) achievement list, scraped from
- * xboxachievements.com via the Wayback Machine snapshot of 2024-11-27 (the
- * live site and image host sit behind a Cloudflare challenge). 55
- * achievements, 1250 Gamerscore in total: the base game plus the South
- * Central pack, distinguished by `pack`.
+ * The achievement list of Midnight Club: Los Angeles on the Xbox 360,
+ * scraped from xboxachievements.com. The source is the Wayback Machine
+ * snapshot of 2024-11-27, because a Cloudflare challenge protects the
+ * live site and the image host. There are 55 achievements and 1250
+ * Gamerscore in total: the base game with the South Central pack.
+ * `pack` gives the pack of each achievement.
  *
- * `img` is the local copy under `public/assets/achievements/mcla/` (64×64
- * JPEG, named by the site's achievement slug); `sourceImg` is the original
- * URL it was copied from, kept for provenance. It cannot be hot-linked: the
- * host returns 403 to non-browser requests. `unlocked` is mock: which of
- * these the signed-in gamer has earned.
+ * `img` is the local copy, under `public/assets/achievements/mcla/`, as
+ * a 64x64 JPEG named by the achievement slug of the site. `sourceImg` is
+ * the original URL of the copy, kept as a record. A link to `sourceImg`
+ * does not work, because the host returns 403 to a request that is not
+ * from a browser. `unlocked` is mock data: which achievements the
+ * signed-in gamer has.
  */
 export interface MclaAchievement {
   img: string;
@@ -17,9 +19,9 @@ export interface MclaAchievement {
   name: string;
   description: string;
   gamerPoints: number;
-  /** Whether the signed-in gamer has earned it (mock). */
+  /** Whether the signed-in gamer earned it. This is mock data. */
   unlocked: boolean;
-  /** "Midnight Club: Los Angeles" for the base game, otherwise the DLC pack name. */
+  /** "Midnight Club: Los Angeles" for the base game, else the name of the DLC pack. */
   pack: string;
 }
 

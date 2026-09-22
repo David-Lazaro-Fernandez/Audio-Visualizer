@@ -1,15 +1,14 @@
 /**
- * The `/demo` page's shading of the shared wave field: a glossy water
- * surface, plus a height/contour view that makes the geometry easy to
- * read (spec sections 4-5).
+ * How the `/demo` page shades the shared wave field: a glossy water
+ * surface, plus a height and contour view that makes the geometry easy
+ * to read (spec sections 4-5).
  *
- * The field itself - the wave packet, the jet, the analytic derivative
- * and the displacement pass - lives in `@/app/_water/water-field`,
- * because the blade dashboard background drives the same field with a
- * completely different shading pass. Only the fragment shader below is
- * specific to this page.
+ * The field, which is the wave packet, the jet, the analytic derivative
+ * and the displacement pass, is in `@/app/_water/water-field`. The blade
+ * dashboard background drives the same field with a fully different
+ * shading pass. Only the fragment shader below is specific to this page.
  *
- * Keep this file ASCII-only; see the note in `water-field.ts`.
+ * Use only ASCII characters. Refer to the note in `water-field.ts`.
  */
 
 import {
@@ -21,16 +20,16 @@ import {
 export { WATER_VERTEX_SHADER };
 
 /**
- * Per-pixel analytic normals. Mode 0 is the glossy read: a sky reflection
- * weighted by Schlick Fresnel with water's F0 of 0.02, plus a tight
- * specular. Mode 1 is the height read: a diverging ramp with contour
- * lines whose width comes from fwidth, so they stay one pixel wide
- * however steep the surface is.
+ * Analytic normals for each pixel. Mode 0 is the glossy view: a sky
+ * reflection weighted by the Schlick Fresnel term with the F0 of water,
+ * 0.02, plus a tight specular. Mode 1 is the height view: a diverging
+ * ramp with contour lines. The width of a line comes from fwidth, thus a
+ * line stays one pixel wide at each slope of the surface.
  *
- * The field is sampled at `vField`, the plane's own xz, and the resulting
- * normal is rotated into world space by the model matrix - the reflection
- * and the light direction are both world-space, and a surface is allowed
- * to rotate its mesh.
+ * The code samples the field at `vField`, which is the local xz of the
+ * plane. The model matrix then moves the normal into world space,
+ * because the reflection and the light direction are both in world space
+ * and a surface can rotate its mesh.
  */
 export const WATER_FRAGMENT_SHADER = /* glsl */ `
 ${WATER_FIELD_CHUNK}

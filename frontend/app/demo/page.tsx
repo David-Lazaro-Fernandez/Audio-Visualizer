@@ -8,11 +8,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * `/demo` - the water-drop ripple surface.
+ * `/demo`: the water-drop ripple surface.
  *
- * A server component holding one client island. Everything interesting is
- * a browser API (WebGL2, pointer events, requestAnimationFrame), so the
- * page itself only exists to name the route and own the metadata.
+ * A server component that holds one client island. The work uses browser
+ * APIs only (WebGL2, pointer events, requestAnimationFrame). Thus the
+ * page only names the route and holds the metadata.
  */
 export default function DemoPage() {
   return <WaterDemo />;

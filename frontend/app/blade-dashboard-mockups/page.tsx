@@ -35,16 +35,16 @@ import {
 } from "./_components";
 
 /**
- * Blade order, left to right (DESIGN.md §1). The index into this array is
- * the "which blade am I on" position that Left/Right and the tab clicks
- * move through; the page opens on games (`DEFAULT_ACTIVE_INDEX`). Each
- * entry carries its section identity (§2.1, §2.2): the radial gradient
- * (as data, from `blade-gradient.ts`, so the CSS fallback and the WebGL
- * surface read the same stops), the active-tab fill and the text/rule
- * tints. Games, Xbox LIVE and Media
- * are built; store and system are declared so the fan of tabs is complete
- * and switching to them shows a titled, empty panel rather than another
- * blade's content — their colors are placeholders.
+ * The blade order, left to right (DESIGN.md §1). The index in this array
+ * is the position of the open blade, which Left, Right and a tab click
+ * change. The page opens on games (`DEFAULT_ACTIVE_INDEX`). Each entry
+ * holds the identity of its section (§2.1, §2.2): the radial gradient,
+ * as data from `blade-gradient.ts`, thus the CSS fallback and the WebGL
+ * surface read the same stops; the fill of the active tab; and the text
+ * and rule tints. Games, Xbox LIVE and Media are built. Store and system
+ * are declared, thus the fan of tabs is complete and a switch to them
+ * shows an empty panel with a title and not the content of another
+ * blade. Their colours are placeholders.
  */
 const BLADES: BladeSection[] = [
   {
@@ -87,8 +87,9 @@ const BLADES: BladeSection[] = [
   {
     label: "media",
     title: "Media",
-    // Sky blue (DESIGN.md §2.1). Rules are lighter than the panel here, as
-    // on Xbox LIVE, because the console's blue dividers read as pale lines.
+    // Sky blue (DESIGN.md §2.1). The rules are lighter than the panel,
+    // as on Xbox LIVE, because the blue dividers of the console are pale
+    // lines.
     gradient: MEDIA_GRADIENT,
     tabFill: "linear-gradient(90deg,#2472b8,#86ccf6 35%,#3f97da)",
     theme: MEDIA_THEME,
@@ -111,8 +112,8 @@ const BLADES: BladeSection[] = [
 ];
 
 /**
- * Legend for a signed-in blade (DESIGN.md §6.5): X signs out, A selects,
- * Y and B are unbound and dim.
+ * The legend of a signed-in blade (DESIGN.md §6.5): X signs out, A
+ * selects, and Y and B are unbound and dim.
  */
 const SIGNED_IN_LEGEND: { left: LegendButton[]; right: LegendButton[] } = {
   left: [
@@ -126,10 +127,11 @@ const SIGNED_IN_LEGEND: { left: LegendButton[]; right: LegendButton[] } = {
 };
 
 /**
- * Games blade menu. `description` is the blurb the right-hand pane shows
- * while the row is highlighted; `detail` is the box that opens on select,
- * or `screen` a full-screen destination (Achievements → Achievements
- * screen, Played Games → Games Library).
+ * The menu of the Games blade. `description` is the text that the right
+ * pane shows while the row is highlighted. `detail` is the box that
+ * Select opens, and `screen` is a full-screen destination: Achievements
+ * opens the Achievements screen and Played Games opens the Games
+ * Library.
  */
 const GAMES_MENU_ITEMS: LibraryMenuItem[] = [
   {
@@ -162,8 +164,8 @@ const GAMES_MENU_ITEMS: LibraryMenuItem[] = [
 ];
 
 /**
- * Xbox LIVE blade menu: a single "Connect" row, described in the pane under
- * the service's own name rather than the row label.
+ * The menu of the Xbox LIVE blade: one "Connect" row. The pane describes
+ * it under the name of the service and not under the label of the row.
  */
 const LIVE_MENU_ITEMS: LibraryMenuItem[] = [
   {
@@ -179,13 +181,13 @@ const LIVE_MENU_ITEMS: LibraryMenuItem[] = [
 ];
 
 /**
- * Media blade menu. Music opens the full-screen Music screen (DESIGN.md
- * §6.11) and Pictures the full-screen picture grid (§6.13); the other rows
- * open a detail box in the mockup where the console's led to full-screen
- * browsers. Media Center has
- * no drawn icon on purpose: its Windows flag is a full-colour bitmap, so
- * the row shows `MenuListItem`'s neutral square until the image is dropped
- * in as `icon: <Image src="/assets/media_center.png" … />`.
+ * The menu of the Media blade. Music opens the full-screen Music screen
+ * (DESIGN.md §6.11) and Pictures opens the full-screen picture grid
+ * (§6.13). The other rows open a detail box in this mockup, where the
+ * console opened a full-screen browser. Media Center has no drawn icon:
+ * its Windows flag is a full-colour bitmap, thus the row shows the
+ * neutral square of `MenuListItem` until someone adds the image as
+ * `icon: <Image src="/assets/media_center.png" ... />`.
  */
 const MEDIA_MENU_ITEMS: LibraryMenuItem[] = [
   {
@@ -218,37 +220,39 @@ const MEDIA_MENU_ITEMS: LibraryMenuItem[] = [
 
 export default function BladeDashboardMockupsPage() {
   return (
-    // Gamerpic selection is shared across the whole blade via context.
+    // A context shares the selected gamer picture across the full blade.
     <GamerPicProvider>
     <BladeNavProvider blades={BLADES} initialIndex={DEFAULT_ACTIVE_INDEX}>
-    {/* Arrows move the cursor (Up/Down) and switch blades (Left/Right);
-        Space/A selects; ESC/B goes back. */}
+    {/* Up and Down move the cursor, Left and Right switch blades,
+        Space and A select, and ESC and B go back. */}
     <KeyboardNav />
     <BladeCanvas>
       <BladeMenuGutters />
       <BladeEdges />
-      {/* The section gradient, sheen, rings and gloss come from the WebGL
-          surface inside BladeCanvas; this is the CSS fallback for the
-          sheen and rings, and renders nothing while the shader is live. */}
+      {/* The section gradient, the sheen, the rings and the gloss come
+          from the WebGL surface in BladeCanvas. This is the CSS fallback
+          of the sheen and the rings, and it renders nothing while the
+          shader is live. */}
       <BladeBackground />
 
       <BladeTabNav />
 
-      {/* One panel per blade; only the open blade's renders. Each is laid
-          out as a 2×2 grid so rows line up:
+      {/* One panel for each blade. Only the panel of the open blade
+          renders. Each panel is a 2x2 grid, thus the rows align:
             | Profile | Section logo |
             | Menu    | Description  |
-          The description cell follows the highlighted menu row via
-          LibraryMenuProvider, which sits above both cells. */}
+          The description cell follows the highlighted menu row through
+          LibraryMenuProvider, which is above both cells. */}
       <BladePanel blade="store" />
 
       <BladePanel blade="community" legend={SIGNED_IN_LEGEND}>
         <LibraryMenuProvider initialItem={LIVE_MENU_ITEMS[0]}>
-          {/* Third row on the left holds the LIVE ad tile; the description
-              spans rows 2–3 on the right so it can run long. */}
+          {/* The third row on the left holds the LIVE tile. The
+              description spans rows 2 and 3 on the right, thus it can be
+              long. */}
           <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-8 md:gap-y-4">
-            {/* Same signed-in gamer as the Games blade (`PROFILE`), shown
-                through their Xbox LIVE rows. */}
+            {/* The same signed-in gamer as the Games blade (`PROFILE`),
+                with the Xbox LIVE rows. */}
             <GamerProfileCard profile={PROFILE} stats={liveStats(PROFILE)} />
             <div className="flex min-w-0 items-center justify-center">
               <Image
@@ -301,9 +305,10 @@ export default function BladeDashboardMockupsPage() {
 
       <BladePanel blade="media" legend={SIGNED_IN_LEGEND}>
         <LibraryMenuProvider initialItem={MEDIA_MENU_ITEMS[0]}>
-          {/* Same grid as Games. The card shows the gamer's Xbox LIVE rows
-              (Rep, Gamerscore, Zone), as the console did on Media; the
-              right column carries the Xbox 360 logo over the blurb. */}
+          {/* The same grid as Games. The card shows the Xbox LIVE rows of
+              the gamer, which are Rep, Gamerscore and Zone, as the
+              console did on Media. The right column holds the console
+              logo above the text. */}
           <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-8 md:gap-y-4">
             <GamerProfileCard profile={PROFILE} stats={liveStats(PROFILE)} />
             <div className="flex min-w-0 items-center justify-center">
@@ -329,9 +334,10 @@ export default function BladeDashboardMockupsPage() {
       </BladePanel>
       <BladePanel blade="system" />
     </BladeCanvas>
-    {/* Development overlay for tuning the background water (§3.1). Not
-        part of the dashboard, and outside the canvas so it is never
-        clipped to it. Off by default; flip SHOW_WATER_CONTROLS to tune. */}
+    {/* The development overlay for the background water (§3.1). It is
+        not part of the dashboard, and it is outside the canvas, thus the
+        canvas never clips it. It is off by default. Set
+        SHOW_WATER_CONTROLS to tune. */}
     {SHOW_WATER_CONTROLS && <BladeWaterControls />}
     </BladeNavProvider>
     </GamerPicProvider>

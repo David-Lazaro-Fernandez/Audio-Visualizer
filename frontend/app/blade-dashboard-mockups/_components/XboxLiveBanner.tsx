@@ -1,13 +1,14 @@
 import Image from "next/image";
 
 /**
- * DESIGN.md §6.7 media slot, filled: the grey Xbox LIVE tile. A branded
- * header, not a row, so it isn't a nav item and the cursor skips it. Uses
- * the 2005 logo artwork on a flat #616063 (§2.3 "branded tiles") with the
- * same inner shadow and light rim as the raised rows. The Games Library
- * stacks it above its menu; the Xbox LIVE blade shows it under the
- * "Connect" row with `rings`, the faint concentric LIVE arcs fading in
- * from the left edge, as the console's ad tile did.
+ * The filled media slot of DESIGN.md §6.7: the grey Xbox LIVE tile. It
+ * is a branded header and not a row, thus it is not a nav item and the
+ * cursor does not stop on it. It uses the 2005 logo artwork on a flat
+ * #616063 (§2.3, branded tiles), with the same inner shadow and light
+ * rim as a raised row. The Games Library puts it above its menu. The
+ * Xbox LIVE blade shows it below the "Connect" row with `rings`, which
+ * are the faint concentric arcs that fade in from the left edge, as on
+ * the tile of the console.
  */
 export function XboxLiveBanner({
   rings = false,

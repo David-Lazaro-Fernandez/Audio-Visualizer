@@ -6,27 +6,32 @@ import { isNativeButtonActivationKey, isSelectKey } from "./keys";
 import { playSound } from "./sounds";
 
 /**
- * Global D-pad for the dashboard. Mount it once inside `BladeNavProvider`;
- * it renders nothing.
+ * The global D-pad of the dashboard. Mount it one time in
+ * `BladeNavProvider`. It renders nothing.
  *
- * Left/Right switch blades (`BladeNavContext.step`) from wherever the
- * cursor is — games → media plays Page Right, games → community plays Page
- * Left — except while a modal screen is open or the cursor is inside a
- * grid, where they move within the grid instead.
+ * Left and Right switch blades (`BladeNavContext.step`) from each
+ * position of the cursor. Games to media plays Page Right, and games to
+ * community plays Page Left. There are two exceptions: while a modal
+ * screen is open, and while the cursor is in a grid. In a grid the two
+ * keys move in the grid.
  *
- * Up/Down move the cursor through lists. Mark a container with
- * `data-nav-list` and its focusable entries with `data-nav-item`:
- *   - "column" (default): Up/Down step through items.
- *   - a number N: a grid N wide — Left/Right step 1, Up/Down step N.
- * Movement is clamped at the ends (no wrap), plays the Select blip, and
- * uses real focus so `focus-visible` styles double as the cursor.
+ * Up and Down move the cursor through a list. Mark a container with
+ * `data-nav-list` and each focusable entry with `data-nav-item`:
+ *   - "column", the default: Up and Down step one item.
+ *   - a number N: a grid N wide. Left and Right step 1, and Up and Down
+ *     step N.
+ * The movement clamps at the ends and does not wrap. It plays the Select
+ * sound and uses real focus, thus the `focus-visible` styles are also
+ * the cursor.
  *
- * A (the key) clicks the focused item. Space and Enter are left to the
- * browser — the items are native <button>s, so it already clicks them —
- * except when nothing is focused, where Space would scroll the page instead.
- * Back (ESC/B)
- * is deliberately NOT handled here: each screen closes itself via
- * `isBackKey`, so Back is silent when there's nothing to leave.
+ * The A key clicks the focused item. The browser handles Space and
+ * Enter, because the items are native <button>s and it already clicks
+ * them. The one exception is a page with no focus, where Space would
+ * scroll the page.
+ *
+ * This component does not handle Back (ESC or B). Each screen closes
+ * itself with `isBackKey`, thus Back is silent when there is nothing to
+ * close.
  */
 export function KeyboardNav() {
   const { step } = useBladeNav();
@@ -43,8 +48,8 @@ export function KeyboardNav() {
         const list = item?.closest<HTMLElement>("[data-nav-list]") ?? null;
         if (!list || gridColumns(list) === 0) {
           e.preventDefault();
-          // A modal (the gamerpic chooser) covers the blades; don't flip
-          // them underneath it.
+          // A modal, such as the gamer picture chooser, covers the
+          // blades. Do not switch them below it.
           if (!isModalOpen()) step(e.key === "ArrowLeft" ? -1 : 1);
           return;
         }
@@ -57,8 +62,8 @@ export function KeyboardNav() {
       }
 
       if (isSelectKey(e)) {
-        // Space/Enter on a focused <button> already click natively; don't
-        // double-fire them. Everything else we click ourselves.
+        // Space and Enter on a focused <button> already click it. Do
+        // not click it a second time. This code clicks the other keys.
         if (isNativeButtonActivationKey(e) && active instanceof HTMLButtonElement) return;
         e.preventDefault();
         (item ?? (active instanceof HTMLButtonElement ? active : null))?.click();
@@ -74,7 +79,7 @@ export function KeyboardNav() {
 
 const ARROWS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
-/** Column count for grid lists; 0 for plain columns. */
+/** The number of columns of a grid list. A plain column gives 0. */
 function gridColumns(list: HTMLElement) {
   const cols = Number(list.dataset.navList);
   return Number.isInteger(cols) && cols > 0 ? cols : 0;
@@ -104,8 +109,9 @@ function moveCursor(item: HTMLElement | null, key: string) {
   const list = item?.closest<HTMLElement>("[data-nav-list]") ?? null;
 
   if (!list || !item) {
-    // Nothing on a list has focus yet: drop the cursor onto the first item,
-    // preferring a list inside an open dialog so the modal keeps priority.
+    // No item of a list has focus. Put the cursor on the first item. A
+    // list in an open dialog has priority, thus the modal keeps the
+    // cursor.
     const first =
       document.querySelector<HTMLElement>(
         '[role="dialog"] [data-nav-list] [data-nav-item]:not(:disabled)',
@@ -130,7 +136,8 @@ function moveCursor(item: HTMLElement | null, key: string) {
     case "ArrowDown":
       delta = cols ? cols : 1;
       break;
-    // Left/Right only reach here inside a grid; elsewhere they switch blades.
+    // Left and Right arrive here only in a grid. In the other lists they
+    // switch blades.
     case "ArrowLeft":
       delta = -1;
       break;
