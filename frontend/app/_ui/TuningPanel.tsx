@@ -5,21 +5,21 @@ import { useState } from "react";
 /**
  * A development overlay of sliders and switches (DESIGN.md §3.1, §6.16).
  *
- * Generic on purpose, and shared across routes — which is why it lives
- * outside any one of them. Three surfaces want hand tuning now: the
- * dashboard's background water, its spectrogram visualizer, and the
- * particle sphere on `/particles`. Each was about to grow its own copy,
- * on top of the one `/demo` already has. The differences between them
- * are a title, a table of knobs and which corner to sit in; everything
- * else — the collapse, the reset, how many decimals a step deserves — is
- * the same panel over again.
+ * The panel is generic and is shared by more than one route, thus it is
+ * not in one of them. Three surfaces now need hand tuning: the
+ * background water of the dashboard, its spectrogram visualizer and the
+ * particle sphere on `/particles`. Each of them was going to get its own
+ * copy, in addition to the copy that `/demo` has. The differences are a
+ * title, a table of knobs and the corner to sit in. The other parts, the
+ * collapse, the reset and the number of decimals for a step, are the
+ * same panel again.
  *
- * It is deliberately not dressed to match the dashboard: the 10-foot UI
- * has no controls (§8), so this is something you switch on to tune and
- * switch off again, and it should look like the tool it is.
+ * The panel does not use the style of the dashboard. The 10-foot UI has
+ * no controls (§8), thus you switch the panel on to tune, then switch it
+ * off again, and it must look like the tool that it is.
  *
- * Its sliders are safe beside the global D-pad because `KeyboardNav`
- * ignores any event whose target is an `<input>`.
+ * Its sliders are safe beside the global D-pad, because `KeyboardNav`
+ * ignores each event whose target is an `<input>`.
  */
 
 export interface TuningSpec {
@@ -27,19 +27,19 @@ export interface TuningSpec {
   min: number;
   max: number;
   step: number;
-  /** Shown before the fold; everything else sits behind the disclosure. */
+  /** Shown before the fold. The other knobs are behind the disclosure. */
   primary?: boolean;
   /**
-   * How freely this knob wanders when drift is on, *relative* to the
-   * drift rate (`useDrift`). 1 or omitted follows the rate exactly, 0.5
-   * moves half as far, 0 never moves at all — density knobs lurch badly
-   * if they wander, so each spec says for itself how much it tolerates.
+   * How far this knob wanders when the drift is on, relative to the drift
+   * rate (`useDrift`). A value of 1, or no value, obeys the rate exactly.
+   * A value of 0.5 moves half as far. A value of 0 does not move. Density
+   * knobs jump badly if they wander, thus each spec gives its own limit.
    */
   driftScale?: number;
   hint: string;
 }
 
-/** A plain on/off row, for things that are not a number. */
+/** A simple on/off row, for controls that are not a number. */
 export interface TuningSwitch {
   label: string;
   value: boolean;
@@ -47,7 +47,7 @@ export interface TuningSwitch {
   onChange: (value: boolean) => void;
 }
 
-/** Enough decimals to show the step: 0.005 needs 3, a step of 1 needs none. */
+/** Decimals necessary to show the step: 0.005 needs 3, and 1 needs none. */
 function decimalsFor(step: number) {
   return Math.max(0, Math.ceil(-Math.log10(step)));
 }
@@ -101,9 +101,9 @@ export function TuningPanel<K extends string>({
   values: Record<K, number>;
   onChange: (key: K, value: number) => void;
   onReset: () => void;
-  /** Optional on/off rows, shown above the sliders. */
+  /** Optional on/off rows. The panel shows them above the sliders. */
   switches?: TuningSwitch[];
-  /** Which corner to sit in, so two panels can be open at once. */
+  /** The corner to sit in, thus two panels can be open at the same time. */
   side?: "left" | "right";
 }) {
   const [open, setOpen] = useState(true);

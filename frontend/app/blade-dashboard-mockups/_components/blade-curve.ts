@@ -1,23 +1,24 @@
 /**
- * DESIGN.md §1.1 blade curve geometry: every edge (collapsed tabs + the
- * active panel) is generated from the same "lazy S" curve, just shifted to
- * a different top-x — DESIGN.md's reference curve, scaled to 90% of its
- * bow/flare radius.
+ * The blade curve geometry of DESIGN.md §1.1. One "lazy S" curve makes
+ * each edge, which is each collapsed tab and the active panel. Only the
+ * top-x changes. The curve is the reference curve of DESIGN.md, scaled
+ * to 90% of its bow and flare radius.
  *
- * Rendered as plain <div>s clipped with `clip-path: polygon(...)` instead
- * of an <svg>/<path> — the curve is sampled at many points along the same
- * cubic bezier math SVG would have used, so the shape is just as smooth,
- * but the element is a div sized to 100%/100% of its box.
+ * The code draws plain <div>s clipped with `clip-path: polygon(...)` and
+ * not an <svg> or a <path>. It samples the curve at many points with the
+ * same cubic bezier math that SVG would use, thus the shape is equally
+ * smooth, and the element is a div at 100% of its box.
  */
 type Point = { x: number; y: number };
 
-// Fractions of the tab's own height (0 = top edge, 1 = bottom edge).
+// Positions down the curve, in reference px (0 is the top edge).
 const EDGE_Y = [0, 130, 250, 380, 510, 625, 720] as const;
 export const CANVAS_HEIGHT = EDGE_Y[EDGE_Y.length - 1];
 
 const CURVE_SCALE = 0.9;
-// DESIGN.md's reference deltas (bow left/-, then flare right/+), relative
-// to a "right-family" edge's top-x, scaled by CURVE_SCALE.
+// The reference deltas of DESIGN.md. A negative value bows left and a
+// positive value flares right. They are relative to the top-x of a
+// right-family edge, and CURVE_SCALE scales them.
 const RIGHT_FAMILY_DELTAS = [0, -13, -19, -13, -7, 30, 85].map(
   (d) => d * CURVE_SCALE,
 );
@@ -45,7 +46,7 @@ function cubicBezier(p0: Point, p1: Point, p2: Point, p3: Point, steps: number):
 
 const STEPS_PER_SEGMENT = 16;
 
-/** Samples one edge's full curve (top to bottom) as a smooth point list. */
+/** Samples the full curve of one edge, top to bottom, as a point list. */
 function sampleEdge(topX: number, mirrored: boolean): Point[] {
   const xs = edgePoints(topX, mirrored);
   const pt = (i: number): Point => ({ x: xs[i], y: EDGE_Y[i] });
@@ -66,10 +67,11 @@ function toClipPath(points: Point[], width: number, xOffset: number): string {
 }
 
 /**
- * The closed band between two edges that curve in tandem (e.g. one tab, or
- * the panel), as a CSS `clip-path` for a div spanning the *whole* 1280-wide
- * canvas (left/right in canvas-relative %, matching `BladeMenuGutters`
- * etc.) — used for the panel, which isn't its own small positioned box.
+ * The closed band between two edges that curve together, such as one tab
+ * or the panel. The result is a CSS `clip-path` for a div that spans the
+ * full 1280-wide canvas, with the left and the right in canvas-relative
+ * %, as `BladeMenuGutters` uses. The panel uses this function, because
+ * the panel is not a small positioned box.
  */
 export function bandClipPath(
   leftTopX: number,
@@ -83,20 +85,20 @@ export function bandClipPath(
 }
 
 export interface TabGeometry {
-  /** `clip-path` value, normalized so the shape's own box starts at x=0. */
+  /** The `clip-path` value, normalized to a box that starts at x=0. */
   clipPath: string;
-  /** The bounding box width, in canvas-relative % (of 1280). */
+  /** Width of the bounding box, in canvas-relative % of 1280. */
   widthPct: number;
-  /** Where the bounding box starts, in canvas-relative % (of 1280). */
+  /** Start of the bounding box, in canvas-relative % of 1280. */
   leftPct: number;
 }
 
 /**
- * Same curve as `bandClipPath`, but returns the tab's own bounding box (the
- * curve bows and flares outside its "top width", so the box has to cover
- * the widest excursion) with the clip-path renormalized to that box's
- * origin — so the tab can be a small, self-contained, independently
- * positioned div instead of needing the whole 1280-wide canvas.
+ * The same curve as `bandClipPath`, but this function returns the
+ * bounding box of the tab, with the clip-path normalized to the origin
+ * of that box. The curve bows and flares outside the top width of the
+ * tab, thus the box must cover the largest excursion. Thus a tab is a
+ * small independent div and does not need the full 1280-wide canvas.
  */
 export function tabGeometry(
   topLeftX: number,
@@ -118,17 +120,18 @@ export function tabGeometry(
 }
 
 /**
- * The lazy S as a plain function of y, for the WebGL surface
- * (`blade-water-gl.ts`). The shader has to mask the water sheet to the
- * panel, and it gets no `clip-path` — but every edge in §1.1
- * is the *same* curve shifted to a different top-x, so one table of
- * x-deltas is enough: the panel's left edge is `leftX - d(y)` (mirrored)
- * and its right edge is `rightX + d(y)`. That also makes the §7.4
- * transition two scalars for the shader to ease, instead of 66 vertices.
+ * The lazy S as a function of y, for the WebGL surface
+ * (`blade-water-gl.ts`). The shader must mask the water sheet to the
+ * panel, and it has no `clip-path`. Each edge in §1.1 is the same curve
+ * at a different top-x, thus one table of x-deltas is sufficient: the
+ * left edge of the panel is `leftX - d(y)`, which is mirrored, and its
+ * right edge is `rightX + d(y)`. Thus the shader eases the §7.4
+ * transition with two scalars and not with 66 vertices.
  *
- * The curve is parametric (y is a bezier of t, not linear in it), so this
- * resamples it onto a uniform y grid the shader can index directly.
- * Deltas are in reference px, already scaled by `CURVE_SCALE`.
+ * The curve is parametric, because y is a bezier of t and not linear in
+ * t. Thus this function resamples the curve onto a uniform y grid that
+ * the shader can index directly. The deltas are in reference px, and
+ * `CURVE_SCALE` already scaled them.
  */
 export function edgeDeltaTable(samples: number): Float32Array {
   const curve = sampleEdge(0, false);
@@ -136,8 +139,8 @@ export function edgeDeltaTable(samples: number): Float32Array {
   let segment = 0;
   for (let i = 0; i < samples; i++) {
     const y = (i / (samples - 1)) * CANVAS_HEIGHT;
-    // The samples march down the curve in step with the table, so the
-    // segment cursor only ever moves forward.
+    // The samples move down the curve with the table, thus the segment
+    // cursor only moves forward.
     while (segment < curve.length - 2 && curve[segment + 1].y < y) segment++;
     const a = curve[segment];
     const b = curve[segment + 1];

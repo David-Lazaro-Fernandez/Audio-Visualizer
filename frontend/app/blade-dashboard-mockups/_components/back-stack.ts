@@ -4,15 +4,17 @@ import { useEffect, useRef } from "react";
 import { isBackKey } from "./keys";
 
 /**
- * Back (ESC / B) for stacked surfaces. Screens nest — Games blade → Games
- * Library → My Games — and every open surface listens on `document`, so a
- * single ESC would otherwise close all of them at once. Each open surface
- * pushes a token here; only the one on top of the stack acts on Back, the
- * rest stay quiet until it has closed. Tokens are removed on close (or
- * unmount) by identity, so surfaces can close out of order safely.
+ * Back (ESC or B) for stacked surfaces. The screens nest, for example
+ * the Games blade, then the Games Library, then My Games. Each open
+ * surface listens on `document`, thus one ESC would close all of them.
+ * To prevent this, each open surface pushes a token here. Only the token
+ * at the top of the stack answers Back, and the others stay quiet until
+ * it closes. The code removes a token by identity at a close or an
+ * unmount, thus the surfaces can close in any order.
  *
- * `onBack` is read through a ref so callers can pass a fresh closure every
- * render without re-registering (which would shuffle the stack order).
+ * The code reads `onBack` through a ref. Thus a caller can pass a new
+ * closure at each render and does not register again, which would change
+ * the order of the stack.
  */
 const stack: symbol[] = [];
 

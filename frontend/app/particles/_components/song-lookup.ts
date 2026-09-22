@@ -4,12 +4,12 @@
  * Resolves an Apple Music link to a playable preview, in the browser.
  *
  * The iTunes Search API needs no key and answers with
- * `Access-Control-Allow-Origin: *`, so this page can look a song up from
- * the client with no route handler in between — unlike the dashboard's
- * albums, which are resolved once by a script and checked in
- * (`scripts/fetch-apple-music.mts`) because a dashboard should not be
- * searching a store at render time. Here the whole point is that you can
- * paste any song, so the lookup has to happen live.
+ * `Access-Control-Allow-Origin: *`. Thus this page can look up a song
+ * from the client with no route handler. The albums of the dashboard are
+ * different: a script resolves them one time and the data is checked in
+ * (`scripts/fetch-apple-music.mts`), because a dashboard must not search
+ * a store at render time. Here a user can paste any song, thus the
+ * lookup must occur live.
  */
 
 export interface Song {
@@ -18,19 +18,19 @@ export interface Song {
   artist: string;
   album: string;
   genre: string | null;
-  /** 30-second AAC preview, served CORS-open. */
+  /** A 30-second AAC preview. The store serves it CORS-open. */
   previewUrl: string;
-  /** The 100 px artwork URL; the size segment is rewritable. */
+  /** The URL of the 100 px artwork. You can change the size segment. */
   artworkUrl100: string | null;
 }
 
 /**
- * Pulls the track id out of whatever was pasted.
+ * Finds the track id in the pasted text.
  *
- * A song link ends in the id (`/song/<slug>/<id>`), but a track reached
- * through its album carries the id in `?i=` instead and the path id is
- * the *album's* — so the query parameter has to win, or the page would
- * analyse the wrong thing entirely. A bare number is accepted too.
+ * A song link ends with the id (`/song/<slug>/<id>`). A track that a
+ * user reaches through its album has the id in `?i=`, and the id in the
+ * path is the id of the album. Thus the query parameter has priority, or
+ * the page analyses the incorrect track. A number alone is also valid.
  */
 export function parseSongId(input: string): number | null {
   const text = input.trim();
@@ -54,7 +54,7 @@ export async function lookupSong(input: string): Promise<Song> {
 
   const response = await fetch(`https://itunes.apple.com/lookup?id=${id}`);
   if (!response.ok) throw new Error(`Lookup failed (${response.status})`);
-  // The endpoint answers as text/javascript, so parse the body ourselves.
+  // The endpoint answers as text/javascript, thus parse the body here.
   const body = JSON.parse(await response.text()) as {
     results?: {
       wrapperType?: string;
@@ -88,7 +88,7 @@ export async function lookupSong(input: string): Promise<Song> {
   };
 }
 
-/** Artwork at the size asked for; Apple's CDN resizes from the path. */
+/** Artwork at the given size. The CDN of Apple resizes from the path. */
 export function artworkAt(song: Song, size: number): string | null {
   return song.artworkUrl100?.replace(/100x100bb/, `${size}x${size}bb`) ?? null;
 }

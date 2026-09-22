@@ -12,22 +12,24 @@ import {
 const STORAGE_KEY = "blade-dashboard:gamerpic";
 
 /**
- * Shared "which gamerpic did the user pick" state. `GamerPicPicker` writes
- * to it; anything else on the blade (header, sign-out row, etc.) can read
- * it via `useGamerPic()` without prop-drilling through the server-rendered
- * profile card.
+ * The shared state of the gamer picture that the user selected.
+ * `GamerPicPicker` writes it. Each other part of the blade, such as the
+ * header and the sign-out row, reads it with `useGamerPic()` and does not
+ * pass it through the props of the profile card, which the server
+ * renders.
  *
- * Persistence model: `selected` is ONLY what the user explicitly chose
- * (null = never picked → callers fall back to their own default). We write
- * to localStorage inside `setSelected` — never from a mount effect — so
- * that Strict Mode's double effect run and the SSR→hydration handoff can't
- * clobber a stored value with a default.
+ * The persistence model: `selected` holds only an explicit selection of
+ * the user. A value of null means that the user selected nothing, thus a
+ * caller uses its own default. The code writes to localStorage in
+ * `setSelected` and never from a mount effect. Thus the double effect of
+ * Strict Mode and the handover from SSR to hydration cannot replace a
+ * stored value with a default.
  */
 export interface GamerPicContextValue {
-  /** Public path of the picked image (e.g. "/profile_pics/monkey.png"), or null if the user never picked one. */
+  /** The public path of the selected image, such as "/profile_pics/monkey.png". It is null when the user selected nothing. */
   selected: string | null;
   setSelected: (src: string | null) => void;
-  /** False until the stored value has been read on the client. Use it to avoid flashing a default. */
+  /** False until the client reads the stored value. Use it to prevent a flash of the default. */
   hydrated: boolean;
 }
 
@@ -43,26 +45,28 @@ export function GamerPicProvider({
   const [selected, setSelectedState] = useState<string | null>(initial);
   const [hydrated, setHydrated] = useState(false);
 
-  // Read-only on mount. Can't read localStorage during render (SSR / static
-  // prerender has no window and would mismatch on hydration).
+  // Read on mount only. The code cannot read localStorage during a
+  // render: SSR and a static prerender have no window, and the values
+  // would not match at the hydration.
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) setSelectedState(stored);
     } catch {
-      // localStorage unavailable (private mode, etc.) — memory only.
+      // localStorage is not available, for example in private mode. Keep
+      // the value in memory only.
     }
     setHydrated(true);
   }, []);
 
-  // Write happens here, on explicit user action only.
+  // The write occurs here, and only after an action of the user.
   const setSelected = useCallback((src: string | null) => {
     setSelectedState(src);
     try {
       if (src) window.localStorage.setItem(STORAGE_KEY, src);
       else window.localStorage.removeItem(STORAGE_KEY);
     } catch {
-      // ignore write failures
+      // Ignore a failure of the write.
     }
   }, []);
 

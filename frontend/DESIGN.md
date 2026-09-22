@@ -227,7 +227,9 @@ two passes:
    identity is still a gradient, not a rendering of water. Because the
    stops arrive as numbers (`blade-gradient.ts`) a blade switch is a real
    per-stop interpolation (§7.4), and the gradient is dithered, which
-   kills the banding the CSS version shows across a wide panel.
+   kills the banding the CSS version shows across a wide panel. Those
+   same numbers are what let the Music Player's bass envelope *move* the
+   gradient rather than paint something over it (§6.16).
 2. A **water sheet** over it, banked about the world Z axis (45° to start
    with), which supersedes the concentric sheen, the two ripple rings and
    the specular gloss. Drops land on a timer; each one punches a crater, throws a jet
@@ -826,6 +828,38 @@ lying about it.
 The spectrum reaches the visualizer as one `Float32Array` mutated in
 place, never as React state: it moves sixty times a second.
 
+**The background answers the bass too.** The visualizer is a box in the
+corner of one screen and the music is the whole reason the screen is up,
+so the section gradient itself moves with the low end. One envelope,
+taken from the bands under 180 Hz, does three things to it
+(`blade-pulse.ts`): it blooms the stops outward from the focal point, so
+the bright core grows; it swings the hue about the grey axis, which
+leaves the luma to the third; and it lifts the brightness. All three are
+small, because the gradient is the section's identity (§2.1) — the bass
+is allowed to move it, not to replace it, and at full scale Media is
+still plainly the blue blade.
+
+It reads the **loudest** bass band rather than their mean: a kick lives
+in one or two of them and the bands under 40 Hz are usually empty in a
+store preview, so an average dilutes every hit with silence. The
+envelope rises fast and falls slowly, over about a fifth of a second,
+which is what makes a kick read as the panel breathing rather than as a
+strobe; it cannot flicker faster than a couple of hertz whatever the
+music does. Under `prefers-reduced-motion` it is zero, because a
+full-screen surface that moves with the audio is precisely what that
+preference is asking not to see (§7.4). Y turns it off with the rest of
+the visualization, and where the shader is not running the CSS gradient
+simply stays put (§3.1).
+
+The envelope lives in a module-level store rather than in context, for
+the reason the water's tuning does: its readers are `BladeWaterRenderer`
+instances and there are several at once (§5.4), so the gradient under
+the player and the blade still showing behind it swell together instead
+of drifting apart. Nothing has to tell the store that the music stopped
+— the fall is computed from elapsed time, so a surface that reads it
+while nothing is playing finds its way back to the plain section color
+on its own.
+
 The visualizer (`MusicVisualizer.tsx`) is drawn as a hardware **LED
 spectrum analyser** — a matrix of discrete cells lit from the bottom of
 each column, the way a rack graphic EQ does it — on a near-black plate,
@@ -985,6 +1019,93 @@ centroid picks the hue from the four-stop ramp: where the energy sits,
 not how much of it there is. The envelopes rise fast and fall slowly, so
 a hit inflates the core and it subsides rather than flickering.
 
+**The core hangs in a tunnel.** Behind it, where a ray misses the rock,
+is the classic polar corridor: a point's angle about the centre is the
+coordinate along the wall and the **reciprocal of its radius** is the
+coordinate into the screen, which is what a perspective divide does — so
+the corridor recedes correctly without a camera, a matrix or a single
+triangle. Rings cross it, lines run away down it, the flight carries it
+past and every bass onset throws a ring of light down it that is gone
+inside a fifth of a second.
+
+**And it bends.** The bend is what makes the flight read as movement
+rather than as a texture scrolling, and it only works if the
+displacement **depends on depth**: shifting the whole screen by a
+constant moves the vanishing point, which reads as the camera looking
+sideways down a straight pipe. So each pixel moves by where the centre
+line is at *its own* depth. A world offset at distance d projects
+divided by d, and r is K / d, so dividing by d is multiplying by r —
+that is the entire correction. The camera's own place on the curve is
+subtracted from it, because it travels down the same line; without that
+the bend washes out as the flight goes on.
+
+That is a chicken and egg — the radius says how far ahead a pixel is,
+and how far ahead it is says how much the path has moved it — so it is
+solved by **fixed-point iteration**, six passes — a number that was
+measured, not chosen. At the bend this ships with, two passes leave
+half the frame unresolved and four leave 1.6%; six leaves 1.0%, and
+ten, twenty and forty leave 0.7, 0.6 and 0.55. That floor is a core
+near the vanishing point where the map is genuinely expansive rather
+than slow, so no iteration count clears it.
+
+That core sets the ceiling on Bend, and it is worth knowing before
+turning it up: **the visible swing of the corridor and the radius of
+the unresolved core are the same quantity**, both proportional to
+amplitude × frequency × |Bend|, so more bend always drags the core out
+with it — at 1 it reaches r = 0.3 and at 4 the edge of the frame. The
+sign only mirrors the curve, so a corridor that leans left costs
+exactly what the same one leaning right does. Raising the amplitude while lowering the frequency
+is not a way out: it leaves the swing exactly where it was, because
+what shows is how much the path changes across the *visible* depth,
+not how big it is.
+
+Three things then do most of the work, and the first is the largest by
+far: the camera **banks** into a bend, in proportion to the path's
+sideways derivative, the way an aircraft does; the wall carries rings
+and lengthwise lines so there is something to *pass*, since a smooth
+wall has no speed; and **exponential fog** on the distance ahead gives
+the corridor a scale. The fog is on distance rather than on position
+along the tunnel, which is what makes it black out the vanishing point
+by itself — so there is no vignette here and no need for one.
+
+The audio steers it. There is no stereo to take a left-right difference
+from, since the preview is summed into one analyser, so the corridor is
+steered by *where the energy sits*: the spectral centroid swings it
+side to side, the balance of bass against treble lifts it, the total
+low end adds to the flight speed, and every onset throws an extra roll
+into the bank. The steer is smoothed, and it is faded in over depth so
+it never bends what is right next to the camera — that would be a jerk,
+not a turn. The flight is **integrated** rather than taken as time
+times speed: the speed moves with the music, and multiplying a changing
+speed by absolute time jumps the whole corridor every time it
+changes.
+
+It is all drawn in **view space**, on the marcher's own quad, and that is
+the right frame precisely because a tunnel is symmetric about the axis
+you look down: no amount of orbiting can slide it, so the corridor
+always points at the camera and only the rock inside it turns. (A box
+would have had to be a real box in world space, since corners have to be
+somewhere.)
+
+Both families of line are measured back into **screen distance** before
+they are given a width — the rings by dividing out `d(depth)/dr`, the
+lengthwise lines by the arc between them — which is what stops the
+rings collapsing into aliased mush as they crowd toward the vanishing
+point, and avoids `fwidth`, which needs an extension in GLSL ES 1.00.
+The centre goes dark for the same reason: it is where the reciprocal
+runs away, and darkening it is both the vanishing point and the cheapest
+antialiasing there is.
+
+The flashes are **onsets, not levels** — the low end jumping above its
+own rolling mean — with a floor and a minimum gap, since a level test
+would fire sixty rings a second. Each is stored as a *depth* rather than
+a radius, so the scroll carries it outward on its own; it is given a
+rush of its own on top, because at any flight speed anyone would want
+the scroll moves it about a hundredth of the screen in a fifth of a
+second. Tunnel and Tunnel flash are knobs like everything else here, so
+the walk moves them too, and Tunnel at zero leaves the core on plain
+black.
+
 Two things about the marcher matter if it is ever changed. It is **not a
 true distance field**: displacing a sphere's radius by noise breaks the
 Lipschitz bound a real SDF guarantees, so a full step can overshoot
@@ -998,8 +1119,14 @@ fewer pixels, which on an image this soft is nearly invisible. The
 silhouette bloom is free: the marcher already tracks how close each
 missed ray passed.
 
-Its knobs wander like the curl field's, on the same one-second walk run
-from the scene, for the same reason — the dashboard mounts no panel.
+Its knobs can wander like the curl field's, on the same one-second walk
+run from the scene, but the player asks its own core to hold still
+(`drift={false}`): these values are a tuned picture rather than a
+starting point, and two percent a second leaves them inside a minute.
+It is a prop rather than the store's default, so a core mounted
+anywhere else still breathes — and the curl field beside it keeps its
+walk either way, because there the values are a region to explore and
+not something someone chose.
 
 That overlay, the core's, the curl field's and the background water's
 (§3.1) are all the same component, `TuningPanel` — a title, a table of

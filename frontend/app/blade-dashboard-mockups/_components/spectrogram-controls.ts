@@ -5,17 +5,16 @@ import type { TuningSpec } from "@/app/_ui/TuningPanel";
 /**
  * Live tuning for the spectrogram visualizer (DESIGN.md §6.16).
  *
- * A module-level store rather than React state, for the reason
- * `blade-water-controls.ts` is one: the thing that needs these values is
- * a three.js scene inside a `useEffect`, not a component tree, and the
- * scene must not be torn down and rebuilt to change a number. Strictly
- * one-way — the panel writes, the scene reads and subscribes — so there
- * is no render loop to worry about.
+ * This is a module-level store and not React state, for the same reason
+ * as `blade-water-controls.ts`: a three.js scene in a `useEffect` reads
+ * these values, not a component tree, and a change to a number must not
+ * rebuild the scene. The flow is one-way, the panel writes and the
+ * scene reads and subscribes, thus a render loop is not possible.
  *
- * Angles rather than a camera position, because "azimuth 20 degrees" is
- * something you can reason about and `(-7, 9, 20)` is not. The
- * projection is orthographic, so distance from the target changes
- * nothing and is not exposed.
+ * The store holds angles and not a camera position, because a user can
+ * reason about "azimuth 20 degrees" and cannot reason about
+ * `(-7, 9, 20)`. The projection is orthographic, thus the distance to
+ * the target changes nothing and the panel does not show it.
  */
 
 export const SPECTROGRAM_SPECS = {
@@ -99,7 +98,7 @@ export const SPECTROGRAM_SPECS = {
 export type SpectrogramKey = keyof typeof SPECTROGRAM_SPECS;
 export type SpectrogramState = Record<SpectrogramKey, number>;
 
-/** Panel order: the five that change the look most, then the rest. */
+/** The panel order: the five knobs with the largest effect first, then the others. */
 export const SPECTROGRAM_KEYS = Object.keys(SPECTROGRAM_SPECS) as SpectrogramKey[];
 
 export const SPECTROGRAM_DEFAULTS: SpectrogramState = {
@@ -118,7 +117,7 @@ export const SPECTROGRAM_DEFAULTS: SpectrogramState = {
 let state: SpectrogramState = { ...SPECTROGRAM_DEFAULTS };
 const listeners = new Set<(state: SpectrogramState) => void>();
 
-/** The values as they stand, for a scene that has just been built. */
+/** The current values, for a scene that starts now. */
 export function spectrogramState(): Readonly<SpectrogramState> {
   return state;
 }
@@ -134,7 +133,7 @@ export function resetSpectrogramControls() {
   for (const listener of listeners) listener(state);
 }
 
-/** Returns an unsubscribe. The scene calls this on mount. */
+/** Subscribes and returns the unsubscribe function. The scene calls it on mount. */
 export function subscribeSpectrogram(
   listener: (state: SpectrogramState) => void,
 ): () => void {

@@ -24,47 +24,51 @@ import { ScrollColumn } from "./ScrollColumn";
 import { playSound } from "./sounds";
 
 /**
- * The "Audiobooks" browse screen the Music screen's Hard Drive row opens
- * (DESIGN.md §6.12) — Media blade → Music → here. Same full-screen
- * structure as the Games Library and My Games (§5.4): the section
- * gradient with the unclipped wave sheen, darker header and legend bands,
- * the content raised as one slab with `CONTENT_BAND_SHADOW`, 12% side
- * padding — only painted in the Media blade's sky blue, with its text and
- * rule tints (`MEDIA_THEME`) set on the root since full-screen surfaces
- * portal outside the canvas and would otherwise inherit the games green.
+ * The Audiobooks browse screen, which the Hard Drive row of the Music
+ * screen opens (DESIGN.md §6.12). The path is: Media blade, Music, this
+ * screen. It has the same full-screen structure as the Games Library and
+ * My Games (§5.4): the section gradient with the wave sheen and no clip,
+ * darker header and legend bands, the content as one raised slab with
+ * `CONTENT_BAND_SHADOW`, and 12% side padding. It is in the sky blue of
+ * the Media blade, and it sets the text and rule tints of that blade
+ * (`MEDIA_THEME`) on its root. A full-screen surface portals outside the
+ * canvas, thus without those tints it would take the games green.
  *
- * Left column: the console's browse categories — Albums, Artists, Saved
- * Playlists, Songs, Genres — as the blade's divider-separated rows (§6.2
- * `row`) with the cursor chevron, since each one has a list to its right.
- * Right column: the highlighted category's entries as compact raised
- * buttons (§6.2 `button`, `compact`) in a scrolling column with the "1 of
- * N" counter and the more-below arrow at its foot. Hover or focus on a
- * category swaps the list, as the console did; Select or Right moves the
- * cursor into the list, Left from the list returns to the category.
+ * The left column is the browse categories of the console, which are
+ * Albums, Artists, Saved Playlists, Songs and Genres. They are the
+ * divider-separated rows of the blade (§6.2 `row`) with the cursor
+ * chevron, because each one has a list at its right. The right column is
+ * the entries of the highlighted category, as compact raised buttons
+ * (§6.2 `button`, `compact`), in a scrolling column with the "1 of N"
+ * counter and the more-below arrow at its foot. A hover or a focus on a
+ * category changes the list, as on the console. Select or Right moves
+ * the cursor into the list, and Left from the list returns to the
+ * category.
  *
- * Two highlight providers nest: the outer one follows the category rows
- * and picks the list, the inner one follows the list rows and drives the
- * counter, so hovering an album never changes which category is open.
+ * Two highlight providers nest. The outer provider follows the category
+ * rows and selects the list. The inner provider follows the list rows
+ * and drives the counter. Thus a hover on an album does not change the
+ * open category.
  *
- * Icons: the console's category glyphs are full-colour bitmaps, so per
- * §6.2 they are not redrawn — the rows show the neutral square until the
- * images are dropped in as `icon: <Image src="/assets/…" />`. Albums reuses
- * the disc-and-note `music` glyph the set already has.
+ * Icons: the category glyphs of the console are full-colour bitmaps,
+ * thus §6.2 does not redraw them. The rows show the neutral square until
+ * someone adds the images as `icon: <Image src="/assets/..." />`. Albums
+ * uses the disc-and-note `music` glyph that the set already has.
  *
- * The album rows themselves carry their sleeve, linked from Apple's
- * artwork CDN (`album-details.ts`, `scripts/fetch-apple-music.mts`). An
- * album with no cover keeps the neutral square, so the shelf reads the
- * same whether or not a sleeve was found.
+ * Each album row carries its sleeve, linked from the artwork CDN of
+ * Apple (`album-details.ts`, `scripts/fetch-apple-music.mts`). An album
+ * with no cover keeps the neutral square, thus the list looks the same
+ * with and without a sleeve.
  *
- * Legend, as on the console: Y Play All Music, X unbound; Back B, A unbound.
- * Back is owned by the row that opened this screen (`MenuListItem` +
- * `useBackKey`), so this takes no props.
+ * The legend is the legend of the console: Y Play All Music, X unbound,
+ * Back B and A unbound. The row that opened this screen owns Back
+ * (`MenuListItem` with `useBackKey`), thus this screen takes no props.
  */
 interface CategoryEntry {
   label: string;
-  /** Album sleeve; the other categories are text only, as on the console. */
+  /** The album sleeve. The other categories are text only, as on the console. */
   icon?: React.ReactNode;
-  /** Full-screen destination, for the album rows (§6.14). */
+  /** The full-screen destination of an album row (§6.14). */
   screen?: React.ComponentType<MenuScreenProps>;
 }
 
@@ -74,27 +78,28 @@ interface Category {
   entries: CategoryEntry[];
 }
 
-/** Text-only entries, for every category but Albums. */
+/** Entries with text only, for each category but Albums. */
 const plain = (...labels: string[]): CategoryEntry[] =>
   labels.map((label) => ({ label }));
 
 /**
- * One album's sleeve, at the 24 px the neutral square it replaces
- * occupies — `MenuListItem` only oversizes `svg` glyphs, so a bitmap sits
- * in the icon box as-is.
+ * The sleeve of one album, at the 24 px of the neutral square that it
+ * replaces. `MenuListItem` makes only an `svg` glyph larger, thus a
+ * bitmap keeps its size in the icon box.
  *
- * A row whose file is missing falls back to that same neutral square
- * rather than a broken image, the way the Achievements screen reacts to
- * art that will not load (§6.10). It does *not* drop the row: there the
- * art is the item, here it only illustrates a title that stands on its
- * own.
+ * A row with a missing file falls back to that neutral square and does
+ * not show a broken image, as the Achievements screen does with art that
+ * does not load (§6.10). This row stays in the list: on that screen the
+ * art is the item, and here it only illustrates a title that is
+ * complete without it.
  */
-/** Box the sleeve sits in, matching the neutral square's `h-6 w-6`. */
+/** The box of the sleeve. It is the same `h-6 w-6` as the neutral square. */
 const ART_PX = 24;
 
 function AlbumArt({ album }: { album: Album }) {
   const [failed, setFailed] = useState(false);
-  // Apple's CDN resizes from the path, so ask for what we display.
+  // The CDN of Apple resizes from the path, thus ask for the size that
+  // the screen shows.
   const src = albumArtworkUrl(album, ART_PX * 4);
   if (!src || failed) {
     return (
@@ -107,10 +112,10 @@ function AlbumArt({ album }: { album: Album }) {
   return (
     <Image
       src={src}
-      // Decorative: the row's own label already names the album.
+      // The image is decoration: the label of the row names the album.
       alt=""
-      // Twice the box, so it is crisp on a retina panel without asking
-      // the optimizer for a variant ten times bigger than it can show.
+      // Two times the box, thus the image is sharp on a retina panel.
+      // A larger variant would waste the work of the optimizer.
       width={ART_PX * 2}
       height={ART_PX * 2}
       onError={() => setFailed(true)}
@@ -120,18 +125,19 @@ function AlbumArt({ album }: { album: Album }) {
 }
 
 /**
- * Every album row opens its own album screen (§6.14). The screen takes
- * the album as an argument, so it cannot be referenced by a `ScreenKey`
- * the way the fixed destinations are — each row carries a component bound
- * to its album instead. Built once at module scope so those component
- * types are stable and opening a screen does not remount it.
+ * Each album row opens its own album screen (§6.14). The screen takes
+ * the album as an argument, thus a `ScreenKey` cannot name it, as it
+ * names the fixed destinations. Each row carries a component that is
+ * bound to its album. The code builds these components one time at
+ * module scope, thus the component types are stable and an open does not
+ * remount a screen.
  */
 const ALBUM_ENTRIES: CategoryEntry[] = ALBUMS.map((album) => {
-  // Annotated so `displayName` is assignable: a bare arrow has no such
-  // property, only a FunctionComponent does. `AlbumScreen` is referenced
-  // from inside the body, not at module-evaluation time, which keeps the
-  // import cycle through `screens.tsx` harmless the same way
-  // `resolveScreen` does.
+  // The type annotation makes `displayName` assignable: a plain arrow
+  // function has no such property and a FunctionComponent has one. The
+  // body reads `AlbumScreen`, and the module evaluation does not. Thus
+  // the import cycle through `screens.tsx` is safe, as with
+  // `resolveScreen`.
   const Screen: React.ComponentType<MenuScreenProps> = () => (
     <AlbumScreen album={album} />
   );
@@ -194,7 +200,7 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-/** Same radial blue as the Media blade canvas (DESIGN.md §2.1). */
+/** The same radial blue as the canvas of the Media blade (DESIGN.md §2.1). */
 const BACKGROUND = gradientCss(MEDIA_GRADIENT);
 
 export function AudiobooksScreen() {
@@ -219,7 +225,7 @@ export function AudiobooksScreen() {
     >
       <BladeScreenSurface gradient={MEDIA_GRADIENT} />
 
-      {/* Header and legend sit at z-0, beneath the content band's shadow. */}
+      {/* The header and the legend are at z-0, below the shadow of the content band. */}
       <BladeChromeBand
         edge="top"
         className="relative z-0 px-[12%] pt-8 pb-5 md:pt-10 md:pb-6"
@@ -254,13 +260,15 @@ export function AudiobooksScreen() {
 }
 
 /**
- * The two columns. Lives inside the outer `LibraryMenuProvider` so it can
- * read the highlighted category and mount the matching list, keyed by
- * category so a switch remounts the list with the cursor context reset.
+ * The two columns. This component is inside the outer
+ * `LibraryMenuProvider`, thus it can read the highlighted category and
+ * mount the correct list. The list is keyed by the category, thus a
+ * change of category remounts the list and resets the cursor context.
  *
- * Left/Right hand the cursor between the columns: Right from a category
- * lands on the list's first row, Left from any list row returns to the
- * category that owns it. Both claim the key so `KeyboardNav` leaves it.
+ * Left and Right move the cursor between the columns. Right from a
+ * category goes to the first row of the list, and Left from a list row
+ * returns to the category that owns the list. Both columns take the key,
+ * thus `KeyboardNav` does not use it.
  */
 function Browser() {
   const highlighted = useHighlightedItem();
@@ -300,8 +308,8 @@ function Browser() {
     label: entry.label,
     icon: entry.icon,
     chevron: true,
-    // Select commits the category and moves the cursor into its list
-    // (`MenuListItem` plays Select A).
+    // Select confirms the category and moves the cursor into its list.
+    // `MenuListItem` plays Select A.
     onSelect: focusFirstEntry,
   }));
 
@@ -309,7 +317,7 @@ function Browser() {
     label: entry.label,
     icon: entry.icon,
     screen: entry.screen,
-    // Categories with no destination yet just play Select A, as the
+    // A category with no destination plays Select A only, as the
     // Achievements grid did before its detail screen existed.
     onSelect: () => {},
   }));
@@ -340,7 +348,7 @@ function Browser() {
   );
 }
 
-/** "1 of 273" at the foot of the list, following the cursor through the inner provider. */
+/** The "1 of 273" counter at the foot of the list. It follows the cursor through the inner provider. */
 function EntryCounter({ entries }: { entries: CategoryEntry[] }) {
   const highlighted = useHighlightedItem();
   const index = entries.findIndex((entry) => entry.label === highlighted?.label);

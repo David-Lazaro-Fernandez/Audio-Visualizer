@@ -6,56 +6,57 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { SlidingSpectrogram } from "./song-spectrogram";
 
 /**
- * A song's spectrogram as a cloud of particles you can walk around.
+ * The spectrogram of a song as a cloud of particles that a user can
+ * walk around.
  *
- * Three axes, one per dimension of the data: **x is time** across the
- * whole interval analysed, **z is frequency** (log-spaced, bass nearest),
- * and **y is level** — so a particle's height *is* how loud that band was
- * at that moment. The result is a landscape: a bass line is a ridge along
- * the front, a hi-hat pattern a row of spikes at the back, a drop a cliff
- * across every band at once.
+ * There are three axes, one for each dimension of the data. X is the
+ * time across the full analysed interval. Z is the frequency, log-spaced
+ * with the bass nearest. Y is the level, thus the height of a particle
+ * is the loudness of that band at that moment. The result is a
+ * landscape: a bass line is a ridge at the front, a hi-hat pattern is a
+ * row of spikes at the back, and a drop is a cliff across each band.
  *
- * Points rather than a surface mesh, which is what the page is named
- * for and also what the data is: a spectrogram is a grid of discrete
- * measurements, and joining them into a skin implies a continuity
- * between neighbouring cells that the transform never measured.
+ * The cloud uses points and not a surface mesh. This is the subject of
+ * the page and also the form of the data: a spectrogram is a grid of
+ * discrete measurements. A skin across them would show a continuity
+ * between adjacent cells that the transform did not measure.
  *
- * The cloud **follows playback**: the window slides with what is being
- * heard, so the newest slice is always the moment you are hearing and
- * the cloud scrolls through the song. That edge is lit, so "now" reads
- * without a separate marker.
+ * The cloud follows the playback. The window slides with the audio that
+ * the user hears, thus the newest slice is always the current moment and
+ * the cloud scrolls through the song. That edge is lit, thus the current
+ * moment is visible with no separate marker.
  *
- * Because the window slides, the point count is fixed at every cell of
- * the grid and quiet cells are hidden by the shader rather than left out
- * of the buffer — dropping them would mean reallocating the geometry
- * every frame as the loud cells moved. Most of the grid is near silence,
- * so hiding rather than drawing it is what keeps the shape above legible
- * instead of sitting on a dark carpet.
+ * The window slides, thus the point count stays the same at each cell of
+ * the grid, and the shader hides the quiet cells instead of the code
+ * removing them from the buffer. To remove them would reallocate the
+ * geometry at each frame as the loud cells move. Most of the grid is
+ * almost silent, thus a hidden cell keeps the shape above readable and
+ * does not put it on a dark carpet.
  *
- * Keep the GLSL ASCII-only: WebGL rejects source containing characters
- * outside the GLSL ES set, comments included, and reports it before the
- * compiler runs.
+ * Use only ASCII characters in the GLSL. WebGL rejects source that
+ * contains characters outside the GLSL ES set, comments included, and it
+ * rejects the source before the compiler runs.
  */
 
-/** The box the cloud is drawn in, in world units. */
+/** The box that holds the cloud, in world units. */
 const SPAN_X = 44;
 const SPAN_Z = 18;
 const HEIGHT = 11;
 
-/** Cells quieter than this are not drawn at all. */
+/** The shader does not draw a cell with a level below this value. */
 const FLOOR = 0.07;
 
 const VERTEX = /* glsl */ `
 attribute float aLevel;
 
 uniform float uSize;
-uniform float uPlayhead;   // world x of the lit "now" edge
-uniform float uFloor;      // cells quieter than this are not drawn
+uniform float uPlayhead;   // world x of the lit edge that shows "now"
+uniform float uFloor;      // the shader hides a cell below this level
 
 varying vec3 vColor;
 varying float vFade;
 
-/** The level scale shared with the dashboard's visualizers. */
+/** The level scale that the visualizers of the dashboard also use. */
 vec3 ramp(float t) {
   vec3 blue   = vec3(0.298, 0.780, 1.000);
   vec3 violet = vec3(0.706, 0.361, 1.000);
@@ -70,9 +71,9 @@ void main() {
   vec4 viewPos = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * viewPos;
 
-  // Near-silent cells are hidden here rather than left out of the
-  // buffer: the window slides, so which cells are loud changes every
-  // few milliseconds and the geometry must not be reallocated for it.
+  // The shader hides an almost silent cell. The code does not remove it
+  // from the buffer, because the window slides: the loud cells change
+  // each few milliseconds and the geometry must stay the same.
   if (aLevel < uFloor) {
     gl_PointSize = 0.0;
     vColor = vec3(0.0);
@@ -80,12 +81,12 @@ void main() {
     return;
   }
 
-  // Perspective-correct size, plus a floor so distant quiet cells stay
-  // visible as dust rather than vanishing.
+  // A perspective-correct size, with a minimum. Thus a distant quiet
+  // cell stays visible as dust and does not disappear.
   gl_PointSize = uSize * (0.45 + aLevel) * (320.0 / max(1.0, -viewPos.z));
 
-  // A band of brightness follows the playhead, so you can see where in
-  // the song you are without a separate marker to read.
+  // A band of brightness follows the playhead, thus the position in the
+  // song is visible with no separate marker.
   float near = 1.0 - smoothstep(0.0, 1.4, abs(position.x - uPlayhead));
   vColor = ramp(aLevel) * (0.35 + 0.65 * aLevel) * (1.0 + 2.2 * near);
   vFade = 0.35 + 0.65 * aLevel;
@@ -97,7 +98,7 @@ varying vec3 vColor;
 varying float vFade;
 
 void main() {
-  // Round, soft-edged points; a square particle reads as a pixel bug.
+  // Round points with soft edges. A square particle looks like a bug.
   float d = length(gl_PointCoord - vec2(0.5));
   float alpha = (1.0 - smoothstep(0.34, 0.5, d)) * vFade;
   if (alpha <= 0.01) discard;
@@ -112,9 +113,9 @@ export function ParticleField({
   className,
 }: {
   analyser: SlidingSpectrogram;
-  /** Playback position in seconds, mutated in place, never state. */
+  /** Playback position in seconds. It is mutated in place, not state. */
   timeRef: { current: number };
-  /** Whether the window should chase playback right now. */
+  /** Whether the window must follow the playback now. */
   followRef: { current: boolean };
   className?: string;
 }) {
@@ -128,7 +129,7 @@ export function ParticleField({
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     } catch {
-      return; // No WebGL2.
+      return; // There is no WebGL2.
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x05040a, 1);
@@ -142,9 +143,10 @@ export function ParticleField({
     const positions = new Float32Array(count * 3);
     const strengths = new Float32Array(count);
 
-    // x and z never move: a cell's place on the time and frequency axes
-    // is fixed, and only its height and level change as the window
-    // slides. So they are written once.
+    // x and z do not move. The position of a cell on the time axis and
+    // on the frequency axis is constant, and only its height and its
+    // level change as the window slides. Thus the code writes x and z one
+    // time.
     for (let age = 0; age < frames; age++) {
       const x = (1 - age / Math.max(1, frames - 1) - 0.5) * SPAN_X;
       for (let band = 0; band < bands; band++) {
@@ -161,10 +163,10 @@ export function ParticleField({
     geometry.setAttribute("aLevel", levelAttribute);
 
     /**
-     * Reads the ring into the buffers, oldest slice at the back.
+     * Reads the ring into the buffers, with the oldest slice at the back.
      *
-     * Only y and the level change, so the x/z written above are left
-     * alone — a third of the writes saved on every frame of playback.
+     * Only y and the level change, thus the x and z written above stay.
+     * This removes a third of the writes at each frame of the playback.
      */
     const refresh = () => {
       const { levels, head } = analyser;
@@ -184,8 +186,8 @@ export function ParticleField({
 
     const uniforms = {
       uSize: { value: 2.6 },
-      // The newest slice is "now", so the lit edge is simply the front of
-      // the cloud. There is no separate playhead to place.
+      // The newest slice is the current moment, thus the lit edge is the
+      // front of the cloud. There is no separate playhead to position.
       uPlayhead: { value: SPAN_X / 2 },
       uFloor: { value: FLOOR },
     };
@@ -203,8 +205,8 @@ export function ParticleField({
     const scene = new THREE.Scene();
     scene.add(points);
 
-    // A faint floor grid, so the time and frequency axes are readable
-    // even where the cloud is empty.
+    // A faint floor grid, thus the time axis and the frequency axis stay
+    // readable where the cloud is empty.
     const grid = new THREE.GridHelper(SPAN_X, 24, 0x2a3355, 0x161a2e);
     grid.scale.z = SPAN_Z / SPAN_X;
     scene.add(grid);
@@ -237,10 +239,10 @@ export function ParticleField({
     const tick = () => {
       frame = requestAnimationFrame(tick);
       if (followRef.current) analyser.advanceTo(timeRef.current);
-      // Only touch the buffers when the levels actually changed. At 60 fps
-      // there are frames between slices, and a scrub while paused can
-      // land on the same ring index it was already on — which is why this
-      // watches the revision and not the head.
+      // Write the buffers only when the levels changed. At 60 fps there
+      // are frames between two slices, and a scrub during a pause can end
+      // on the same ring index. Thus this code reads the revision and not
+      // the head.
       if (analyser.version !== seen) {
         seen = analyser.version;
         refresh();
@@ -261,7 +263,7 @@ export function ParticleField({
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-    // Rebuilt only for a different song; the refs are stable.
+    // Rebuilt only for another song. The refs are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyser]);
 

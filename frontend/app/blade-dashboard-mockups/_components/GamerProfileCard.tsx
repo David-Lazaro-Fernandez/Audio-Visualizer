@@ -6,9 +6,9 @@ import type { GamerProfile } from "./profile";
 import { RepStars } from "./RepStars";
 
 /**
- * One label/value row on the profile card. Values are usually numbers
- * (set in bold, DESIGN.md §4); a node (the Rep stars) or a word ("Pro")
- * stays regular weight.
+ * One row of a label and a value on the profile card. A value is usually
+ * a number, in bold (DESIGN.md §4). A node, such as the Rep stars, or a
+ * word, such as "Pro", stays at the regular weight.
  */
 export interface ProfileStat {
   label: React.ReactNode;
@@ -21,7 +21,7 @@ const GAMERSCORE_LABEL = (
   </>
 );
 
-/** The Games blade's rows (DESIGN.md §6.3): Games, Gamerscore, Achievements. */
+/** The rows of the Games blade (DESIGN.md §6.3): Games, Gamerscore and Achievements. */
 export function gamerStats(profile: GamerProfile): ProfileStat[] {
   return [
     { label: "Games", value: profile.games },
@@ -30,7 +30,7 @@ export function gamerStats(profile: GamerProfile): ProfileStat[] {
   ];
 }
 
-/** The Xbox LIVE blade's rows (DESIGN.md §6.3): Rep, Gamerscore, Zone. */
+/** The rows of the Xbox LIVE blade (DESIGN.md §6.3): Rep, Gamerscore and Zone. */
 export function liveStats(profile: GamerProfile): ProfileStat[] {
   return [
     { label: "Rep", value: <RepStars filled={profile.rep} /> },
@@ -40,15 +40,16 @@ export function liveStats(profile: GamerProfile): ProfileStat[] {
 }
 
 /**
- * DESIGN.md §6.3 Gamer profile card: "appears identically wherever
- * identity matters" — gamertag header, gamerpic, then three stat rows, all
- * drawn from the one shared `GamerProfile` (`profile.ts`): the name, the
- * default picture and the online silhouette in the header come from the
- * profile itself, so every card shows the same person. Only the rows
- * differ per blade: Games / Gamerscore / Achievements (`gamerStats`) or
- * Rep / Gamerscore / Zone (`liveStats`). The signed-out counterpart is a
- * separate, simpler card (a "Sign In — N Profiles Found" slot), not a
- * state of this one.
+ * The gamer profile card of DESIGN.md §6.3. It looks the same at each
+ * position where the identity is necessary: a gamertag header, the gamer
+ * picture and then three stat rows. All of it comes from the one shared
+ * `GamerProfile` (`profile.ts`). The name, the default picture and the
+ * online silhouette in the header come from the profile, thus each card
+ * shows the same person. Only the rows change with the blade: Games,
+ * Gamerscore and Achievements (`gamerStats`), or Rep, Gamerscore and
+ * Zone (`liveStats`). The signed-out card is a separate and more simple
+ * card, a "Sign In - N Profiles Found" slot, and not a state of this
+ * card.
  */
 export function GamerProfileCard({
   profile,
@@ -68,8 +69,9 @@ export function GamerProfileCard({
     <div
       className="w-full overflow-hidden rounded-[12px]"
       style={{
-        // Transparent card: the blade's section color shows through. The
-        // radial gradient is the soft "shine" in the middle of the panel.
+        // The card is transparent, thus the section colour of the blade
+        // shows through. The radial gradient is the soft shine at the
+        // middle of the panel.
         background:
           "radial-gradient(70% 60% at 50% 61%, rgba(255, 255, 255, 0.60), rgba(255, 255, 255, 0) 100%)",
         boxShadow: "rgba(255, 255, 255, 0.35) 0px 15px 14px inset",
@@ -117,9 +119,9 @@ function StatRow({ label, value }: ProfileStat) {
 }
 
 /**
- * The little "gamer" silhouette the 360 draws beside an online profile's
- * gamertag: a head over a shoulders line, drawn as an outline glyph in the
- * header's dark ink.
+ * The small gamer silhouette that the console draws beside the gamertag
+ * of an online profile: a head above a line of shoulders, as an outline
+ * glyph in the dark ink of the header.
  */
 function LiveSilhouette() {
   return (

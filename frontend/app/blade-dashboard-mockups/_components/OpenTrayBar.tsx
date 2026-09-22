@@ -3,20 +3,22 @@
 import { playSound } from "./sounds";
 
 /**
- * DESIGN.md §1 blade anatomy: the wide pill bar anchored near the bottom
- * of the active blade's left column. It's an action, so it's a <button>
- * with a hover/active state rather than inert markup. The eject glyph is
- * a left-pointing triangle + a thin 3px bar (CSS shapes, not an icon font)
- * sitting inside a circle that overlaps the pill's rounded left cap.
+ * The blade anatomy of DESIGN.md §1: the wide pill bar near the bottom
+ * of the left column of the active blade. It is an action, thus it is a
+ * <button> with a hover state and an active state and not inert markup.
+ * The eject glyph is a left-pointing triangle with a thin 3 px bar. Both
+ * are CSS shapes and not an icon font. They are inside a circle that
+ * overlaps the rounded left cap of the pill.
  *
- * The circle is a sibling of the button (it has to sit behind the pill's
- * cap), so hover is tracked on the shared wrapper (`group`): hovering or
- * keyboard-focusing the pill tints both the pill and the circle, and
- * brightens the eject glyph, so the whole control reads as one item.
+ * The circle is a sibling of the button, because it must be behind the
+ * cap of the pill. Thus the shared wrapper tracks the hover (`group`): a
+ * hover or a keyboard focus on the pill tints the pill and the circle
+ * and brightens the eject glyph. Thus the full control reads as one
+ * item.
  *
- * The label and the eject glyph take their tints from the blade's theme
- * variables (DESIGN.md §2.2), so the same bar sits on the green Games
- * blade and the gold Xbox LIVE one.
+ * The label and the eject glyph take their tints from the theme
+ * variables of the blade (DESIGN.md §2.2). Thus the same bar works on
+ * the green Games blade and on the gold Xbox LIVE blade.
  */
 export function OpenTrayBar({
   label,

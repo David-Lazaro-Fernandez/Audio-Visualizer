@@ -13,12 +13,13 @@ const MIN_HEIGHT = 96;
 const MAX_WIDTH = 320;
 
 /**
- * Given the main content container's box and the clicked menu item's box
- * (both viewport-relative, from getBoundingClientRect), work out where a
- * detail box can go without spilling outside the container: first try
- * beside the item (to its right), then below it. Returns null when neither
- * has enough room — the caller should not render a box at all rather than
- * let it overflow.
+ * Finds a position for a detail box that stays inside the container. The
+ * inputs are the box of the main content container and the box of the
+ * selected menu item, both relative to the viewport, from
+ * getBoundingClientRect. The function tries the right side of the item
+ * first, then below the item. It returns null when there is not
+ * sufficient space in either position. The caller must then render no
+ * box, because a box that overflows is not acceptable.
  */
 export function placeMenuBox(
   container: MeasuredRect,

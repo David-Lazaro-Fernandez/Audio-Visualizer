@@ -19,17 +19,17 @@ import {
 } from "./curl-controls";
 
 /**
- * The curl field's tuning overlay.
+ * The tuning overlay of the curl field.
  *
- * The panel **reads** the store as well as writing to it: drift moves
- * the values on its own, and a panel that mirrored only its own writes
- * would show numbers that were no longer true. So the store is the
- * single source of truth and this subscribes to it — the sliders are a
- * view of it rather than a copy.
+ * The panel reads the store and also writes to it. The drift moves the
+ * values without input, and a panel that showed only its own writes
+ * would show values that are no longer true. Thus the store is the one
+ * source of truth and this component subscribes to it. The sliders are a
+ * view of the store and not a copy.
  *
- * It does not *run* the drift, only switches it. The walk belongs to the
- * scene, because the dashboard shows the field with no overlay at all
- * and it still has to breathe there.
+ * The panel does not run the drift. It only switches it. The walk belongs
+ * to the scene, because the dashboard shows the field with no overlay and
+ * the field must still breathe there.
  */
 export function CurlControls() {
   const [values, setValues] = useState<CurlState>(() => ({ ...curlState() }));

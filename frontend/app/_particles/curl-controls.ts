@@ -5,26 +5,27 @@ import type { TuningSpec } from "@/app/_ui/TuningPanel";
 /**
  * Live tuning for the curl-noise flow field.
  *
- * Same one-way store as the other overlays: the panel writes, the scene
- * reads and subscribes, so a slider never tears down the simulation.
+ * It uses the same one-way store as the other overlays: the panel writes,
+ * the scene reads and subscribes. Thus a slider does not tear down the
+ * simulation.
  *
- * Unlike the analytic sphere, these knobs shape a *field* rather than a
- * trajectory, so they take effect on every particle at once — there are
- * no per-particle constants to wait out. Which is also what makes
- * drifting them worth doing: the whole cloud responds, so the field
- * breathes instead of the next few particles behaving differently from
- * the ones already out there.
+ * These knobs shape a field, not a trajectory as the analytic sphere
+ * does, thus they change each particle at the same time and no
+ * per-particle constant delays them. This also makes the drift worth
+ * running: the full cloud answers, thus the field breathes. If it did
+ * not, only the new particles would behave differently from the
+ * particles that are already out there.
  *
- * The minimums are not zero. They are the floors below which the field
- * stops reading as anything — found by tuning, not derived — so they sit
- * on the specs rather than in a comment: the slider cannot go under
- * them and neither can the drift, since the walk clamps and bounces on
- * the same bounds.
+ * The minimums are not zero. They are the values below which the field
+ * shows almost nothing. They were found by tuning, thus they are on the
+ * specs and not in a comment: the slider cannot go below them, and the
+ * drift cannot either, because the walk clamps and bounces on the same
+ * bounds.
  *
- * Each knob carries a `driftScale`, relative to the drift rate, because
- * they do not tolerate wandering equally — the curl strength can swing
- * wide and look alive, where the emission floor lurches the density if
- * it moves much.
+ * Each knob has a `driftScale`, relative to the drift rate, because the
+ * knobs do not accept the same movement. The curl strength can move a
+ * long way and stay attractive, but the emission floor makes the density
+ * jump if it moves much.
  */
 export const CURL_SPECS = {
   radial: {
@@ -140,14 +141,15 @@ let state: CurlState = { ...CURL_DEFAULTS };
 const listeners = new Set<(state: CurlState) => void>();
 
 /**
- * Whether the field wanders on its own. **On by default**, and its own
- * channel rather than one of the knobs above, because it is not a number
- * and does not belong in a `Record<K, number>`.
+ * Whether the field wanders without input. It is on by default. It is a
+ * separate channel and not one of the knobs above, because it is not a
+ * number and does not fit a `Record<K, number>`.
  *
- * It lives in the store, not in the panel, because the panel is not
- * always there: the dashboard hides every tuning overlay (a 10-foot UI
- * has no controls), and drift still has to run inside that visualizer.
- * So the *scene* drives the drift and the panel is only a switch on it.
+ * It is in the store and not in the panel, because the panel is not
+ * always present. The dashboard hides each tuning overlay, because a
+ * 10-foot UI has no controls, and the drift must still run in that
+ * visualizer. Thus the scene drives the drift and the panel is only a
+ * switch on it.
  */
 let drifting = true;
 const driftListeners = new Set<(on: boolean) => void>();

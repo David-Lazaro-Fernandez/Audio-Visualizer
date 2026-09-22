@@ -1,14 +1,16 @@
 /**
- * Call of Duty: Modern Warfare 3 (Xbox 360) achievement list, scraped from
- * xboxachievements.com (via the Wayback Machine snapshot of 2024-02-22, since
- * the live site and image host sit behind a Cloudflare challenge). 76
- * achievements, 1610 Gamerscore in total.
+ * The achievement list of Call of Duty: Modern Warfare 3 on the Xbox
+ * 360, scraped from xboxachievements.com. The source is the Wayback
+ * Machine snapshot of 2024-02-22, because a Cloudflare challenge
+ * protects the live site and the image host. There are 76 achievements
+ * and 1610 Gamerscore in total.
  *
- * `img` is the local copy under `public/assets/achievements/mw3/` (64×64 JPEG,
- * named by the site's achievement slug); `sourceImg` is the original URL it
- * was copied from, kept for provenance. It cannot be hot-linked: the host
- * returns 403 to non-browser requests. `unlocked` is mock: which of these
- * the signed-in gamer has earned.
+ * `img` is the local copy, under `public/assets/achievements/mw3/`, as a
+ * 64x64 JPEG named by the achievement slug of the site. `sourceImg` is
+ * the original URL of the copy, kept as a record. A link to `sourceImg`
+ * does not work, because the host returns 403 to a request that is not
+ * from a browser. `unlocked` is mock data: which achievements the
+ * signed-in gamer has.
  */
 export interface Mw3Achievement {
   img: string;
@@ -16,7 +18,7 @@ export interface Mw3Achievement {
   name: string;
   description: string;
   gamerPoints: number;
-  /** Whether the signed-in gamer has earned it (mock). */
+  /** Whether the signed-in gamer earned it. This is mock data. */
   unlocked: boolean;
 }
 

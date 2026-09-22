@@ -5,9 +5,10 @@ import type { BoxPlacement } from "./menu-box-placement";
 import { getPortalRoot } from "./portal";
 
 /**
- * The "box of content" a menu item opens on click (DESIGN.md §5.3
- * master-detail). Positioned in viewport coordinates from `placeMenuBox`,
- * clamped to the space actually available inside the main container.
+ * The box of content that a menu item opens on a click (DESIGN.md §5.3,
+ * master-detail). `placeMenuBox` gives its position in viewport
+ * coordinates, clamped to the space that is available in the main
+ * container.
  */
 export function MenuDetailBox({
   placement,

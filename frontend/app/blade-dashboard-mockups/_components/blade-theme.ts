@@ -1,11 +1,12 @@
 /**
- * DESIGN.md §2.2 Text on section color. Each blade paints its text, rules
- * and small glyphs in tints of its own section color, so the shared
- * components (menu rows, Open Tray, the media slot watermark) read those
- * colors from CSS custom properties instead of literal greens. The section
- * layout sets the games values as defaults on the font wrapper — which
- * also encloses the portal root, so full-screen surfaces stay green — and
- * `BladeCanvas` overrides them with the open blade's theme.
+ * Text on the section colour, DESIGN.md §2.2. Each blade paints its
+ * text, rules and small glyphs in tints of its own section colour. Thus
+ * the shared components, which are the menu rows, the Open Tray and the
+ * watermark of the media slot, read those colours from CSS custom
+ * properties and not from literal greens. The section layout sets the
+ * games values as the defaults on the font wrapper, which also contains
+ * the portal root. Thus a full-screen surface stays green. `BladeCanvas`
+ * then replaces the values with the theme of the open blade.
  */
 export interface BladeTheme {
   /** Primary text on the section color. */
@@ -23,7 +24,7 @@ export interface BladeTheme {
   watermark: string;
 }
 
-/** The games blade, DESIGN.md §2.2 — also the default for anything outside a canvas. */
+/** The games blade, DESIGN.md §2.2. It is also the default outside a canvas. */
 export const GAMES_THEME: BladeTheme = {
   ink: "#17300a",
   inkSoft: "#1f3b0d",
@@ -35,9 +36,10 @@ export const GAMES_THEME: BladeTheme = {
 };
 
 /**
- * The media blade, DESIGN.md §2.2 — sky blue. Rules are lighter than the
- * panel here because the console's blue dividers read as pale lines. Also
- * the theme of the full-screen surfaces the Media blade opens (Audiobooks).
+ * The media blade, DESIGN.md §2.2, in sky blue. The rules are lighter
+ * than the panel, because the blue dividers of the console are pale
+ * lines. The full-screen surfaces that the Media blade opens, such as
+ * Audiobooks, also use this theme.
  */
 export const MEDIA_THEME: BladeTheme = {
   ink: "#0a2240",
@@ -49,7 +51,7 @@ export const MEDIA_THEME: BladeTheme = {
   watermark: "#123a60",
 };
 
-/** The theme as inline-style custom properties (`--blade-ink`, ...). */
+/** The theme as inline-style custom properties: `--blade-ink` and the others. */
 export function themeVars(theme: BladeTheme): React.CSSProperties {
   return {
     "--blade-ink": theme.ink,

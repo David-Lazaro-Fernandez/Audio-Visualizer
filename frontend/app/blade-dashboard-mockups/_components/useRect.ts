@@ -22,9 +22,10 @@ function measure(el: Element): MeasuredRect {
 }
 
 /**
- * Tracks an element's viewport-relative box (via ResizeObserver + scroll/
- * resize listeners) so layout code can react to its real pixel size and
- * position instead of assuming fixed coordinates.
+ * Tracks the box of an element relative to the viewport, with a
+ * ResizeObserver and scroll and resize listeners. Thus the layout code
+ * can use the true pixel size and position and does not assume fixed
+ * coordinates.
  */
 export function useRect<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);

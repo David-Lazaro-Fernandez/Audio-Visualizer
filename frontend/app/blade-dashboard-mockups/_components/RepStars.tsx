@@ -1,10 +1,11 @@
 /**
  * The Xbox LIVE reputation readout on the profile card (DESIGN.md §6.3):
- * five stars, `filled` of them lit. Lit stars share the glossy yellow of
- * the Y button (§2.3, `#CBD527` family) with a darker edge so they sit on
- * the card's white shine; unlit ones are the same shape in the card's
- * neutral gray, since disabled ≠ hidden (§7.2). Plain SVG so it renders on
- * the server and passes into the card as a stat value.
+ * five stars, of which `filled` are lit. A lit star uses the glossy
+ * yellow of the Y button (§2.3, the `#CBD527` family) with a darker
+ * edge, thus it stays visible on the white shine of the card. An unlit
+ * star is the same shape in the neutral gray of the card, because
+ * disabled is not hidden (§7.2). It is plain SVG, thus it renders on the
+ * server and goes into the card as a stat value.
  */
 export function RepStars({
   filled = 5,
@@ -40,7 +41,7 @@ function Star({
   lit: boolean;
   sizePx: number;
 }) {
-  // One gradient per star so the ids stay unique in the document.
+  // One gradient for each star, thus each id stays unique in the document.
   const gradId = `rep-star-${index}-${lit ? "lit" : "dim"}`;
   return (
     <svg

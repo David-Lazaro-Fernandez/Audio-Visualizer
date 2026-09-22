@@ -17,43 +17,45 @@ import {
 import { VISUALIZER_BANDS } from "./visualizer-styles";
 
 /**
- * The water visualizer (DESIGN.md §6.16): the same WebGL wave field the
- * blade background uses (§3.1), with the music dropping the stones.
+ * The water visualizer (DESIGN.md §6.16): the same WebGL wave field
+ * that the blade background uses (§3.1), with the music as the source
+ * of the drops.
  *
- * Nothing about the physics is new here. `ripplePacket` in
- * `app/_water/water-field.ts` is already a damped radial sinusoid under a
- * Gaussian envelope, which is exactly the shape a drop makes; this only
- * decides when and where one lands. `audio-drops.ts` watches the
- * spectrum for onsets and returns the band that hit, and each band maps
- * to three properties of a drop:
+ * There is no new physics here. `ripplePacket` in
+ * `app/_water/water-field.ts` is already a damped radial sinusoid under
+ * a Gaussian envelope, which is the shape that a drop makes. This file
+ * decides only when and where a drop lands. `audio-drops.ts` watches
+ * the spectrum for an onset and returns the band that hit. Each band
+ * sets three properties of a drop:
  *
- * - **where** it lands — bass at the centre, treble at the rim
- * - **how hard** — the band's level becomes the drop's `strength`
- * - **how tight its rings are** — the band's wavenumber, through
- *   `uDropK`, which is why a kick makes a broad slow swell and a cymbal a
- *   fine quick one. Without that per-drop wavenumber every drop would
- *   ring at the same spacing and only differ in size.
+ * - Where it lands: the bass at the centre and the treble at the rim.
+ * - How hard: the level of the band becomes the `strength` of the drop.
+ * - How tight its rings are: the wavenumber of the band, through
+ *   `uDropK`. Thus a kick makes a broad slow swell and a cymbal makes a
+ *   fine quick one. Without a wavenumber for each drop, all the drops
+ *   would ring at the same spacing and only the size would change.
  *
- * Colour comes from the surface's **slope**, not its height: flat water
- * reads black and only the moving rings light up, which is what suits a
- * dark panel. The ramp is the same level scale as the other three
- * visualizers, so switching between them stays coherent.
+ * The colour comes from the slope of the surface and not from its
+ * height. Thus flat water is black and only the moving rings are lit,
+ * which is correct for a dark panel. The ramp is the same level scale
+ * as the other visualizers, thus a change of style stays coherent.
  *
- * With no audio it drops on a timer, so the panel is never dead. Frozen
- * while paused and under `prefers-reduced-motion`.
+ * With no audio the code drops on a timer, thus the panel is never
+ * dead. The picture freezes during a pause and under
+ * `prefers-reduced-motion`.
  */
 
 /**
- * Tuned faster and tighter than the blade background's slow swell
- * (`blade-water.ts`): a visualizer wants to keep up with a beat, not
- * breathe over ten seconds.
+ * Tuned faster and tighter than the slow swell of the blade background
+ * (`blade-water.ts`). A visualizer must follow a beat and must not
+ * breathe across ten seconds.
  */
 const PARAMS: Record<string, number> = {
   uAmp: 0.15,
-  // lambda = 2*pi/uK ~= 2.1 units, about an eighth of the visible depth.
-  // At uK 4 it was 1.57 over a 25-unit-wide view: sixteen rings across
-  // the frame, each ripple ~6% of the panel, which on a tile this size
-  // reads as nothing happening.
+  // lambda = 2*pi/uK, which is near 2.1 units, or an eighth of the
+  // visible depth. At uK 4 it was 1.57 over a view 25 units wide: 16
+  // rings across the frame and each ripple near 6% of the panel. On a
+  // tile of this size that looks like nothing happens.
   uK: 3,
   uSpeed: 7,
   uSigma0: 1.2,
@@ -72,59 +74,60 @@ const PARAMS: Record<string, number> = {
 };
 
 /**
- * The sheet is sized to the view, not the other way round: 32 units
- * covers the camera's ~24 x 17 of visible ground with margin to spare,
- * and no more — a bigger plane at the same segment count just spends
- * resolution off-screen. At 256 segments that is 0.125 units each, or 17
- * per wavelength.
+ * The size of the sheet comes from the view. 32 units covers the visible
+ * ground of the camera, which is near 24 x 17, with a margin, and no
+ * more. A larger plane at the same segment count uses its resolution
+ * off the screen. At 256 segments a segment is 0.125 units, which is 17
+ * segments for each wavelength.
  */
 const PLANE_SIZE = 32;
 const PLANE_SEGMENTS = 256;
 /**
- * How far from the centre the highest band lands. Kept inside the
- * visible ground on every side, so no band ever drops out of frame —
- * the treble bands are the ones at risk, since they sit furthest out.
+ * The distance from the centre where the highest band lands. It stays
+ * inside the visible ground on each side, thus no band lands out of the
+ * frame. The treble bands have the risk, because they are the furthest
+ * out.
  */
 const DROP_SPREAD = 6.5;
-/** Seconds between drops when nothing is playing. */
+/** Seconds between two drops while nothing plays. */
 const IDLE_INTERVAL = 0.5;
-/** Total spectrum energy below which we treat the input as silence. */
+/** Below this total spectrum energy the code treats the input as silence. */
 const SILENCE = 0.01;
 /**
- * How many ripples can be in flight. The whole array, unlike the slow
- * surfaces that share this field — a ripple is visible for about two
- * seconds, so capacity divided by that life is the drop rate this can
- * sustain: roughly twenty a second at 48 slots.
+ * The number of ripples that can be in flight. This visualizer uses the
+ * full array, and the slow surfaces that share this field do not. A
+ * ripple is visible for near two seconds, thus the capacity divided by
+ * that life is the drop rate: near 20 a second with 48 slots.
  */
 const CAPACITY = MAX_DROPS;
-/** Below this remaining amplitude a slot's ripple is over and reusable. */
+/** Below this amplitude the ripple of a slot is complete and the slot is free. */
 const SPENT = 0.03;
 /**
- * A new drop may still take a live slot if it is this much louder than
- * what is in it — a kick should not be refused because a faded tick is
- * still nominally ringing.
+ * A new drop can take a live slot when it is this much louder than the
+ * ripple in that slot. A kick must not be refused because a faded tick
+ * still rings.
  */
 const LOUDER_WINS = 0.35;
 /**
- * Minimum seconds between drops. Without it a single loud bar spends the
- * entire budget in a few frames and then has nothing left, which is the
- * same starvation as having too few slots.
+ * The minimum seconds between two drops. Without it one loud bar uses
+ * the full budget in some frames and then has nothing left. That is the
+ * same problem as too few slots.
  */
 const MIN_GAP = 0.05;
 /**
  * Each band keeps its own direction, spaced by the golden angle.
  *
- * The angle used to be random, which is most of why this read as
- * "drops falling at random": a band landed somewhere different every
- * time it hit, so there was nothing to connect a sound to a place. Fixed
- * directions make the mapping visible — the bass always near the centre,
- * a given band always the same way out — while still filling the disc
- * evenly rather than lining up in spokes.
+ * The angle was random before, which is the main reason that the drops
+ * looked random: a band landed at a different position at each hit,
+ * thus nothing connected a sound to a place. A constant direction makes
+ * the mapping visible. The bass is always near the centre and a given
+ * band is always in the same direction. The golden angle also fills the
+ * disc equally and does not form spokes.
  */
 const GOLDEN_ANGLE = 2.39996;
-/** A little scatter so repeated hits are not pixel-identical. */
+/** A small scatter, thus two hits of one band are not at the same pixel. */
 const ANGLE_JITTER = 0.22;
-/** Slope-to-colour gain; the one knob for "how hot does it look". */
+/** The gain from the slope to the colour. It is the one control of the brightness. */
 const COLOR_GAIN = 3.2;
 
 const FRAGMENT = /* glsl */ `
@@ -138,7 +141,7 @@ varying vec3 vWorldPos;
 varying vec2 vField;
 varying float vHeight;
 
-/** The same level scale the other three visualizers are silkscreened in. */
+/** The same level scale as the other visualizers. */
 vec3 ramp(float t) {
   vec3 blue   = vec3(0.298, 0.780, 1.000);
   vec3 violet = vec3(0.706, 0.361, 1.000);
@@ -154,8 +157,9 @@ void main() {
   vec3 N = worldNormal(s);
   vec3 V = normalize(cameraPosition - vWorldPos);
 
-  // Slope, not height. A ripple's crest and trough both carry energy,
-  // and the still water between rings has to read black on this panel.
+  // The slope and not the height. The crest and the trough of a ripple
+  // both carry energy, and the still water between two rings must be
+  // black on this panel.
   float energy = clamp(length(s.yz) * uColorGain, 0.0, 1.0);
   vec3 base = ramp(energy);
 
@@ -202,15 +206,15 @@ export function WaterVisualizer({
     let lastDropAt = -1;
 
     /**
-     * Finds a slot for a new drop, or -1 to refuse it.
+     * Finds a slot for a new drop, or returns -1 to refuse the drop.
      *
-     * Deliberately not a ring buffer. A ring recycles the oldest slot
-     * whether or not its ripple has finished, so in a busy passage every
-     * wave was cut a tenth of a second after it started and the whole
-     * thing read as the animation being chopped rather than decaying.
-     * This takes an unused or faded slot, and when everything is still
-     * ringing it would rather **miss a hit** than truncate a visible
-     * wave — a dropped onset is invisible, a cut wave is not.
+     * This is not a ring buffer. A ring reuses the oldest slot also
+     * when its ripple is not complete. Thus in a busy passage each wave
+     * was cut a tenth of a second after its start, and the animation
+     * looked cut and not decayed. This function takes an unused slot or
+     * a faded slot. When each slot still rings, it refuses the hit and
+     * does not cut a visible wave: a refused onset is invisible and a
+     * cut wave is not.
      */
     const allocate = (t: number, strength: number) => {
       let quietestSlot = -1;
@@ -253,17 +257,17 @@ export function WaterVisualizer({
       fragmentShader: FRAGMENT,
     });
     const mesh = new THREE.Mesh(geometry, material);
-    // The jet lifts vertices off the plane the bounding sphere was
-    // measured from, so let the GPU decide what is on screen.
+    // The jet moves vertices off the plane that gave the bounding
+    // sphere. Thus let the GPU decide what is on the screen.
     mesh.frustumCulled = false;
     const scene = new THREE.Scene();
     scene.add(mesh);
 
-    // Steep, nearly overhead. The earlier three-quarter view spread the
-    // drops over 30 units of foreshortened depth, so the far half of the
-    // spectrum was squashed into a few pixels at the top of the tile.
-    // Looking down keeps the rings close to circular, fills the panel,
-    // and makes "bass in the middle" something you can actually see.
+    // A steep view, almost from above. The previous three-quarter view
+    // spread the drops across 30 units of foreshortened depth, thus the
+    // far half of the spectrum was some pixels at the top of the tile. A
+    // view from above keeps the rings near circular, fills the panel and
+    // makes the bass at the middle visible.
     const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
     camera.position.set(0, 20, 7);
     camera.lookAt(0, 0, 0);
@@ -282,9 +286,9 @@ export function WaterVisualizer({
       const radius = bandRadius(band, VISUALIZER_BANDS) * DROP_SPREAD;
       const angle = band * GOLDEN_ANGLE + (Math.random() - 0.5) * ANGLE_JITTER;
       drops[slot].set(Math.cos(angle) * radius, Math.sin(angle) * radius, at, strength);
-      // Mutated in place: replacing the array would break three's binding.
+      // Mutated in place. A new array would break the binding of three.
       dropK[slot] = bandWavenumber(band, VISUALIZER_BANDS);
-      // A high-water mark, which is what the shader's loop bound wants.
+      // The maximum used index, which is the loop bound of the shader.
       count = Math.max(count, slot + 1);
       uniforms.uDropCount.value = count;
       lastDropAt = at;
@@ -294,7 +298,7 @@ export function WaterVisualizer({
       const { width, height } = canvas.getBoundingClientRect();
       if (!width || !height) return;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      // updateStyle off: the canvas is sized by its classes.
+      // updateStyle is off: the classes of the canvas give its size.
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -315,10 +319,10 @@ export function WaterVisualizer({
           for (const hit of detect(source, now)) addDrop(hit.band, hit.strength, t);
         }
 
-        // The idle drop is for when there is no audio at all — not for a
-        // frame without an onset. Onsets are sparse by nature, a handful
-        // a second, so keying this on "nothing landed this frame" sprayed
-        // random drops right through every song and buried the real ones.
+        // The idle drop is for a state with no audio, and not for a
+        // frame with no onset. Onsets are rare, some each second. A test
+        // on "no drop at this frame" put random drops through each song
+        // and hid the real drops.
         if (energy <= VISUALIZER_BANDS * SILENCE && t >= nextIdle) {
           addDrop(Math.floor(Math.random() * VISUALIZER_BANDS), 0.6, t);
           nextIdle = t + IDLE_INTERVAL + Math.random() * IDLE_INTERVAL;
@@ -360,7 +364,7 @@ export function WaterVisualizer({
     };
   }, []);
 
-  // `tick` stops the loop when paused, so resuming has to start it again.
+  // `tick` stops the loop at a pause, thus a resume must start it again.
   useEffect(() => {
     if (!paused) startRef.current?.();
   }, [paused]);

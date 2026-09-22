@@ -4,46 +4,48 @@ import { useEffect, useRef } from "react";
 import { VISUALIZER_BANDS, type VisualizerStyle } from "./visualizer-styles";
 
 /**
- * The Music Player's visualizer (DESIGN.md §6.16), drawn as a hardware
- * **LED spectrum analyser**: a matrix of discrete cells lit from the
- * bottom of each column, the way a rack graphic EQ does it, rather than
- * continuous bars. It is deliberately the one surface not in the
- * section's palette — on the console it was a full-bleed graphic effect,
+ * The visualizer of the Music Player (DESIGN.md §6.16), drawn as a
+ * hardware LED spectrum analyser: a matrix of discrete cells lit from
+ * the bottom of each column, as a rack graphic EQ does it, and not as
+ * continuous bars. It is the one surface that does not use the palette
+ * of the section. On the console it was a full-bleed graphic effect and
  * not chrome.
  *
- * Three things are what make it read as hardware rather than as a chart:
+ * Three details make it look like hardware and not like a chart:
  *
- * - **Unlit cells stay visible.** A faint cool tint on every cell means
- *   you see the whole matrix at rest, so a quiet passage reads as a dim
- *   panel instead of an empty box.
- * - **Colour comes from the row, not the column.** Low cells are blue,
- *   the middle violet, the top amber and red — a level scale, so a loud
- *   band is red because it is *high*, not because of its frequency.
- * - **Peak hold.** Each column keeps its loudest recent cell lit and
- *   lets it sink slowly, which is the detached dot floating above the
- *   column on a real unit.
+ * - An unlit cell stays visible. Each cell has a faint cool tint, thus
+ *   the full matrix is visible at rest and a quiet passage is a dim
+ *   panel and not an empty box.
+ * - The colour comes from the row and not from the column. A low cell
+ *   is blue, a middle cell is violet, and a top cell is amber or red.
+ *   This is a level scale, thus a loud band is red because it is high
+ *   and not because of its frequency.
+ * - The peak holds. Each column keeps its loudest recent cell lit and
+ *   lets it fall slowly. This is the separate dot above a column on a
+ *   real unit.
  *
- * Columns run left to right by frequency, bass at the left, as the
- * hardware does. This module draws three of the four styles the bumpers
- * cycle (`visualizer-styles.ts`): the matrix, mirrored bars — what the
- * console itself drew — and a radial ring. The fourth is WebGL and lives
- * in `WaterVisualizer.tsx`.
+ * The columns run left to right by frequency, with the bass at the
+ * left, as the hardware does. This module draws three of the styles
+ * that the bumpers cycle (`visualizer-styles.ts`): the matrix, the
+ * mirrored bars, which is what the console drew, and a radial ring. The
+ * other styles use WebGL and are in their own files.
  *
- * The spectrum arrives as a `Float32Array` mutated in place by
- * `use-audio-spectrum.ts`, never as React state — it moves sixty times a
- * second. With no analyser feeding it, the signal is synthesised so the
- * panel is never a dead rectangle. Frozen while paused and under
- * `prefers-reduced-motion`, where it stops asking for frames entirely.
+ * The spectrum arrives as a `Float32Array` that
+ * `use-audio-spectrum.ts` mutates in place, and never as React state,
+ * because it changes 60 times a second. With no analyser, the code
+ * synthesises the signal, thus the panel is never a dead rectangle. The
+ * picture freezes during a pause and under `prefers-reduced-motion`,
+ * where the loop also stops its request for frames.
  */
 
 
-/** Cells per column. */
+/** The number of cells in a column. */
 const ROWS = 14;
-/** Fraction of a cell's slot left as unlit gap, horizontally / vertically. */
+/** The fraction of the slot of a cell that stays an unlit gap, horizontally and vertically. */
 const GAP_X = 0.22;
 const GAP_Y = 0.26;
 
-/** The level scale, bottom to top, as a real analyser is silkscreened. */
+/** The level scale, bottom to top, as the print on a real analyser. */
 const RAMP: { upTo: number; lit: string; glow: string }[] = [
   { upTo: 0.42, lit: "#4cc7ff", glow: "rgba(76,199,255,.28)" },
   { upTo: 0.68, lit: "#b45cff", glow: "rgba(180,92,255,.28)" },
@@ -51,10 +53,10 @@ const RAMP: { upTo: number; lit: string; glow: string }[] = [
   { upTo: 1.01, lit: "#ff3b30", glow: "rgba(255,59,48,.32)" },
 ];
 
-/** Every cell carries this, so the grid is legible at rest. */
+/** Each cell has this tint, thus the grid is readable at rest. */
 const UNLIT = "rgba(126,148,255,.075)";
 
-/** How fast a held peak sinks, in rows per frame (~0.7 rows/second). */
+/** How fast a held peak falls, in rows for each frame, which is near 0.7 rows a second. */
 const PEAK_FALL = 0.012;
 
 function rampFor(rowFraction: number) {
@@ -63,9 +65,9 @@ function rampFor(rowFraction: number) {
 }
 
 /**
- * A plausible spectrum with no audio behind it: each band sums three
- * detuned sines, and lower bands are louder, the way real music is. The
- * result drifts rather than looping visibly.
+ * A realistic spectrum with no audio. Each band is the sum of three
+ * detuned sines, and a low band is louder, as in real music. The result
+ * drifts and has no visible loop.
  */
 function syntheticSpectrum(time: number, out: Float32Array) {
   for (let i = 0; i < out.length; i++) {
@@ -80,10 +82,10 @@ function syntheticSpectrum(time: number, out: Float32Array) {
 }
 
 /**
- * The LED matrix: discrete cells lit from the bottom of each column, with
- * a held peak floating above it. `lighter` compositing plus a bloom that
- * spills just past each cell buys the panel's glow without an expensive
- * blur, and the gaps stay dark so it still reads as separate cells.
+ * The LED matrix: discrete cells lit from the bottom of each column,
+ * with a held peak above them. The `lighter` composite and a bloom that
+ * goes a short distance past each cell give the glow of the panel with
+ * no expensive blur. The gaps stay dark, thus the cells stay separate.
  */
 function drawLed(
   context: CanvasRenderingContext2D,
@@ -101,7 +103,7 @@ function drawLed(
   const bloomX = insetX * 0.55;
   const bloomY = insetY * 0.55;
 
-  // The unlit matrix, so the grid reads even in silence.
+  // The unlit matrix, thus the grid is visible also in silence.
   context.globalCompositeOperation = "source-over";
   context.fillStyle = UNLIT;
   for (let column = 0; column < VISUALIZER_BANDS; column++) {
@@ -126,7 +128,7 @@ function drawLed(
     const litRows = Math.round(levels[column] * ROWS);
     for (let row = 0; row < litRows && row < ROWS; row++) cell(x, row);
 
-    // The held peak, sitting on its own above the column.
+    // The held peak, alone above the column.
     const peakRow = Math.min(ROWS - 1, Math.round(peaks[column] * ROWS) - 1);
     if (peakRow >= litRows && peakRow >= 0) cell(x, peakRow);
   }
@@ -134,9 +136,9 @@ function drawLed(
 }
 
 /**
- * Mirrored continuous bars, which is what the console's own visualizer
- * did: the spectrum drawn twice about the centre so the picture is
- * symmetric and the bass sits in the middle.
+ * Mirrored continuous bars, as the visualizer of the console drew them:
+ * the spectrum drawn two times about the centre, thus the picture is
+ * symmetric and the bass is at the middle.
  */
 function drawMirror(
   context: CanvasRenderingContext2D,
@@ -170,10 +172,10 @@ function drawMirror(
 }
 
 /**
- * A radial ring: the spectrum wrapped around the centre and mirrored over
- * both halves, so it stays symmetric however the music moves. Spokes grow
- * outward from a fixed inner radius and take their colour from their own
- * level, not their angle.
+ * A radial ring: the spectrum around the centre, mirrored on the two
+ * halves, thus it stays symmetric at each change of the music. A spoke
+ * grows outward from a constant inner radius and takes its colour from
+ * its own level and not from its angle.
  */
 function drawRadial(
   context: CanvasRenderingContext2D,
@@ -193,11 +195,11 @@ function drawRadial(
   const glowWidth = strokeWidth * 2.2;
 
   for (let spoke = 0; spoke < spokes; spoke++) {
-    // Second half counts back down, so the ring is symmetric: spoke 0
-    // and the last spoke both show band 0.
+    // The second half counts back down, thus the ring is symmetric:
+    // spoke 0 and the last spoke both show band 0.
     const band = spoke < VISUALIZER_BANDS ? spoke : spokes - 1 - spoke;
     const level = levels[band] ?? 0;
-    // Start at the top and go clockwise, as a dial would.
+    // Start at the top and continue clockwise, as a dial does.
     const angle = (spoke / spokes) * Math.PI * 2 - Math.PI / 2;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
@@ -229,11 +231,11 @@ export function MusicVisualizer({
   className,
 }: {
   paused?: boolean;
-  /** Which of `VISUALIZER_STYLES` to draw. */
+  /** The style from `VISUALIZER_STYLES` to draw. */
   style?: VisualizerStyle;
-  /** Overall level, 0..1. Scales the whole spectrum. */
+  /** The total level, 0..1. It scales the full spectrum. */
   amplitude?: number;
-  /** Real spectrum, 0..1 per band. Omit to use the synthetic one. */
+  /** The real spectrum, 0..1 for each band. With no value the code uses the synthetic spectrum. */
   spectrum?: Float32Array;
   className?: string;
 }) {
@@ -244,10 +246,11 @@ export function MusicVisualizer({
   amplitudeRef.current = amplitude;
   const spectrumRef = useRef(spectrum);
   spectrumRef.current = spectrum;
-  // Read inside the draw loop, so switching never rebuilds the canvas.
+  // The draw loop reads this, thus a change of style does not rebuild
+  // the canvas.
   const styleRef = useRef(style);
   styleRef.current = style;
-  /** Set by the mount effect so unpausing can restart the loop. */
+  /** The mount effect sets it, thus the end of a pause can start the loop again. */
   const startRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -258,9 +261,9 @@ export function MusicVisualizer({
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const bands = new Float32Array(VISUALIZER_BANDS);
-    /** Smoothed so columns fall away rather than snapping between frames. */
+    /** Smoothed, thus a column falls slowly and does not jump between frames. */
     const levels = new Float32Array(VISUALIZER_BANDS);
-    /** The held peak per column, in the same 0..1 scale. */
+    /** The held peak of each column, in the same 0..1 scale. */
     const peaks = new Float32Array(VISUALIZER_BANDS);
     let frame = 0;
     let frozenAt = -1;
@@ -277,8 +280,8 @@ export function MusicVisualizer({
       const { width, height } = canvas;
       if (!width) return;
 
-      // Reduced motion and pause both hold the picture still, so the
-      // spectrum is sampled once and then reused.
+      // Reduced motion and a pause both hold the picture. Thus the code
+      // samples the spectrum one time and then uses that sample again.
       const still = motion.matches || pausedRef.current;
       const time = still ? (frozenAt < 0 ? (frozenAt = now) : frozenAt) / 1000 : now / 1000;
       if (!still) frozenAt = -1;
@@ -293,7 +296,7 @@ export function MusicVisualizer({
       const gain = Math.max(0, Math.min(1, amplitudeRef.current));
       for (let i = 0; i < VISUALIZER_BANDS; i++) {
         const target = bands[i] * gain;
-        // Rise fast, fall slow: the shape a level meter has.
+        // Rise fast and fall slow, as a level meter does.
         levels[i] += (target - levels[i]) * (target > levels[i] ? 0.55 : 0.12);
         peaks[i] = still
           ? Math.max(peaks[i], levels[i])
@@ -301,7 +304,7 @@ export function MusicVisualizer({
       }
 
       context.clearRect(0, 0, width, height);
-      // All three read the same levels; only the drawing differs.
+      // All three styles read the same levels. Only the drawing is different.
       if (styleRef.current === "mirror") drawMirror(context, width, height, levels);
       else if (styleRef.current === "radial") drawRadial(context, width, height, levels);
       else drawLed(context, width, height, levels, peaks);
@@ -309,8 +312,8 @@ export function MusicVisualizer({
 
     const tick = (now: number) => {
       draw(now);
-      // A still picture needs no further frames; pausing or reducing
-      // motion stops the loop until something changes.
+      // A still picture needs no more frames. A pause or reduced motion
+      // stops the loop until a value changes.
       if (motion.matches || pausedRef.current) {
         frame = 0;
         return;
@@ -343,7 +346,7 @@ export function MusicVisualizer({
     };
   }, []);
 
-  // `tick` stops the loop when paused, so resuming has to start it again.
+  // `tick` stops the loop at a pause, thus a resume must start it again.
   useEffect(() => {
     if (!paused) startRef.current?.();
   }, [paused]);

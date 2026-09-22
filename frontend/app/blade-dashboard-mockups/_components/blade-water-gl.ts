@@ -1,31 +1,31 @@
 /**
- * The blade surface: DESIGN.md §2.1 (section gradient), §3 / §3.1 (the
- * water relief that replaced the concentric sheen and the CSS ripples)
- * and §7.4 (the color crossfade), drawn into one canvas on one WebGL2
- * context.
+ * The blade surface: the section gradient of DESIGN.md §2.1, the water
+ * relief of §3 and §3.1, which replaced the concentric sheen and the CSS
+ * ripples, and the colour crossfade of §7.4. All of it goes into one
+ * canvas on one WebGL2 context.
  *
- * Two passes, back to front:
+ * There are two passes, back to front:
  *
- * 1. A screen-space quad painting the section's radial gradient. This is
- *    the blade's identity and it is still a gradient, not a rendering of
- *    water. Because the stops arrive as numbers (`blade-gradient.ts`) a
- *    blade switch is a real per-stop interpolation rather than CSS's
- *    fade-a-copy-on-top, and the whole thing is dithered, which kills the
- *    banding the CSS version shows across a wide panel.
- * 2. The water sheet, banked 45 degrees, contributing *only relief*: sky
- *    on the crests, deep tint in the troughs, and nothing whatsoever
- *    where the surface is still. So still water is invisible and the
- *    gradient underneath reads exactly as it always did.
+ * 1. A screen-space quad that paints the radial gradient of the section.
+ *    This is the identity of the blade, and it is still a gradient and
+ *    not an image of water. The stops arrive as numbers
+ *    (`blade-gradient.ts`), thus a blade switch interpolates each stop
+ *    and does not fade a copy on top as CSS does. The pass also dithers
+ *    the gradient, which removes the banding that the CSS version shows
+ *    across a wide panel.
+ * 2. The water sheet, banked 45 degrees, which adds only relief: sky on
+ *    the crests, a deep tint in the troughs and nothing where the
+ *    surface is still. Thus still water is invisible and the gradient
+ *    below it does not change.
  *
- * The wave field itself is shared with `/demo`
- * (`@/app/_water/water-field`); only the shading pass below is the
- * dashboard's.
+ * `/demo` shares the wave field (`@/app/_water/water-field`). Only the
+ * shading pass below belongs to the dashboard.
  *
- * Everything works in **sRGB**, with no tone mapping and no
- * `<colorspace_fragment>`: this surface has to match the CSS gradient it
- * falls back to pixel for pixel, and CSS composites in sRGB.
+ * All the work is in sRGB, with no tone mapping and no
+ * `<colorspace_fragment>`. This surface must match the CSS gradient that
+ * it falls back to pixel for pixel, and CSS composites in sRGB.
  *
- * Keep the GLSL ASCII-only; see the note in `water-field.ts`.
+ * Use only ASCII characters in the GLSL. Refer to `water-field.ts`.
  */
 
 import * as THREE from "three";
@@ -59,12 +59,18 @@ import {
   subscribeBladeWater,
   type BladeWaterState,
 } from "./blade-water-controls";
+import {
+  bladePulse,
+  PULSE_BLOOM,
+  PULSE_HUE_DEG,
+  PULSE_LIFT,
+} from "./blade-pulse";
 
-/** The reference frame the panel edges are expressed in (§1.2). */
+/** The reference frame of the panel edges (§1.2). */
 const REFERENCE_WIDTH = 1280;
-/** Resolution of the sampled edge profile. Well under a pixel of error. */
+/** Resolution of the sampled edge profile. The error is less than a pixel. */
 const CURVE_SAMPLES = 512;
-/** Retina is worth it; beyond 2x is pure fill cost. */
+/** Retina is necessary. More than 2x is only fill cost. */
 const MAX_DPR = 2;
 
 const FULLSCREEN_VERTEX = /* glsl */ `
@@ -83,6 +89,7 @@ uniform vec2  uFocal;        // fraction of the box, always 50% / 44%
 uniform vec2  uRadius;       // fraction of the box, always 90% / 80%
 uniform float uStopAt[STOPS];
 uniform vec3  uColor[STOPS]; // already crossfaded on the CPU
+uniform float uPulse;        // bass envelope, 0..1 (blade-pulse.ts)
 
 /** Piecewise-linear in sRGB, exactly as CSS reads a radial-gradient. */
 vec3 sectionColor(float t) {
@@ -96,38 +103,60 @@ vec3 sectionColor(float t) {
   return uColor[STOPS - 1];
 }
 
-/** Enough noise to break up the banding a wide flat gradient shows. */
+/** Sufficient noise to remove the banding of a wide flat gradient. */
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+/**
+ * A rotation about the grey axis. It changes the hue and keeps the luma,
+ * thus the pulse moves the colour and does not also move the brightness.
+ * The lift below moves the brightness.
+ */
+vec3 hueRotate(vec3 c, float angle) {
+  const vec3 axis = vec3(0.57735027); // normalised (1, 1, 1)
+  return c * cos(angle)
+       + cross(axis, c) * sin(angle)
+       + axis * dot(axis, c) * (1.0 - cos(angle));
+}
+
 void main() {
   vec2 p = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y) / uResolution;
-  vec3 col = sectionColor(length((p - uFocal) / uRadius));
+
+  // DESIGN.md 6.16: the bass moves the gradient. A smaller radius moves
+  // the stops outward, thus a kick makes the bright core larger and does
+  // not brighten the full panel at one time. The swell starts at the
+  // focal point and travels, as the water does.
+  float r = length((p - uFocal) / uRadius);
+  vec3 col = sectionColor(r / (1.0 + uPulse * ${PULSE_BLOOM.toFixed(3)}));
+  col = hueRotate(col, uPulse * ${((PULSE_HUE_DEG * Math.PI) / 180).toFixed(5)});
+  col *= 1.0 + uPulse * ${PULSE_LIFT.toFixed(3)};
+
   col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
   gl_FragColor = vec4(col, 1.0);
 }
 `;
 
-const WATER_RELIEF_FRAGMENT = /* glsl */ `
-${WATER_FIELD_CHUNK}
-${WATER_FRAGMENT_PRELUDE}
-
+/**
+ * The panel mask of DESIGN.md 1.1: which pixels belong to the open blade
+ * and not to the full canvas. It is separate from the shading that uses
+ * it, because it is the geometry of the panel in GLSL. The gradient pass
+ * is never masked, and each pass that is masked must stop exactly at
+ * this curve.
+ *
+ * Each edge in 1.1 is one curve at a different top-x, thus one sampled
+ * profile d(y) is sufficient: the panel runs from leftX - d(y) to
+ * rightX + d(y). These are two scalars, thus the mask glides with the
+ * CSS clip-path during a blade switch and needs no 66 vertices.
+ */
+const PANEL_MASK_CHUNK = /* glsl */ `
 uniform vec2  uResolution;
 uniform vec2  uPanel;        // left / right edge, reference px, eased
 uniform float uMasked;       // 1 = clip to the panel curve
 uniform sampler2D uCurve;    // edge x-delta profile, DESIGN.md 1.1
 uniform int   uCurveSize;
 
-uniform vec3  uDeep, uHorizon, uZenith, uLightDir;
-uniform float uRelief;       // wave height -> opacity
-uniform float uOpacity;      // cap on the whole layer
-
-varying vec3 vWorldPos;
-varying vec2 vField;
-varying float vHeight;
-
-/** The lazy S sampled at y (reference px), lerped between two texels. */
+/** The lazy S at y, in reference px, interpolated between two texels. */
 float edgeDelta(float y) {
   float f = clamp(y / ${CANVAS_HEIGHT.toFixed(1)}, 0.0, 1.0) * float(uCurveSize - 1);
   int i0 = int(floor(f));
@@ -137,12 +166,11 @@ float edgeDelta(float y) {
   return mix(a, b, f - float(i0));
 }
 
-void main() {
-  // DESIGN.md 1.1 panel mask, resolved before anything expensive: the
-  // waves belong to the open blade and must not spill onto the collapsed
-  // tab gutters. One device pixel, in reference px, is the edge's
-  // antialiasing width.
-  vec2 uv = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y) / uResolution;
+/**
+ * 0 outside the panel and 1 inside it, with a ramp of one pixel at the
+ * edge. The antialiasing width is one device pixel, in reference px.
+ */
+float panelMask(vec2 uv) {
   float refX = uv.x * ${REFERENCE_WIDTH.toFixed(1)};
   float d    = edgeDelta(uv.y * ${CANVAS_HEIGHT.toFixed(1)});
   float aa   = ${REFERENCE_WIDTH.toFixed(1)} / uResolution.x;
@@ -150,12 +178,33 @@ void main() {
   float right = uPanel.y + d;
   float inside = smoothstep(left - aa, left + aa, refX)
                * (1.0 - smoothstep(right - aa, right + aa, refX));
-  float mask = mix(1.0, inside, uMasked);
+  return mix(1.0, inside, uMasked);
+}
+`;
+
+const WATER_RELIEF_FRAGMENT = /* glsl */ `
+${WATER_FIELD_CHUNK}
+${WATER_FRAGMENT_PRELUDE}
+${PANEL_MASK_CHUNK}
+
+uniform vec3  uDeep, uHorizon, uZenith, uLightDir;
+uniform float uRelief;       // wave height -> opacity
+uniform float uOpacity;      // cap on the whole layer
+
+varying vec3 vWorldPos;
+varying vec2 vField;
+varying float vHeight;
+
+void main() {
+  // Computed before the expensive work. The waves belong to the open
+  // blade and must not go onto the collapsed tab gutters.
+  vec2 uv = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y) / uResolution;
+  float mask = panelMask(uv);
   if (mask <= 0.0) discard;
 
-  // The field is sampled in the sheet's own xz, so banking the mesh does
-  // not squash the rings into ellipses; the normal is then rotated into
-  // world space, where the camera and the light live.
+  // The code samples the field in the local xz of the sheet, thus a bank
+  // of the mesh does not make the rings elliptical. The normal then moves
+  // into world space, where the camera and the light are.
   vec3 s = surface(vField);
   vec3 N = worldNormal(s);
   vec3 V = normalize(cameraPosition - vWorldPos);
@@ -164,9 +213,9 @@ void main() {
   vec3 H   = normalize(normalize(uLightDir) + V);
   float spec = pow(max(dot(N, H), 0.0), 256.0);
 
-  // Signed relief. A crest takes the reflected sky, a trough the deep
-  // tint, and still water takes nothing at all - which is what lets the
-  // section gradient underneath show through untouched.
+  // Signed relief. A crest takes the reflected sky, a trough takes the
+  // deep tint, and still water takes nothing. Thus the section gradient
+  // below stays unchanged.
   float lift = clamp(s.x * uRelief, -1.0, 1.0);
   vec3  tint = lift >= 0.0 ? sky : uDeep;
   float alpha = clamp(abs(lift) * uOpacity + spec, 0.0, 1.0);
@@ -175,23 +224,23 @@ void main() {
 }
 `;
 
-/** The panel's edges in reference px (§1.2); null for a full-bleed surface. */
+/** The edges of the panel in reference px (§1.2). A full-bleed surface passes null. */
 export interface PanelEdges {
   leftX: number;
   rightX: number;
 }
 
-/** What the surface should be showing. Changes tween at the blade tempo. */
+/** What the surface must show. A change tweens at the blade tempo. */
 export interface SurfaceState {
   gradient: SectionGradient;
   panel: PanelEdges | null;
 }
 
-/** Resolved, mid-tween values - what actually reaches the uniforms. */
+/** The resolved mid-tween values. These reach the uniforms. */
 interface Frame {
-  /** STOP_COUNT x RGB, flattened for `uniform3fv`. */
+  /** STOP_COUNT x RGB, flat, for `uniform3fv`. */
   stops: Float32Array;
-  /** deep, horizon, zenith - 3 x RGB. */
+  /** The deep, horizon and zenith colours: 3 x RGB. */
   palette: Float32Array;
   panel: [number, number];
 }
@@ -228,9 +277,9 @@ function lerpFrame(from: Frame, to: Frame, t: number): Frame {
 /**
  * Owns one three.js renderer and draws the blade surface into it.
  *
- * Construction throws when WebGL2 is unavailable; the caller is expected
- * to catch that and leave the CSS fallback showing rather than degrade to
- * a blank canvas.
+ * The constructor throws when WebGL2 is not available. The caller must
+ * catch the error and keep the CSS fallback on the screen. A blank
+ * canvas is not acceptable.
  */
 export class BladeWaterRenderer {
   private readonly renderer: THREE.WebGLRenderer;
@@ -243,11 +292,11 @@ export class BladeWaterRenderer {
   private readonly waterGeometry: THREE.PlaneGeometry;
   private readonly waterMaterial: THREE.ShaderMaterial;
   private readonly curve: THREE.DataTexture;
-  /** Kept so the tuning overlay can re-bank the sheet live. */
+  /** Kept, thus the tuning overlay can bank the sheet at run time. */
   private readonly sheet: THREE.Mesh;
   private readonly unsubscribe: () => void;
 
-  /** Origins, start times and strengths; mutated in place, never replaced. */
+  /** The origins, start times and strengths. Mutated in place, never replaced. */
   private readonly drops = Array.from(
     { length: MAX_DROPS },
     () => new THREE.Vector4(0, 0, -1e6, 0),
@@ -267,23 +316,23 @@ export class BladeWaterRenderer {
   private height = 0;
 
   constructor(canvas: HTMLCanvasElement, initial: SurfaceState) {
-    // Throws when a context cannot be created, which is the signal
-    // `BladeSurface` is waiting for to leave the CSS fallback up.
-    // `capabilities.isWebGL2` is not that signal: three hardcodes it to
-    // true now that WebGL1 support is gone.
+    // This throws when it cannot create a context. `BladeSurface` waits
+    // for that error and then keeps the CSS fallback. Do not use
+    // `capabilities.isWebGL2`: three sets it to true always, because it
+    // no longer supports WebGL1.
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       alpha: false,
       antialias: false,
       powerPreference: "low-power",
     });
-    // Two passes into one buffer, so the second must not wipe the first.
+    // Two passes write one buffer, thus the second must not clear the first.
     this.renderer.autoClear = false;
     this.renderer.setClearColor(0x000000, 1);
 
     const { focal, radius, stops } = initial.gradient;
-    // One Vector2 deliberately shared by both materials, so `resize` has
-    // a single place to write the drawing-buffer size.
+    // Both materials share one Vector2, thus `resize` writes the size of
+    // the drawing buffer in one place.
     const resolution = new THREE.Vector2(1, 1);
 
     this.gradientMaterial = new THREE.ShaderMaterial({
@@ -293,6 +342,7 @@ export class BladeWaterRenderer {
         uRadius: { value: new THREE.Vector2(radius[0], radius[1]) },
         uStopAt: { value: stops.map((s) => s.at) },
         uColor: { value: new Float32Array(STOP_COUNT * 3) },
+        uPulse: { value: 0 },
       },
       vertexShader: FULLSCREEN_VERTEX,
       fragmentShader: GRADIENT_FRAGMENT,
@@ -321,7 +371,7 @@ export class BladeWaterRenderer {
         uTime: { value: 0 },
         uDropCount: { value: 0 },
         uDrops: { value: this.drops },
-        // Every drop at uK; only the audio visualizer varies it.
+        // Each drop uses uK. Only the audio visualizer changes it.
         uDropK: { value: flatDropK() },
         uResolution: { value: resolution },
         uPanel: { value: new THREE.Vector2(0, REFERENCE_WIDTH) },
@@ -355,8 +405,8 @@ export class BladeWaterRenderer {
     );
     this.waterGeometry.rotateX(-Math.PI / 2);
     this.sheet = new THREE.Mesh(this.waterGeometry, this.waterMaterial);
-    // The swell pushes vertices off the plane the bounding sphere was
-    // computed from, and the sheet is deliberately larger than the view.
+    // The swell moves vertices off the plane that gave the bounding
+    // sphere, and the sheet is larger than the view.
     this.sheet.frustumCulled = false;
     this.waterScene.add(this.sheet);
 
@@ -368,17 +418,17 @@ export class BladeWaterRenderer {
     this.to = this.from;
     this.masked = initial.panel ? 1 : 0;
 
-    // Adopt whatever the overlay is currently showing, so a surface that
-    // mounts later (a full-screen screen opening over the blade) matches
-    // the one underneath instead of snapping back to the defaults.
+    // Use the current values of the overlay. Thus a surface that mounts
+    // later, such as a full-screen screen above the blade, matches the
+    // surface below it and does not return to the defaults.
     this.applyControls(bladeWaterState());
     this.unsubscribe = subscribeBladeWater((next) => this.applyControls(next));
   }
 
   /**
-   * Live tuning (`blade-water-controls.ts`). Every wave parameter is a
-   * uniform, so most of this is a straight copy; the bank is a mesh
-   * transform and the cadence is plain bookkeeping.
+   * Live tuning (`blade-water-controls.ts`). Each wave parameter is a
+   * uniform, thus most of this method is a copy. The bank is a mesh
+   * transform and the drop rate is bookkeeping.
    */
   private applyControls(next: Readonly<BladeWaterState>) {
     const uniforms = this.waterMaterial.uniforms;
@@ -390,10 +440,10 @@ export class BladeWaterRenderer {
   }
 
   /**
-   * Point the surface at a new state. The move is eased over the blade
-   * tempo (§7.4) from wherever the tween currently is, so switching
-   * blades mid-transition picks up the color and edges on screen rather
-   * than snapping back to the last target.
+   * Sends the surface to a new state. The move eases over the blade
+   * tempo (§7.4) from the current position of the tween. Thus a blade
+   * switch during a transition continues from the colour and the edges
+   * on the screen and does not return to the last target.
    */
   setState(next: SurfaceState, now: number) {
     const target = frameOf(next);
@@ -409,9 +459,9 @@ export class BladeWaterRenderer {
   }
 
   /**
-   * §7.4: reduced-motion users get the cut. The water also stops: with
-   * time frozen the sheet is perfectly still, which in this shading means
-   * perfectly transparent, so the blade is simply its gradient.
+   * §7.4: a user with reduced motion gets a cut. The water also stops.
+   * With the time frozen the sheet is fully still, and in this shading a
+   * still sheet is fully transparent. Thus the blade is its gradient.
    */
   setAnimated(animate: boolean) {
     this.animate = animate ? 1 : 0;
@@ -422,7 +472,7 @@ export class BladeWaterRenderer {
     this.width = cssWidth;
     this.height = cssHeight;
     this.renderer.setPixelRatio(Math.min(dpr, MAX_DPR));
-    // updateStyle off: the canvas gets its CSS size from its classes.
+    // updateStyle is off: the canvas takes its CSS size from its classes.
     this.renderer.setSize(cssWidth, cssHeight, false);
     const buffer = this.renderer.getDrawingBufferSize(new THREE.Vector2());
     (this.gradientMaterial.uniforms.uResolution.value as THREE.Vector2).copy(buffer);
@@ -430,7 +480,7 @@ export class BladeWaterRenderer {
     this.camera.updateProjectionMatrix();
   }
 
-  /** Whether the tween has finished. The water never settles. */
+  /** Whether the tween is complete. The water is never still. */
   settled(now: number) {
     return !this.animate || now - this.tweenStart >= BLADE_MOTION_MS;
   }
@@ -449,8 +499,9 @@ export class BladeWaterRenderer {
       t,
       1,
     );
-    // Capacity, not the array size: this surface drops once every couple
-    // of seconds and has no use for the visualizer's larger budget.
+    // Use the capacity and not the array size. This surface drops one
+    // time in some seconds and does not need the larger budget of the
+    // visualizer.
     this.dropHead = (this.dropHead + 1) % DEFAULT_DROP_CAPACITY;
     this.dropCount = Math.min(this.dropCount + 1, DEFAULT_DROP_CAPACITY);
     this.waterMaterial.uniforms.uDropCount.value = this.dropCount;
@@ -459,7 +510,7 @@ export class BladeWaterRenderer {
   draw(now: number) {
     if (!this.width) return;
     if (this.origin < 0) this.origin = now;
-    // The very first draw has no previous state to come from.
+    // The first draw has no previous state.
     if (this.tweenStart === -Infinity) this.tweenStart = now - BLADE_MOTION_MS;
 
     const frame = this.frameAt(now);
@@ -467,13 +518,17 @@ export class BladeWaterRenderer {
     const water = this.waterMaterial.uniforms;
 
     gradient.uColor.value = frame.stops;
+    // The bass pulse (`blade-pulse.ts`). It is zero while nothing plays
+    // and zero under reduced motion: a background that moves with the
+    // music is what that preference removes (§7.4).
+    gradient.uPulse.value = this.animate ? bladePulse(now) : 0;
     (water.uPanel.value as THREE.Vector2).set(frame.panel[0], frame.panel[1]);
     water.uMasked.value = this.masked;
     (water.uDeep.value as THREE.Vector3).fromArray(frame.palette, 0);
     (water.uHorizon.value as THREE.Vector3).fromArray(frame.palette, 3);
     (water.uZenith.value as THREE.Vector3).fromArray(frame.palette, 6);
 
-    // Kept relative to the first frame so float precision stays good.
+    // Relative to the first frame, thus the float precision stays good.
     const t = this.animate ? (now - this.origin) / 1000 : 0;
     water.uTime.value = t;
     if (this.animate && t >= this.nextDrop) {
@@ -493,9 +548,9 @@ export class BladeWaterRenderer {
     this.waterGeometry.dispose();
     this.waterMaterial.dispose();
     this.curve.dispose();
-    // Deliberately no `forceContextLoss()`: the canvas is React's and
-    // outlives this renderer. Strict Mode mounts effects twice, so losing
-    // the context here would leave the second mount calling
+    // Do not call `forceContextLoss()`. The canvas belongs to React and
+    // stays after this renderer. Strict Mode mounts an effect two times,
+    // thus a lost context here would make the second mount call
     // `getShaderPrecisionFormat` on a dead context, which returns null.
     this.renderer.dispose();
   }

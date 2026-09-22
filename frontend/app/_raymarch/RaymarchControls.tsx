@@ -19,13 +19,13 @@ import {
 } from "./raymarch-controls";
 
 /**
- * The raymarched core's tuning overlay.
+ * The tuning overlay of the raymarched core.
  *
- * Same shape and same reasoning as the curl panel: the store is the
- * single source of truth, this subscribes to it so the sliders track the
- * drift instead of showing stale copies of their own writes, and the
- * walk itself lives in the scene so the field still breathes where the
- * panel is hidden.
+ * It has the same structure and the same reasons as the curl panel. The
+ * store is the one source of truth. This component subscribes to it,
+ * thus the sliders follow the drift and do not show old copies of their
+ * own writes. The walk runs in the scene, thus the field also breathes
+ * where the panel is hidden.
  */
 export function RaymarchControls() {
   const [values, setValues] = useState<RaymarchState>(() => ({ ...raymarchState() }));

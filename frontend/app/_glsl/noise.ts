@@ -1,18 +1,17 @@
 /**
- * Noise primitives, as GLSL, shared by everything that needs a field.
+ * GLSL noise primitives. Each field that needs noise uses this chunk.
  *
- * Gradient noise on an integer lattice rather than simplex. Simplex is
- * faster in principle but fiddly to get right from memory, and these run
- * on the GPU where the difference does not show.
+ * The noise is gradient noise on an integer lattice, not simplex noise.
+ * Simplex noise is faster, but it is more difficult to write correctly.
+ * These functions run on the GPU, where the difference does not show.
  *
- * Extracted when the raymarcher became the third consumer, after the
- * curl noise field and its potential. One implementation means one place
- * for a hash to be wrong in.
+ * The curl noise field, its potential and the raymarcher all use the
+ * chunk. One implementation keeps the hashes correct in one place.
  *
- * Keep this ASCII-only: WebGL rejects shader source containing
- * characters outside the GLSL ES set, comments included, and reports it
- * before the compiler runs - so the failure arrives as a compile error
- * with a null info log rather than a readable message.
+ * Use only ASCII characters. WebGL rejects shader source that contains
+ * characters outside the GLSL ES set, comments included. It rejects the
+ * source before the compiler runs, so the error has a null info log and
+ * no readable message.
  */
 export const NOISE_CHUNK = /* glsl */ `
 /** One float of noise from an index, for per-item jitter. */
@@ -29,7 +28,7 @@ vec3 hash33(vec3 p) {
   return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
 }
 
-/** Gradient noise: random gradients on the lattice, smoothstep between. */
+/** Gradient noise: random gradients on the lattice, smoothstep between them. */
 float gnoise(vec3 p) {
   vec3 i = floor(p);
   vec3 f = p - i;
@@ -51,9 +50,9 @@ float gnoise(vec3 p) {
 }
 
 /**
- * Fractal sum of 'octaves' layers of gradient noise, each half the
- * amplitude at twice the frequency. Normalised so the result stays in
- * about -1..1 whatever the octave count.
+ * Fractal sum of 'octaves' layers of gradient noise. Each layer has half
+ * the amplitude and twice the frequency of the layer before it. The sum
+ * is normalised, thus the result stays near -1..1 at all octave counts.
  */
 float fbm(vec3 p, int octaves) {
   float sum = 0.0;
@@ -62,7 +61,7 @@ float fbm(vec3 p, int octaves) {
   for (int i = 0; i < octaves; i++) {
     sum += gnoise(p) * amplitude;
     total += amplitude;
-    p *= 2.02;            // slightly off 2, so lattices do not align
+    p *= 2.02;            // not exactly 2, thus the lattices do not align
     amplitude *= 0.5;
   }
   return sum / max(total, 1e-5);

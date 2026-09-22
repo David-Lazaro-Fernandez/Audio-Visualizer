@@ -1,15 +1,17 @@
 /**
- * Halo 3 (Xbox 360) achievement list, scraped from xboxachievements.com via
- * the Wayback Machine snapshot of 2025-08-15 (the live site and image host
- * sit behind a Cloudflare challenge). 79 achievements, 1750
- * Gamerscore in total: the base game plus the Legendary, Mythic 1, Mythic 2
- * and Title Update packs, distinguished by `pack`.
+ * The achievement list of Halo 3 on the Xbox 360, scraped from
+ * xboxachievements.com. The source is the Wayback Machine snapshot of
+ * 2025-08-15, because a Cloudflare challenge protects the live site and
+ * the image host. There are 79 achievements and 1750 Gamerscore in
+ * total: the base game with the Legendary, Mythic 1, Mythic 2 and Title
+ * Update packs. `pack` gives the pack of each achievement.
  *
- * `img` is the local copy under `public/assets/achievements/halo3/` (64×64
- * JPEG, named by the site's achievement slug); `sourceImg` is the original
- * URL it was copied from, kept for provenance. It cannot be hot-linked: the
- * host returns 403 to non-browser requests. `unlocked` is mock: which of
- * these the signed-in gamer has earned.
+ * `img` is the local copy, under `public/assets/achievements/halo3/`, as
+ * a 64x64 JPEG named by the achievement slug of the site. `sourceImg` is
+ * the original URL of the copy, kept as a record. A link to `sourceImg`
+ * does not work, because the host returns 403 to a request that is not
+ * from a browser. `unlocked` is mock data: which achievements the
+ * signed-in gamer has.
  */
 export interface Halo3Achievement {
   img: string;
@@ -17,9 +19,9 @@ export interface Halo3Achievement {
   name: string;
   description: string;
   gamerPoints: number;
-  /** Whether the signed-in gamer has earned it (mock). */
+  /** Whether the signed-in gamer earned it. This is mock data. */
   unlocked: boolean;
-  /** "Halo 3" for the base game, otherwise the DLC pack name. */
+  /** "Halo 3" for the base game, else the name of the DLC pack. */
   pack: string;
 }
 

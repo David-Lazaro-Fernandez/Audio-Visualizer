@@ -13,18 +13,19 @@ import {
 } from "./blade-water-controls";
 
 /**
- * Live tuning for the background water (DESIGN.md §3.1) — the bank of
- * the sheet, how hard its relief pushes into the section gradient, and
- * the wave model itself.
+ * Live tuning for the background water (DESIGN.md §3.1): the bank of the
+ * sheet, the strength of its relief on the section gradient, and the
+ * wave model.
  *
- * Off by default (`SHOW_WATER_CONTROLS`): the 10-foot UI has no controls
- * (§8), so this is something to switch on while tuning. The panel itself
- * is `TuningPanel`, shared with the spectrogram's overlay (§6.16) and
- * sits on the left so both can be open at once.
+ * It is off by default (`SHOW_WATER_CONTROLS`). The 10-foot UI has no
+ * controls (§8), thus you switch this panel on while you tune. The panel
+ * is `TuningPanel`, which the overlay of the spectrogram also uses
+ * (§6.16). It sits on the left, thus both panels can be open at the same
+ * time.
  *
- * React state here is only so the panel can print the numbers and reset
- * them. Every value goes straight into the live uniforms through
- * `blade-water-controls.ts`, so nothing here remounts a canvas or
+ * The React state here lets the panel print the numbers and reset them.
+ * Each value goes directly into the live uniforms through
+ * `blade-water-controls.ts`, thus nothing here remounts a canvas or
  * recompiles a shader.
  */
 export function BladeWaterControls() {

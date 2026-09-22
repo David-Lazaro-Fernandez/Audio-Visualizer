@@ -1,56 +1,59 @@
 /**
- * The albums the Audiobooks browse screen lists (DESIGN.md §6.12).
+ * The albums that the Audiobooks browse screen lists (DESIGN.md §6.12).
  *
- * Artwork, genre and the track listing - previews included - all come
- * from the **iTunes Search API**, which is keyed by the store's
- * `collectionId`. Each album carries the id of the edition to use.
+ * The artwork, the genre and the track listing, with the previews, all
+ * come from the iTunes Search API. The key is the `collectionId` of the
+ * store, and each album holds the id of its edition.
  *
- * An id can be pinned by hand straight from a `music.apple.com` URL -
- * `.../album/aquemini/266365274` - which is the surer route, because it
- * names the exact edition instead of trusting a search to rank it first;
- * that is how the deluxe and explicit editions here were chosen.
- * `scripts/fetch-apple-music.mts` resolves the rest by search once and
- * reports the ids to paste. Either way it is a one-off: an id is stable,
- * a title search is not, and a dashboard should not be searching a store
- * at render time.
+ * You can set an id by hand from a `music.apple.com` URL, such as
+ * `.../album/aquemini/266365274`. This method is more reliable, because
+ * the URL names the exact edition and a search can rank another edition
+ * first. The deluxe editions and the explicit editions here come from
+ * that method. `scripts/fetch-apple-music.mts` resolves the other albums
+ * by search one time and reports the ids to paste here. Both methods
+ * occur one time: an id is stable, a title search is not, and a
+ * dashboard must not search a store at render time.
  *
- * This module is hand-maintained and deliberately imports nothing: the
- * fetch script reads `ALBUMS` from here, so pulling in the JSON file that
- * same script writes would make it depend on its own output. The fetched
- * half lives in `album-details.ts`.
+ * A person maintains this module and it imports nothing. The fetch
+ * script reads `ALBUMS` from here, thus an import of the JSON file that
+ * the same script writes would make this module depend on its own
+ * output. The fetched data is in `album-details.ts`.
  *
- * An album with no id has no artwork and no tracks, and keeps the neutral
- * square (§6.2) - which is also what a row falls back to when its remote
- * artwork fails to load.
+ * An album with no id has no artwork and no tracks and keeps the neutral
+ * square (§6.2). A row also falls back to that square when its remote
+ * artwork does not load.
  */
 export interface Album {
-  /** Title as the browse list shows and sorts it. */
+  /** The title, as the browse list shows it and sorts it. */
   title: string;
   /**
-   * Recording artist. Used to resolve the store id, and shown on the song
-   * screen (§6.15). Absent on the console's catch-all rows.
+   * The recording artist. The script uses it to resolve the store id,
+   * and the song screen shows it (§6.15). A catch-all row of the console
+   * has no artist.
    */
   artist?: string;
   /**
-   * Title to search the store with, when it differs from the displayed
-   * one. The console's lists carry sort artefacts a catalogue will not
-   * match.
+   * The title for the store search, when it is different from the title
+   * on the screen. The lists of the console contain sort artefacts that
+   * a catalogue cannot match.
    */
   search?: string;
   /**
-   * iTunes Store `collectionId`, filled in from the script's report. It
-   * keys the artwork, the genre and the track listing with its previews.
+   * The `collectionId` of the iTunes Store, from the report of the
+   * script. It is the key of the artwork, the genre and the track
+   * listing with the previews.
    */
   appleId?: number;
 }
 
 export const ALBUMS: Album[] = [
-  // The console's catch-all for untagged files. No artist, so no art.
+  // The catch-all of the console for a file with no tags. It has no
+  // artist, thus it has no art.
   { title: "Unknown Album" },
-  // Deliberately unresolved: "#3" matches several unrelated records and
-  // the list gives no artist to disambiguate it - a store search for it
-  // returns Ella Mai and Lukas Graham. Guessing would put the wrong
-  // sleeve on the shelf, so it keeps the placeholder.
+  // This album stays unresolved. "#3" matches several unrelated records
+  // and the list gives no artist, thus a store search returns Ella Mai
+  // and Lukas Graham. A guess would show the incorrect sleeve, thus the
+  // row keeps the placeholder.
   { title: "#3" },
   {
     title: "(What's the Story), Morning Glory?",
@@ -90,7 +93,7 @@ export const ALBUMS: Album[] = [
   { title: "NEVER ENOUGH", artist: "Turnstile", appleId: 1805820903 },
 ];
 
-/** What to search the store with. */
+/** The text for the store search. */
 export function albumSearchTitle(album: Album): string {
   return album.search ?? album.title;
 }

@@ -1,17 +1,16 @@
 /**
- * The app's four-stop colour ramp, as GLSL.
+ * The four-stop colour ramp of the app, as GLSL.
  *
- * Blue, violet, amber, red - the same progression the LED matrix uses
- * for its rows (DESIGN.md §6.16), so the whole player reads as one
- * instrument even though each visualizer decides for itself what the
- * ramp *means*: level on the matrix, frequency in the curl field, the
- * spectral centroid on the raymarched core. The stops are the shared
- * part; the argument is not.
+ * The stops are blue, violet, amber and red. The LED matrix uses the same
+ * stops for its rows (DESIGN.md §6.16), thus the player reads as one
+ * instrument. Each visualizer decides what the ramp shows: level on the
+ * matrix, frequency in the curl field and the spectral centroid on the
+ * raymarched core. Only the stops are shared.
  *
- * Extracted when the core became its second GLSL consumer. Two copies
- * of a palette drift apart, and DESIGN.md calls this one thing.
+ * The core was the second GLSL consumer of the ramp. Two copies of a
+ * palette move apart, and DESIGN.md gives only one ramp.
  *
- * Keep this ASCII-only, for the reason given in `noise.ts`.
+ * Use only ASCII characters. Refer to `noise.ts` for the reason.
  */
 export const RAMP_CHUNK = /* glsl */ `
 vec3 ramp(float t) {

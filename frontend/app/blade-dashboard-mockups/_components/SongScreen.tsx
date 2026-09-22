@@ -20,27 +20,30 @@ import { musicPlayerFor } from "./MusicPlayerScreen";
 import type { Album } from "./albums";
 
 /**
- * The song screen a track row on the album screen opens (DESIGN.md
- * §6.15) — Media blade → Music → Audiobooks → album → here.
+ * The song screen, which a track row on the album screen opens
+ * (DESIGN.md §6.15). The path is: Media blade, Music, Audiobooks,
+ * album, this screen.
  *
- * Same full-screen structure and Media blue as the album screen (§6.14),
- * and the same left column of four actions. What differs is the right
- * column: where the album screen lists tracks, this is a **readout** of
- * one song's tags, so it is the detail panel skin from §6.9 — the raised
- * border and one-sided bevel, a header strip in the chrome-band tint, the
- * music glyph, then the tags as label-and-value pairs. It is never a
- * cursor stop: there is nothing in it to select.
+ * It has the same full-screen structure and the same Media blue as the
+ * album screen (§6.14), and the same left column of four actions. The
+ * right column is different. The album screen lists the tracks. This
+ * screen is a readout of the tags of one song, thus it uses the detail
+ * panel skin of §6.9: the raised border and the one-sided bevel, a
+ * header strip in the chrome-band tint, the music glyph, and then the
+ * tags as pairs of a label and a value. It is never a cursor stop,
+ * because it holds nothing to select.
  *
- * The tags come from the album the song sits on (`album-details.ts`),
- * which is where a real library would get them too: a file's artist,
- * album and genre are album-level facts.
+ * The tags come from the album of the song (`album-details.ts`), which
+ * is also the source that a real library would use: the artist, the
+ * album and the genre of a file are facts of the album.
  *
- * Nothing acts yet — no player, no playlist, no tag editor — so every row
- * plays Select A, as on the album screen. Back is owned by the row that
- * opened this (`MenuListItem` + `useBackKey`).
+ * No action works yet, because there is no player, no playlist and no
+ * tag editor. Thus each row plays Select A, as on the album screen. The
+ * row that opened this screen owns Back (`MenuListItem` with
+ * `useBackKey`).
  */
 
-/** What the console offered on a song. None of it is wired up yet. */
+/** The actions that the console gave for a song. None of them works yet. */
 const ACTIONS = [
   "Play Song",
   "Add to Current Playlist",
@@ -48,7 +51,7 @@ const ACTIONS = [
   "Delete Song",
 ] as const;
 
-/** Same radial blue as the Media blade canvas (DESIGN.md §2.1). */
+/** The same radial blue as the canvas of the Media blade (DESIGN.md §2.1). */
 const BACKGROUND = gradientCss(MEDIA_GRADIENT);
 
 export function SongScreen({ album, track }: { album: Album; track: Track }) {
@@ -62,8 +65,8 @@ export function SongScreen({ album, track }: { album: Album; track: Track }) {
     return () => opener?.focus();
   }, []);
 
-  // Play Song opens the player with a one-track queue (§6.16), which is
-  // exactly the "1 of 1" the console showed.
+  // Play Song opens the player with a queue of one track (§6.16), which
+  // is the "1 of 1" that the console showed.
   const actionItems: LibraryMenuItem[] = useMemo(
     () =>
       ACTIONS.map((label) =>
@@ -85,7 +88,7 @@ export function SongScreen({ album, track }: { album: Album; track: Track }) {
     >
       <BladeScreenSurface gradient={MEDIA_GRADIENT} />
 
-      {/* Header and legend sit at z-0, beneath the content band's shadow. */}
+      {/* The header and the legend are at z-0, below the shadow of the content band. */}
       <BladeChromeBand
         edge="top"
         className="relative z-0 px-[12%] pt-8 pb-5 md:pt-10 md:pb-6"
@@ -127,11 +130,12 @@ export function SongScreen({ album, track }: { album: Album; track: Track }) {
 }
 
 /**
- * The readout. Detail panel skin (§6.9): translucent lighter blue so the
- * background's brightness variation shows through, the raised border and
- * one-sided bevel, and a header strip in the chrome-band tint rather than
- * a rule. A readout, not a control, so it takes no hover, focus or
- * disabled state and carries no `data-nav-item`.
+ * The readout. It uses the detail panel skin (§6.9): a translucent
+ * lighter blue, thus the brightness variation of the background shows
+ * through, the raised border with the one-sided bevel, and a header
+ * strip in the chrome-band tint in place of a rule. It is a readout and
+ * not a control, thus it has no hover state, no focus state and no
+ * disabled state, and it carries no `data-nav-item`.
  */
 function SongTags({ album, track }: { album: Album; track: Track }) {
   return (
@@ -144,8 +148,9 @@ function SongTags({ album, track }: { album: Album; track: Track }) {
         <p className="truncate text-[24px]">{track.title}</p>
       </div>
 
-      {/* The console's note here is a full-colour bitmap and is not
-          redrawn (§6.2); the set's own disc-and-note glyph stands in. */}
+      {/* The note of the console here is a full-colour bitmap and is
+          not redrawn (§6.2). The disc-and-note glyph of the set replaces
+          it. */}
       <div className="flex shrink-0 items-center justify-center py-8 [&_svg]:h-24 [&_svg]:w-24">
         <MenuIcon name="music" />
       </div>
@@ -159,7 +164,7 @@ function SongTags({ album, track }: { album: Album; track: Track }) {
   );
 }
 
-/** A label above its value, the way the console stacked song tags. */
+/** A label above its value, as the console showed the song tags. */
 function Tag({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
@@ -170,11 +175,13 @@ function Tag({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * A song screen bound to one track, for the album screen's rows to open.
+ * A song screen that is bound to one track, for a row of the album
+ * screen to open.
  *
- * The screen takes arguments, so it cannot be named by a `ScreenKey`
- * (`screens.tsx`); each row carries its own component instead. Annotated
- * so `displayName` is assignable — a bare arrow has no such property.
+ * The screen takes arguments, thus a `ScreenKey` cannot name it
+ * (`screens.tsx`). Each row carries its own component. The type
+ * annotation makes `displayName` assignable, because a plain arrow
+ * function has no such property.
  */
 export function songScreenFor(
   album: Album,

@@ -7,15 +7,17 @@ import type { BladeTheme } from "./blade-theme";
 import { pageTurnSound, playSound } from "./sounds";
 
 /**
- * One top-level blade (DESIGN.md §1): its tab label, panel title, and
- * section identity (§2.1) — the radial gradient, the active-tab fill and
- * the text/rule tints the shared components read as CSS variables. The
- * gradient is carried as data rather than a CSS string because the WebGL
- * surface needs its stops as numbers (`blade-gradient.ts`); `gradientCss`
- * derives the CSS fallback from the same source.
- * Position is not stored here: where a tab sits, and where the panel is,
- * both follow from the blade's index and which blade is open
- * (`blade-layout.ts`).
+ * One top-level blade (DESIGN.md §1): its tab label, its panel title and
+ * its section identity (§2.1). The identity is the radial gradient, the
+ * fill of the active tab, and the text and rule tints that the shared
+ * components read as CSS variables. The gradient is data and not a CSS
+ * string, because the WebGL surface needs its stops as numbers
+ * (`blade-gradient.ts`). `gradientCss` makes the CSS fallback from the
+ * same data.
+ *
+ * The position is not here. The position of a tab and the position of
+ * the panel both come from the index of the blade and from the open
+ * blade (`blade-layout.ts`).
  */
 export interface BladeSection {
   label: string;
@@ -26,19 +28,21 @@ export interface BladeSection {
 }
 
 /**
- * Which blade is open. Lives above the tab strip (`BladeTabNav`), the
- * global key handler (`KeyboardNav`) and all the chrome (`BladeEdges`,
- * `BladeMenuGutters`, `BladeBackground`, `BladePanel`), so clicking a tab
- * and pressing Left/Right anywhere on the page drive the same index, and
- * the panel, gutters and section color all move together. Blade order is
- * the `blades` order, left to right; the page seeds `initialIndex`
- * (games, index 2, by default).
+ * Which blade is open. The context is above the tab strip
+ * (`BladeTabNav`), the global key handler (`KeyboardNav`) and each part
+ * of the chrome (`BladeEdges`, `BladeMenuGutters`, `BladeBackground`,
+ * `BladePanel`). Thus a click on a tab and a press of Left or Right at
+ * each position on the page drive the same index, and the panel, the
+ * gutters and the section colour move together. The blade order is the
+ * order of `blades`, left to right. The page sets `initialIndex`, which
+ * is games, index 2, by default.
  *
- * `goTo` plays Page Right when moving to a higher index and Page Left for a
- * lower one, and nothing when the index doesn't change (already at the end,
- * or re-selecting the open blade). It also records the blade just left and
- * the direction of travel, which the transition (§7.4) uses to crossfade
- * the old color off the panel and slide the new content in from the right
+ * `goTo` plays Page Right for a move to a higher index and Page Left for
+ * a move to a lower index. It plays nothing when the index does not
+ * change, which occurs at an end of the list or on the open blade. It
+ * also records the blade that the user left and the direction of the
+ * move. The transition (§7.4) uses those two values to fade the old
+ * colour off the panel and to slide the new content in from the correct
  * side.
  */
 export interface BladeNavValue {
@@ -46,15 +50,15 @@ export interface BladeNavValue {
   activeIndex: number;
   /** The open blade. */
   active: BladeSection;
-  /** The blade open before the last switch; null until the first switch. */
+  /** The blade that was open before the last switch. It is null until the first switch. */
   previous: BladeSection | null;
-  /** +1 when the last switch moved right, -1 left, 0 before any switch. */
+  /** +1 when the last switch moved right, -1 for left, and 0 before the first switch. */
   direction: -1 | 0 | 1;
-  /** Where the open blade's panel is on the reference frame. */
+  /** The position of the panel of the open blade on the reference frame. */
   geometry: PanelGeometry;
   count: number;
   goTo: (index: number) => void;
-  /** Move `delta` blades; clamps at both ends. */
+  /** Moves `delta` blades. It clamps at the two ends. */
   step: (delta: number) => void;
 }
 

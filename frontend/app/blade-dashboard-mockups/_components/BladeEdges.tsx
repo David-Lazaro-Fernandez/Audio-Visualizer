@@ -7,28 +7,29 @@ import { gradientCss } from "./blade-gradient";
 import { useBladeSurfacePainted } from "./BladeSurface";
 
 /**
- * DESIGN.md §1.1: the active panel's own waisted/flared boundary (never a
- * rectangle) plus its specular gloss — a plain <div> clipped to the curve
- * with `clip-path: polygon(...)` rather than an <svg>/<path>. The
- * collapsed tabs are NOT drawn here — each one is its own self-contained
- * shape inside `BladeTabNav`'s buttons, since a tab is a menu item and its
- * clickable area has to be the actual curved shape.
+ * DESIGN.md §1.1: the waisted and flared boundary of the active panel,
+ * which is never a rectangle, with its specular gloss. It is a plain
+ * <div> clipped to the curve with `clip-path: polygon(...)` and not an
+ * <svg> or a <path>. This component does not draw the collapsed tabs.
+ * Each tab is its own shape in a button of `BladeTabNav`, because a tab
+ * is a menu item and its clickable area must be the curved shape.
  *
- * The panel slides with the open blade (§1.2, §7.4): its edges come from
- * `BladeNavContext` and the clip-path transitions between blades, so the
- * panel visibly glides to its new edges.
+ * The panel moves with the open blade (§1.2, §7.4). Its edges come from
+ * `BladeNavContext` and the clip-path transitions between blades, thus
+ * the panel glides to its new edges.
  *
- * What fills the shape depends on who is painting. When the WebGL surface
- * is live (`BladeSurface`) it has already drawn the section gradient, the
- * sheen and the gloss underneath, masked to this same curve — so this
- * keeps only the 2.5 px rim, which has to stay in CSS because it follows
- * the clip-path exactly. On the CSS fallback the shape carries its own
- * gradient and gloss, and the §7.4 color change has to be faked, because
- * CSS cannot interpolate two gradients: the previous blade's color is
- * painted on top and faded out (`blade-fade-out`, keyed on the open blade
- * so each switch restarts it). Reduced-motion users get the cut.
+ * The fill of the shape depends on the painter. When the WebGL surface
+ * is live (`BladeSurface`), it already drew the section gradient, the
+ * sheen and the gloss below, with a mask on this same curve. Thus this
+ * component keeps only the 2.5 px rim, which must stay in CSS because it
+ * follows the clip-path exactly. On the CSS fallback the shape carries
+ * its own gradient and gloss, and the colour change of §7.4 needs a
+ * substitute, because CSS cannot interpolate two gradients: the code
+ * paints the colour of the previous blade on top and fades it out
+ * (`blade-fade-out`, keyed on the open blade, thus each switch starts it
+ * again). A user with reduced motion gets a cut.
  */
-/** The panel curve with the default (games) blade open, for reference. */
+/** The panel curve with the default blade, games, open. It is a reference value. */
 export const PANEL_CLIP_PATH = panelClipPath(DEFAULT_ACTIVE_INDEX);
 
 export function BladeEdges() {
@@ -55,7 +56,7 @@ export function BladeEdges() {
           }}
         />
       )}
-      {/* specular gloss overlay on the active panel */}
+      {/* The specular gloss above the active panel. */}
       {!painted && (
         <div
           className="absolute inset-0"

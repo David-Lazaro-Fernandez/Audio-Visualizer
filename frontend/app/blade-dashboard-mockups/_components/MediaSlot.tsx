@@ -1,8 +1,9 @@
 /**
- * DESIGN.md §6.7 Media/ad slot: a large rounded rectangle reserved for
- * dynamic content; blank/glossy with a watermark label when empty. Sized by
- * aspect ratio + `w-full` rather than a fixed pixel height so it scales
- * with its column instead of overflowing on narrow viewports.
+ * The media slot of DESIGN.md §6.7: a large rounded rectangle for
+ * dynamic content. When it is empty it is glossy and blank and carries a
+ * watermark label. Its size comes from an aspect ratio and `w-full` and
+ * not from a fixed pixel height. Thus it scales with its column and does
+ * not overflow on a narrow viewport.
  */
 export function MediaSlot({
   label,

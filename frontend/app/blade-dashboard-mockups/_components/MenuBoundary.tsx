@@ -5,15 +5,14 @@ import { useRect, type MeasuredRect } from "./useRect";
 
 const MenuBoundaryContext = createContext<MeasuredRect | null>(null);
 
-/** The container box that detail boxes must stay within (see `placeMenuBox`). */
+/** The container box that a detail box must stay inside (refer to `placeMenuBox`). */
 export function useMenuBoundary() {
   return useContext(MenuBoundaryContext);
 }
 
 /**
- * Wraps the main content container and tracks its real pixel box, so
- * descendant menus know how much room they have to open a detail box in
- * before they run out of container.
+ * Wraps the main content container and measures its pixel box. Thus a
+ * menu below it knows how much space it has for a detail box.
  */
 export function MenuBoundary({
   className,

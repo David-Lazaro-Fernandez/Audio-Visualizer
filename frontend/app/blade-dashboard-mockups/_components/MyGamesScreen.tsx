@@ -19,28 +19,31 @@ import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
 
 /**
- * The "My Games" screen the Games Library's My Games row opens — the
- * third surface in the stack (Games blade → Games Library → here). Same
- * skin as the Games Library: the section green with the unclipped wave
- * sheen, darker header and legend bands, 12% side padding.
+ * The My Games screen, which the My Games row of the Games Library
+ * opens. It is the third surface in the stack: Games blade, Games
+ * Library, this screen. It has the same skin as the Games Library: the
+ * section green with the wave sheen and no clip, darker header and
+ * legend bands, and 12% side padding.
  *
- * Between the header and the content sits a tab strip (§5.5) — Arcade,
- * Demos, Recently Downloaded, Recently Played — that filters the list.
- * Left/Right step through the enabled tabs (the 360 used the bumpers;
- * under a modal the arrows have nothing else to do), clicking one works
- * too. Switching tabs remounts the list via `key` so the cursor lands on
- * the new first row.
+ * A tab strip (§5.5) is between the header and the content: Arcade,
+ * Demos, Recently Downloaded and Recently Played. It filters the list.
+ * Left and Right step through the enabled tabs, because the console used
+ * the bumpers and the arrows have no other work under a modal. A click
+ * on a tab also works. A change of tab remounts the list through `key`,
+ * thus the cursor goes to the first row of the new list.
  *
- * The list on the left reuses the Games blade's divider-separated rows
- * (`LibraryMenu` in its default `rows` layout) with each title's artwork
- * from `public/assets/games_pics`. "N of M" underneath tracks the cursor.
- * The detail panel on the right (§6.9) follows the cursor too, through the
- * same highlight provider the description pane uses elsewhere.
+ * The list on the left uses the divider-separated rows of the Games
+ * blade (`LibraryMenu` in its default `rows` layout), with the artwork
+ * of each title from `public/assets/games_pics`. The "N of M" counter
+ * below it follows the cursor. The detail panel on the right (§6.9) also
+ * follows the cursor, through the same highlight provider as the
+ * description pane.
  *
- * Legend: Y Download Games, X unbound on the left; Back B / Select A on
- * the right. Select (Enter / Space / A) commits the highlighted game — see
- * `GamesGrid`. Back is owned by the row that opened this screen
- * (`MenuListItem` + `useBackKey`), so this takes no props.
+ * The legend is Y Download Games and X unbound on the left, and Back B
+ * and Select A on the right. Select, by Enter, Space or A, confirms the
+ * highlighted game. Refer to `GamesGrid`. The row that opened this
+ * screen owns Back (`MenuListItem` with `useBackKey`), thus this screen
+ * takes no props.
  */
 type TabKey = "all" | "arcade" | "demos" | "recent-downloads" | "recent-played";
 
@@ -50,8 +53,8 @@ interface MyGamesTab {
   disabled?: boolean;
 }
 
-// "All Games" leads, as on the 360, so full games have somewhere to show up
-// alongside the Arcade and Demo downloads.
+// "All Games" is first, as on the console, thus a full game also has a
+// position beside the Arcade downloads and the Demo downloads.
 const TABS: MyGamesTab[] = [
   { key: "all", label: "All Games" },
   { key: "arcade", label: "Arcade" },
@@ -61,29 +64,30 @@ const TABS: MyGamesTab[] = [
 ];
 
 /**
- * What kind of title this is. Drives which filter tab lists it (Arcade →
- * `arcade`, Demos → `demo`) and the detail panel's header, status lines and
- * Achievements copy — see `KIND_COPY`.
+ * The kind of title. It selects the filter tab that lists the title,
+ * where Arcade uses `arcade` and Demos uses `demo`. It also selects the
+ * header, the status lines and the Achievements text of the detail
+ * panel. Refer to `KIND_COPY`.
  */
 type GameType = "full_game" | "demo" | "arcade";
 
 interface MyGame {
   title: string;
-  /** Title artwork under `public/assets/games_pics/`. */
+  /** The title artwork, under `public/assets/games_pics/`. */
   image: string;
-  /** One-line blurb shown in the detail panel under the status lines. */
+  /** One line of text. The detail panel shows it below the status lines. */
   description: string;
   type: GameType;
-  /** Listed under Recently Downloaded (arcade titles and demos, not discs). */
+  /** The title is in Recently Downloaded. Arcade titles and demos are, and a disc is not. */
   recentlyDownloaded?: boolean;
 }
 
 interface KindCopy {
-  /** Detail panel: top band label ("Arcade Game"). */
+  /** The detail panel: the label of the top band, such as "Arcade Game". */
   kind: string;
-  /** Detail panel: the two status lines beside the icon. */
+  /** The detail panel: the two status lines beside the icon. */
   status: [string, string];
-  /** Detail panel: the Achievements body copy. */
+  /** The detail panel: the text of the Achievements band. */
   achievements: string;
 }
 
@@ -106,7 +110,7 @@ const KIND_COPY: Record<GameType, KindCopy> = {
   },
 };
 
-/** Which titles a filter tab shows; "all" and the disabled tab are handled by the caller. */
+/** The titles that a filter tab shows. The caller handles "all" and the disabled tab. */
 const TAB_FILTER: Partial<Record<TabKey, (game: MyGame) => boolean>> = {
   arcade: (game) => game.type === "arcade",
   demos: (game) => game.type === "demo",
@@ -115,7 +119,7 @@ const TAB_FILTER: Partial<Record<TabKey, (game: MyGame) => boolean>> = {
 
 const PICS = "/assets/games_pics";
 
-/** Where "playing" a game sends you. Every title launches the same thing. */
+/** The destination of a launch. Each title opens the same URL. */
 const LAUNCH_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
 function launchGame() {
@@ -190,7 +194,7 @@ const GAMES: MyGame[] = [
   },
 ];
 
-/** Same radial green as the Games blade canvas. */
+/** The same radial green as the canvas of the Games blade. */
 const BACKGROUND = gradientCss(GAMES_GRADIENT);
 
 export function MyGamesScreen() {
@@ -199,18 +203,20 @@ export function MyGamesScreen() {
   const filter = TAB_FILTER[tab];
   const games = filter ? GAMES.filter(filter) : GAMES;
 
-  // Cursor handoff: focus comes in from the opener and goes back on close.
-  // Declared before the per-tab focus effect so the opener is captured
-  // before anything here takes focus.
+  // The cursor arrives from the row that opened the screen and returns
+  // to it at the close. This hook is before the focus effect of the tab,
+  // thus the code records that row before anything here takes the
+  // focus.
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     return () => opener?.focus();
   }, []);
 
-  // Land the cursor on the first row on open and after every tab switch.
-  // When a tab has no rows (Demos), focus the screen itself instead: if
-  // focus fell to <body>, key events would bypass this root's handler and
-  // Left/Right would be dead, with no way back to a populated tab.
+  // Put the cursor on the first row at the open and after each tab
+  // change. When a tab has no rows, as Demos does, focus the screen
+  // itself. If the focus went to <body>, the key events would not reach
+  // the handler of this root, Left and Right would do nothing, and the
+  // user could not return to a tab with rows.
   useEffect(() => {
     const root = rootRef.current;
     const first = root?.querySelector<HTMLElement>(
@@ -236,14 +242,15 @@ export function MyGamesScreen() {
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      // Claim Left/Right for the tab strip; `KeyboardNav` skips prevented events.
+      // Take Left and Right for the tab strip. `KeyboardNav` ignores a
+      // prevented event.
       e.preventDefault();
       stepTab(e.key === "ArrowLeft" ? -1 : 1);
       return;
     }
-    // With no rows, swallow Up/Down too — otherwise `KeyboardNav`'s
-    // "nothing focused" fallback would drop the cursor onto a row of the
-    // Games Library underneath this screen.
+    // With no rows, also take Up and Down. If it did not, the
+    // no-focus fallback of `KeyboardNav` would put the cursor on a row
+    // of the Games Library below this screen.
     if (games.length === 0 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
       e.preventDefault();
     }
@@ -268,7 +275,7 @@ export function MyGamesScreen() {
     >
       <BladeScreenSurface gradient={GAMES_GRADIENT} />
 
-      {/* Header and legend sit at z-0, beneath the content band's shadow. */}
+      {/* The header and the legend are at z-0, below the shadow of the content band. */}
       <BladeChromeBand
         edge="top"
         className="relative z-0 px-[12%] pt-8 pb-5 md:pt-10 md:pb-6"
@@ -311,10 +318,11 @@ export function MyGamesScreen() {
 }
 
 /**
- * Filter tabs under the header (§5.5): plain text, the active one lifted
- * to white with the title's shadow, the rest in the section's dark green,
- * greyed ones in the low-contrast disabled green (§7.2). Not nav items —
- * Left/Right on the screen switch tabs, the cursor stays on the list.
+ * The filter tabs below the header (§5.5). They are plain text. The
+ * active tab is white with the shadow of the title, the other tabs are
+ * the dark green of the section, and a disabled tab is the low-contrast
+ * green (§7.2). They are not nav items: Left and Right on the screen
+ * change the tab and the cursor stays on the list.
  */
 function TabStrip({
   tabs,
@@ -358,16 +366,18 @@ function TabStrip({
 }
 
 /**
- * The list + counter column and the detail panel. Lives inside
- * `LibraryMenuProvider` so it can read the highlighted row.
+ * The column of the list and the counter, with the detail panel. This
+ * component is inside `LibraryMenuProvider`, thus it can read the
+ * highlighted row.
  *
- * Select (Enter / Space / A) commits the highlighted game: the mouse can
- * highlight a row by hovering — the panel follows it — while the keyboard
- * cursor stays where it was, so pressing Select moves focus onto the
- * highlighted row (the same `focus()` the first row gets on open), then
- * launches it (`launchGame`, which navigates to `LAUNCH_URL`). Clicking a
- * row launches it through the row's own `onSelect`; the key handler here
- * prevents the browser's Enter/Space click so the launch fires once.
+ * Select, by Enter, Space or A, confirms the highlighted game. A hover
+ * can highlight a row, and the panel follows that row, while the
+ * keyboard cursor stays where it was. Thus Select first moves the focus
+ * to the highlighted row, with the same `focus()` that the first row
+ * gets at the open, then launches the game (`launchGame`, which goes to
+ * `LAUNCH_URL`). A click on a row launches the game through the
+ * `onSelect` of that row. The key handler here prevents the Enter and
+ * Space click of the browser, thus the launch occurs one time.
  */
 function GamesGrid({ games, items }: { games: MyGame[]; items: LibraryMenuItem[] }) {
   const highlighted = useHighlightedItem();
@@ -379,8 +389,9 @@ function GamesGrid({ games, items }: { games: MyGame[]; items: LibraryMenuItem[]
     const rows = e.currentTarget.querySelectorAll<HTMLElement>("[data-nav-item]");
     const row = rows[index];
     if (!row) return;
-    // Own the key: stops the browser's Enter/Space click on the focused
-    // button and keeps `KeyboardNav` from clicking it again.
+    // Take the key. This stops the Enter and Space click of the browser
+    // on the focused button, and it stops a second click from
+    // `KeyboardNav`.
     e.preventDefault();
     if (document.activeElement !== row) row.focus();
     playSound("selectA");
@@ -408,7 +419,7 @@ function GamesGrid({ games, items }: { games: MyGame[]; items: LibraryMenuItem[]
   );
 }
 
-/** "1 of 6" under the list, following the cursor. Sits at the bottom of the column so it lines up with the panel's base. */
+/** The "1 of 6" counter below the list. It follows the cursor and sits at the bottom of the column, level with the base of the panel. */
 function GameCounter({ games }: { games: MyGame[] }) {
   const highlighted = useHighlightedItem();
   const index = games.findIndex((game) => game.title === highlighted?.label);
@@ -423,15 +434,17 @@ function GameCounter({ games }: { games: MyGame[] }) {
 }
 
 /**
- * The detail panel (§6.9): a tall rounded rectangle on a translucent lighter
- * green, divided into stacked bands rather than ruled — darker header
- * strips ("Arcade Game", "Achievements") alternate with a brighter content
- * band (icon + status lines), the title's one-line blurb, and a transparent
- * body, so the colour shift itself is the separator. Its edge is the Games Library button skin —
- * the same 1px #5a5a5a border and top/left/right inset bevel
- * (`RAISED_BORDER` + `RAISED_INSET_SHADOW`) — minus the hover/focus
- * states: it's a static readout, not a control, so it isn't a nav item
- * and never lights up.
+ * The detail panel (§6.9): a tall rounded rectangle on a translucent
+ * lighter green, divided into stacked bands and not by rules. Darker
+ * header strips, such as "Arcade Game" and "Achievements", alternate
+ * with a brighter content band, which holds the icon and the status
+ * lines, then the one line of text of the title, then a transparent
+ * body. Thus the change of colour is the separator. Its edge is the
+ * button skin of the Games Library: the same 1 px #5a5a5a border and the
+ * inset bevel on the top, the left and the right (`RAISED_BORDER` with
+ * `RAISED_INSET_SHADOW`). It has no hover state and no focus state,
+ * because it is a static readout and not a control. Thus it is not a nav
+ * item and it never lights.
  */
 function GameDetailPanel({ games }: { games: MyGame[] }) {
   const highlighted = useHighlightedItem();
@@ -469,9 +482,10 @@ function GameDetailPanel({ games }: { games: MyGame[] }) {
 }
 
 /**
- * Title artwork tile: the 64px source PNGs from `public/assets/games_pics`,
- * shown at 36px in the rows and 72px in the detail panel, with a rounded
- * corner and no border — the art sits directly on the green.
+ * The tile of the title artwork: the 64 px source PNGs from
+ * `public/assets/games_pics`, at 36 px in a row and 72 px in the detail
+ * panel, with a rounded corner and no border. The art sits directly on
+ * the green.
  */
 function GameArt({ game, sizePx }: { game: MyGame; sizePx: number }) {
   return (
@@ -486,7 +500,7 @@ function GameArt({ game, sizePx }: { game: MyGame; sizePx: number }) {
   );
 }
 
-/** Darker translucent header strip inside the detail panel — same tint as the chrome bands (§5.2). */
+/** A darker translucent header strip in the detail panel, in the same tint as the chrome bands (§5.2). */
 function PanelBand({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-black/10 px-5 py-2 text-[24px] leading-tight">{children}</div>

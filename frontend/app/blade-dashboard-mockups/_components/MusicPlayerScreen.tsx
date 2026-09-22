@@ -27,6 +27,7 @@ import {
 } from "./visualizer-styles";
 import { ScrollColumn } from "./ScrollColumn";
 import { useAudioSpectrum } from "./use-audio-spectrum";
+import { useBladePulse } from "./use-blade-pulse";
 import { MEDIA_THEME, themeVars } from "./blade-theme";
 import { getPortalRoot } from "./portal";
 import { useBackKey } from "./back-stack";
@@ -41,46 +42,50 @@ import { formatTrackLength, type Track } from "./album-details";
 import type { Album } from "./albums";
 
 /**
- * The Music Player (DESIGN.md §6.16), opened by Play Song on the song
- * screen (§6.15) or Play Album on the album screen (§6.14). Same
- * full-screen structure and Media blue as the rest of the chain.
+ * The Music Player (DESIGN.md §6.16). Play Song on the song screen
+ * (§6.15) and Play Album on the album screen (§6.14) open it. It has
+ * the same full-screen structure and the same Media blue as the other
+ * screens in the chain.
  *
- * Two columns. The left is the player, gathered into one raised panel
- * (§6.9 skin): a row of five transport buttons, the wide "Edit or Save
- * Playlist" button, and the now-playing plate — artist over title, with
- * the visualizer under it and the bumper hints in its corners. The right
- * is the queue: "Current Playlist" over the same compact raised rows the
- * album screen uses, with the "N of M" counter at the foot.
+ * There are two columns. The left column is the player, in one raised
+ * panel (the §6.9 skin): a row of five transport buttons, the wide
+ * "Edit or Save Playlist" button, and the now-playing plate, which has
+ * the artist above the title, the visualizer below them and the bumper
+ * hints in its corners. The right column is the queue: "Current
+ * Playlist" above the same compact raised rows as the album screen,
+ * with the "N of M" counter at the foot.
  *
- * **It really plays.** Each track carries the store's 30-second preview
- * (`album-details.ts`), served CORS-open, so the `<audio>` element can be
- * read by a Web Audio `AnalyserNode` and the visualizer shows the actual
- * spectrum of the actual audio (`use-audio-spectrum.ts`) rather than a
- * synthetic one. Thirty seconds is all the store gives, so a track ends
- * early and the queue advances: that is the preview's limit, not a
- * placeholder.
+ * The player plays real audio. Each track has the 30-second preview of
+ * the store (`album-details.ts`), served CORS-open. Thus a Web Audio
+ * `AnalyserNode` can read the `<audio>` element, and the visualizer
+ * shows the spectrum of the real audio (`use-audio-spectrum.ts`) and
+ * not a synthetic spectrum. The store gives only 30 seconds, thus a
+ * track ends early and the queue continues. That is the limit of the
+ * preview and not a placeholder.
  *
- * A browser will not start audio without a user gesture. Opening this
- * screen is one, so the first play usually succeeds — and when it is
- * refused the transport simply shows Play and waits, which is the honest
- * state rather than a silent lie.
+ * A browser does not start audio without a user gesture. The action
+ * that opens this screen is a gesture, thus the first play usually
+ * starts. When the browser refuses it, the transport shows Play and
+ * waits, which is the true state.
  *
- * Y toggles the visualization, X blows it up full-screen — the first
- * screen in this chain whose left-hand legend slots are live rather than
- * dimmed (§6.5, §7.2). Back is owned by the row that opened this
- * (`MenuListItem` + `useBackKey`); the full-screen visualization owns its
- * own Back, so one press peels it off first (§5.4).
+ * Y switches the visualization on and off, and X opens it full-screen.
+ * This is the first screen in the chain with live slots on the left of
+ * the legend, and not dimmed slots (§6.5, §7.2). The row that opened
+ * this screen owns Back (`MenuListItem` with `useBackKey`). The
+ * full-screen visualization owns its own Back, thus one press closes it
+ * first (§5.4).
  */
 
-/** Same radial blue as the Media blade canvas (DESIGN.md §2.1). */
+/** The same radial blue as the canvas of the Media blade (DESIGN.md §2.1). */
 const BACKGROUND = gradientCss(MEDIA_GRADIENT);
 
 /**
- * Transport glyphs. Simple monochrome shapes, so unlike the console's
- * full-colour bitmaps they *are* redrawn (§6.2) — as inline SVG in the
- * icon set's finish: translucent white fill, a light edge, inked detail.
- * Local to this screen rather than added to `MenuIcons.tsx`, which is the
- * menu-row set and nothing else uses these.
+ * The transport glyphs. They are simple monochrome shapes, thus this
+ * code redraws them (§6.2), unlike the full-colour bitmaps of the
+ * console. They are inline SVG in the finish of the icon set: a
+ * translucent white fill, a light edge and inked detail. They are local
+ * to this screen and are not in `MenuIcons.tsx`, which is the menu-row
+ * set, because no other screen uses them.
  */
 const GLYPHS = {
   pause: "M5 3h3.5v14H5zM11.5 3H15v14h-3.5z",
@@ -105,13 +110,13 @@ function TransportGlyph({ shape }: { shape: keyof typeof GLYPHS }) {
 }
 
 /**
- * The "playing" mark on a queue row.
+ * The playing mark on a queue row.
  *
- * A CSS shape, not the transport SVG: the raised button's icon box
- * oversizes *any* `svg` descendant to 44 px and lifts it 10 px (§6.2),
- * which is right for a menu glyph and far too big for a marker sitting
- * beside a track title. A border triangle sidesteps that selector
- * entirely, the way the more-below arrow and the row chevron already do.
+ * It is a CSS shape and not the transport SVG. The icon box of the
+ * raised button makes each `svg` descendant 44 px and lifts it 10 px
+ * (§6.2). That is correct for a menu glyph and too large for a mark
+ * beside a track title. A border triangle does not match that selector,
+ * as with the more-below arrow and the row chevron.
  */
 function PlayingMark() {
   return (
@@ -122,7 +127,7 @@ function PlayingMark() {
   );
 }
 
-/** The raised skin the transport and playlist buttons share. */
+/** The raised skin of the transport buttons and the playlist button. */
 const CONTROL_SKIN =
   "rounded-[8px] border border-[#5a5a5a] bg-[rgba(255,255,255,.22)] " +
   "transition-[background-color,box-shadow] duration-150 " +
@@ -134,7 +139,7 @@ export function MusicPlayerScreen({
   startIndex = 0,
 }: {
   album: Album;
-  /** The queue. One track when opened from a song, the album otherwise. */
+  /** The queue. It is one track from a song screen, else the full album. */
   tracks: Track[];
   startIndex?: number;
 }) {
@@ -151,8 +156,9 @@ export function MusicPlayerScreen({
   const [styleIndex, setStyleIndex] = useState(0);
   const [fullScreen, setFullScreen] = useState(false);
 
-  // The queue's order is the only thing sorting changes; which track is
-  // playing is tracked by title so it survives a reorder.
+  // A sort changes only the order of the queue. The code tracks the
+  // current track by its title, thus the track stays correct after a
+  // sort.
   const queue = useMemo(
     () => (reversed ? [...tracks].reverse() : tracks),
     [tracks, reversed],
@@ -160,21 +166,30 @@ export function MusicPlayerScreen({
   const index = Math.max(0, queue.findIndex((track) => track.title === playing));
   const current = queue[index];
 
-  // The same array every frame, mutated in place by the analyser: this
-  // moves 60 times a second and must not go through React state.
+  // The same array at each frame, mutated in place by the analyser. It
+  // changes 60 times a second and must not go through React state.
   const spectrum = useAudioSpectrum(audioRef, VISUALIZER_BANDS);
 
-  // Load and start whenever the track changes. `paused` is deliberately
-  // not a dependency: toggling it must not reload the preview.
+  // The background answers the bass, and also the tile (§6.16). The
+  // same array drives a module-level envelope that each blade surface
+  // reads, thus the gradient under the player and the blade behind it
+  // swell together. The hook runs only while `visualization` is on,
+  // because Y means no visualization on each surface and not only in
+  // this box.
+  useBladePulse(spectrum, visualization);
+
+  // Load and start at each change of the track. `paused` is not a
+  // dependency: a change to it must not load the preview again.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     const source = current?.previewUrl;
     if (!source) {
-      // Not every track in the store has a preview. Without this the
-      // queue stalls on the silent one forever, since `onEnded` never
-      // fires for audio that never started. Guarded on some track being
-      // playable, or a queue of silent tracks would skip endlessly.
+      // Some tracks in the store have no preview. Without this code the
+      // queue stops at a silent track, because `onEnded` does not fire
+      // for audio that did not start. The code first tests that one
+      // track can play, or a queue of silent tracks would skip without
+      // an end.
       if (queue.some((track) => track.previewUrl) && index < queue.length - 1) {
         step(1);
       }
@@ -185,7 +200,7 @@ export function MusicPlayerScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.previewUrl]);
 
-  // Reflect the transport's state onto the element.
+  // Copy the state of the transport to the element.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audio.src) return;
@@ -193,10 +208,10 @@ export function MusicPlayerScreen({
     else void audio.play().catch(() => setPaused(true));
   }, [paused]);
 
-  // The cursor opens on the track that is playing, not on the transport:
-  // the queue is what you came here for, and Play Album should put you on
-  // the first song of the album. Falls back to the first item on the
-  // screen if the queue is somehow empty, so the cursor is never lost.
+  // The cursor starts on the track that plays and not on the transport.
+  // The queue is the reason for the screen, and Play Album must put the
+  // cursor on the first song of the album. With an empty queue the
+  // cursor goes to the first item on the screen, thus it is never lost.
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     const rows = playlistRef.current?.querySelectorAll<HTMLElement>("[data-nav-item]");
@@ -206,7 +221,8 @@ export function MusicPlayerScreen({
       rootRef.current?.querySelector<HTMLElement>("[data-nav-item]:not(:disabled)");
     target?.focus();
     return () => opener?.focus();
-    // Mount only: `startIndex` is where the queue starts, not a live value.
+    // Mount only. `startIndex` is the start of the queue and not a live
+    // value.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -215,9 +231,9 @@ export function MusicPlayerScreen({
     setFullScreen(false);
   });
 
-  // The two live legend slots. Bound here rather than globally, because
-  // every other screen leaves Y and X dimmed and a dimmed slot must not
-  // answer a key (§7.2).
+  // The two live legend slots. The binding is here and not global,
+  // because each other screen keeps Y and X dimmed, and a dimmed slot
+  // must not answer a key (§7.2).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
@@ -230,9 +246,9 @@ export function MusicPlayerScreen({
         setFullScreen(true);
         playSound("selectA");
       } else if (isLeftBumperKey(e) || isRightBumperKey(e)) {
-        // The bumpers cycle the visualizer, as the hints in the panel's
-        // corners advertise. They wrap: there is no end of the list to
-        // get stuck against.
+        // The bumpers cycle the visualizer, as the hints in the corners
+        // of the panel show. The list wraps, thus a user cannot reach an
+        // end.
         e.preventDefault();
         const delta = isRightBumperKey(e) ? 1 : -1;
         setStyleIndex(
@@ -247,30 +263,34 @@ export function MusicPlayerScreen({
 
   const visualizer = VISUALIZER_STYLES[styleIndex];
 
-  // Three of the seven are canvas-2D readings of the spectrum; the rest
-  // are WebGL scenes — a wave field the music drops stones into, a
-  // scrolling spectrogram, a curl-noise particle flow and a raymarched
-  // core (§6.16). Held as an element rather than a component so
-  // switching styles does not hand React a new component type and tear
-  // the canvas down twice.
+  // Three of the seven styles are canvas-2D views of the spectrum. The
+  // others are WebGL scenes: a wave field that the music drops stones
+  // into, a scrolling spectrogram, a curl-noise particle flow and a
+  // raymarched core (§6.16). The code holds an element and not a
+  // component, thus a change of style does not give React a new
+  // component type and does not destroy the canvas two times.
   const visual =
     visualizer.id === "water" ? (
       <WaterVisualizer paused={paused} spectrum={spectrum} />
     ) : visualizer.id === "spectrogram" ? (
       <SpectrogramVisualizer paused={paused} spectrum={spectrum} />
     ) : visualizer.id === "core" ? (
-      // No geometry at all: a fullscreen quad marched per pixel. It is
-      // fed the same live band array as everything else and folds it
-      // into bass, treble and a centroid itself.
+      // There is no geometry: a fullscreen quad, marched for each
+      // pixel. It takes the same live band array as the other styles and
+      // folds it into a bass value, a treble value and a centroid.
       <RaymarchCore
         bands={VISUALIZER_BANDS}
         paused={paused}
+        // The core of the dashboard is a tuned picture and not a region
+        // to explore, thus its knobs do not move here. `/particles` and
+        // each other scene keep their walk.
+        drift={false}
         sample={(out) => out.set(spectrum.subarray(0, out.length))}
       />
     ) : visualizer.id === "curl" ? (
-      // The same particle system `/particles` runs, fed from the live
-      // analyser instead of an offline transform. Orbiting is off: this
-      // sits in a 10-foot UI, so the view drifts on its own.
+      // The same particle system as `/particles`, but the source is the
+      // live analyser and not an offline transform. The orbit is off:
+      // this is a 10-foot UI, thus the view drifts on its own.
       <CurlParticles
         bands={VISUALIZER_BANDS}
         orbit={false}
@@ -297,10 +317,11 @@ export function MusicPlayerScreen({
   };
 
   /**
-   * The left column is not a single list, so Up/Down have to hand the
-   * cursor between the transport row and the button under it, and
-   * Left/Right between the two columns. The transport row itself is a
-   * 5-wide grid, so `KeyboardNav` already walks it with Left/Right.
+   * The left column is not one list. Thus Up and Down move the cursor
+   * between the transport row and the button below it, and Left and
+   * Right move it between the two columns. The transport row is a grid
+   * five wide, thus `KeyboardNav` already moves through it with Left and
+   * Right.
    */
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -321,7 +342,8 @@ export function MusicPlayerScreen({
       e.preventDefault();
       focusFirst(editRef);
     } else if (e.key === "ArrowRight" && inTransport) {
-      // Only from the last button: elsewhere Right steps along the row.
+      // Only from the last button. At the other buttons Right moves
+      // along the row.
       const buttons = transportRef.current?.querySelectorAll("[data-nav-item]");
       if (buttons && buttons[buttons.length - 1] === target) {
         e.preventDefault();
@@ -332,8 +354,8 @@ export function MusicPlayerScreen({
 
   const playlistItems: LibraryMenuItem[] = queue.map((track) => ({
     label: track.title,
-    // A play triangle marks the track in progress; the rest carry no
-    // glyph, as the console's queue did.
+    // A play triangle marks the track that plays. The other rows have no
+    // glyph, as in the queue of the console.
     icon: track.title === current?.title ? <PlayingMark /> : null,
     meta: formatTrackLength(track.ms) || undefined,
     onSelect: () => {
@@ -386,10 +408,10 @@ export function MusicPlayerScreen({
       >
         <BladeScreenSurface gradient={MEDIA_GRADIENT} />
 
-        {/* `crossOrigin` is load-bearing: without it the preview still
-            plays, but the analyser reads only zeros and the visualizer
-            sits flat. A preview is 30 s, so `onEnded` fires early and the
-            queue moves on. */}
+        {/* `crossOrigin` is necessary. Without it the preview plays, but
+            the analyser reads only zeros and the visualizer stays flat.
+            A preview is 30 s, thus `onEnded` fires early and the queue
+            continues. */}
         <audio
           ref={audioRef}
           crossOrigin="anonymous"
@@ -411,7 +433,7 @@ export function MusicPlayerScreen({
           className="relative z-10 grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-8 overflow-hidden px-[12%] py-6 md:grid-cols-2 md:grid-rows-[minmax(0,1fr)] md:gap-8"
           style={{ boxShadow: CONTENT_BAND_SHADOW }}
         >
-          {/* Player. One raised panel, as on the console. */}
+          {/* The player, in one raised panel, as on the console. */}
           <div
             className={`flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden rounded-[10px] p-3 ${RAISED_BORDER} ${RAISED_INSET_SHADOW}`}
             style={{ background: "rgba(255,255,255,.12)" }}
@@ -448,8 +470,9 @@ export function MusicPlayerScreen({
               </button>
             </div>
 
-            {/* Now playing: artist over title on a dark plate, the
-                visualizer beneath, bumper hints in the corners. */}
+            {/* The now-playing plate: the artist above the title on a
+                dark plate, the visualizer below them, and the bumper
+                hints in the corners. */}
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-[6px] border border-[#5a5a5a] bg-[#0d0a10]">
               <div className="absolute inset-x-0 top-0 z-10 bg-black/70 px-4 py-3">
                 <p className="truncate text-[19px] text-white/70">
@@ -459,16 +482,17 @@ export function MusicPlayerScreen({
                   {current?.title ?? "Nothing playing"}
                 </p>
               </div>
-              {/* Inside a ternary this is already an expression, so the
-                  element goes in bare: `{visual}` here would be an object
-                  literal, not a JSX container. */}
+              {/* This is already an expression, because it is in a
+                  ternary. Thus the element needs no braces: `{visual}`
+                  here would be an object literal and not a JSX
+                  container. */}
               {visualization ? (
                 visual
               ) : (
                 <div className="h-full w-full bg-[#07060c]" />
               )}
               {/* The bumper hints are live: they cycle the visualizer, and
-                  the name between them says which one you are on. */}
+                  the name between them gives the current style. */}
               <div className="pointer-events-none absolute inset-x-2 bottom-2 flex items-center justify-between gap-2">
                 <span className="rounded-[4px] bg-white/25 px-1.5 text-[13px] text-white/80">
                   LB
@@ -485,12 +509,13 @@ export function MusicPlayerScreen({
             </div>
           </div>
 
-          {/* Queue. A long album overruns the slab, so the list is bounded
-              and scrolls inside itself (`ScrollColumn`, shared with §6.12
-              and §6.14) rather than pushing the page: the header band, the
-              legend and the player column all have to stay put. The
-              scrollbar is hidden and the more-below triangle stands in for
-              it, and the counter rides the same footer row. */}
+          {/* The queue. A long album is taller than the slab, thus the
+              list has a bound and scrolls in itself (`ScrollColumn`,
+              shared with §6.12 and §6.14) and does not make the page
+              longer. The header band, the legend and the player column
+              must stay in position. The scrollbar is hidden and the
+              more-below triangle replaces it. The counter is on the same
+              footer row. */}
           <div className="flex min-h-0 min-w-0 flex-col gap-3">
             <h2 className="shrink-0 text-[30px]">Current Playlist</h2>
             <div
@@ -538,10 +563,12 @@ export function MusicPlayerScreen({
         </BladeChromeBand>
       </div>
 
-      {/* Tuning overlays, off by default: the dashboard is a 10-foot UI
-          and has no controls (§8). Flip SHOW_VISUALIZER_CONTROLS to tune
-          a field in place. The curl field and the core keep drifting
-          either way — the walk runs from the scene, not the panel. */}
+      {/* The tuning overlays. They are off by default, because the
+          dashboard is a 10-foot UI and has no controls (§8). Set
+          SHOW_VISUALIZER_CONTROLS to tune a field in place. The curl
+          field drifts in both conditions, because its walk runs from the
+          scene and not from the panel. The core holds the tuned values
+          above. */}
       {SHOW_VISUALIZER_CONTROLS && visualizer.id === "spectrogram" && (
         <SpectrogramControls />
       )}
@@ -563,7 +590,7 @@ export function MusicPlayerScreen({
   );
 }
 
-/** A player bound to one queue, for a menu row to open (see `screens.tsx`). */
+/** A player that is bound to one queue, for a menu row to open. Refer to `screens.tsx`. */
 export function musicPlayerFor(
   album: Album,
   tracks: Track[],

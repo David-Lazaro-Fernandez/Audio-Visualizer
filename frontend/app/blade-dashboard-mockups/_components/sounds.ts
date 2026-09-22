@@ -1,14 +1,17 @@
 /**
- * UI sound effects for the blade dashboard, served from
- * `public/assets/sounds`. One cached <audio> element per cue; replaying a
- * cue restarts it from the top (like the 360 does when you skate down a
- * list), while different cues can overlap.
+ * The UI sounds of the blade dashboard, served from
+ * `public/assets/sounds`. There is one cached <audio> element for each
+ * cue. A second play of one cue starts it again from the beginning, as
+ * the console does when a user moves quickly down a list. Two different
+ * cues can play at the same time.
  *
- * Which cue goes where:
- * - `select`    hovering a selectable item (gamerpic, menu row, blade tab)
- * - `selectA`   clicking/confirming an item (A button)
- * - `back`      leaving a screen you can actually leave (ESC, B button, ×)
- * - `pageLeft`  / `pageRight` switching blades toward the left / right
+ * The cues are:
+ * - `select`: a hover on a selectable item, such as the gamer picture, a
+ *   menu row or a blade tab.
+ * - `selectA`: a click on an item, or a confirmation with the A button.
+ * - `back`: a user leaves a screen that can close, with ESC, the B
+ *   button or the ×.
+ * - `pageLeft` and `pageRight`: a blade switch to the left or the right.
  */
 export type UiSound = "select" | "selectA" | "back" | "pageLeft" | "pageRight";
 
@@ -32,7 +35,7 @@ function audioFor(name: UiSound): HTMLAudioElement {
   return el;
 }
 
-/** Warm the cache so the first hover doesn't lag on a network fetch. Client only. */
+/** Fills the cache, thus the first hover does not wait for a network fetch. Client only. */
 export function preloadSounds() {
   if (typeof window === "undefined") return;
   for (const name of Object.keys(SOUND_FILES) as UiSound[]) audioFor(name).load();
@@ -42,14 +45,16 @@ export function playSound(name: UiSound) {
   if (typeof window === "undefined") return;
   const el = audioFor(name);
   el.currentTime = 0;
-  // Browsers reject play() before the first user gesture (autoplay policy);
-  // a silent hover is fine, so swallow that.
+  // A browser refuses play() before the first user gesture, because of
+  // the autoplay policy. A silent hover is acceptable, thus ignore the
+  // error.
   void el.play().catch(() => {});
 }
 
 /**
- * Blade order, left to right. Moving to a higher index plays `pageRight`,
- * a lower one `pageLeft`; same index plays nothing.
+ * The blade order, left to right. A move to a higher index plays
+ * `pageRight` and a move to a lower index plays `pageLeft`. The same
+ * index plays nothing.
  */
 export function pageTurnSound(from: number, to: number): UiSound | null {
   if (to === from) return null;

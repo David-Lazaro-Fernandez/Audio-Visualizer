@@ -13,12 +13,12 @@ import {
 } from "./sphere-controls";
 
 /**
- * The particle sphere's tuning overlay, mounted only while the sphere is
- * the view on screen.
+ * The tuning overlay of the particle sphere. It is mounted only while
+ * the sphere is the view on the screen.
  *
- * React state here is only so the panel can print the numbers and reset
- * them; the scene reads the store directly, which is what keeps a slider
- * drag from re-rendering the page sixty times.
+ * The React state here lets the panel print the numbers and reset them.
+ * The scene reads the store directly, thus a slider drag does not render
+ * the page 60 times.
  */
 export function SphereControls() {
   const [values, setValues] = useState<SphereState>({ ...SPHERE_DEFAULTS });

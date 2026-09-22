@@ -10,18 +10,19 @@ import { useBackKey } from "./back-stack";
 import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
 
-/** Columns in the picture grid — also tells `KeyboardNav` how Up/Down jump. */
+/** The number of columns in the picture grid. It also gives `KeyboardNav` the step of Up and Down. */
 const GRID_COLS = 4;
 
 /**
- * The "player pic" slot on the gamer profile card (DESIGN.md §6.3).
- * Hovering reveals a subtle edit affordance; clicking opens the
- * "Change Gamer Picture" screen, modelled on the 360 dashboard's own:
- * black header bar (title / current pic / clock), a two-pane body — light
- * gray picture grid on the left with the selection framed in green, and a
- * mid-gray pane on the right echoing the profile card (same gamertag and
- * `stats` rows as the card that opened it) + Xbox logo — and a black
- * footer with the A/B button legend.
+ * The player picture slot on the gamer profile card (DESIGN.md §6.3). A
+ * hover shows a small edit mark. A click opens the Change Gamer Picture
+ * screen, which follows the screen of the console dashboard: a black
+ * header bar with the title, the current picture and a clock; a body of
+ * two panes, a light gray picture grid on the left with a green frame
+ * around the selection, and a mid-gray pane on the right that repeats
+ * the profile card, with the same gamertag and the same `stats` rows as
+ * the card that opened it, and the Xbox logo; and a black footer with
+ * the A and B button legend.
  */
 export function GamerPicPicker({
   options,
@@ -30,24 +31,25 @@ export function GamerPicPicker({
   stats,
 }: {
   options: string[];
-  /** The profile's own picture, shown until the user picks another. */
+  /** The picture of the profile. The card shows it until the user selects another. */
   defaultSrc?: string;
   gamertag: string;
   stats: ProfileStat[];
 }) {
   const [open, setOpen] = useState(false);
-  // Selection lives in GamerPicContext so every card on every blade shows
-  // the same pick. `selected` is null until the user picks; fall back to
-  // the profile's picture, then the first option, in render (no seeding
-  // effect — that raced the localStorage read).
+  // The selection is in GamerPicContext, thus each card on each blade
+  // shows the same picture. `selected` is null until the user selects a
+  // picture. The render then uses the picture of the profile, else the
+  // first option. There is no effect that sets an initial value, because
+  // such an effect raced the read of localStorage.
   const { selected, setSelected, hydrated } = useGamerPic();
   const effective = selected ?? defaultSrc ?? options[0] ?? null;
-  // Until the stored value is read, show the placeholder instead of
-  // flashing the default image and then swapping.
+  // Show the placeholder until the code reads the stored value. Thus the
+  // card does not show the default image and then change it.
   const current = hydrated ? effective : null;
 
-  // Keyboard cursor handoff: opening moves focus onto the currently
-  // selected picture in the grid; closing hands it back to the pencil.
+  // The keyboard cursor: an open moves the focus to the selected
+  // picture in the grid, and a close returns it to the pencil.
   const triggerRef = useRef<HTMLButtonElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const wasOpen = useRef(false);
@@ -64,7 +66,8 @@ export function GamerPicPicker({
     wasOpen.current = open;
   }, [open]);
 
-  // Opening is an A-press; any way of leaving (ESC, B, backdrop) is a B-press.
+  // An open is an A press. Each way to leave, which is ESC, B or the
+  // backdrop, is a B press.
   const openPicker = () => {
     playSound("selectA");
     setOpen(true);
@@ -74,7 +77,8 @@ export function GamerPicPicker({
     setOpen(false);
   };
 
-  // Only registered while open, so ESC with nothing to go back from stays silent.
+  // Registered only while the screen is open, thus ESC with nothing to
+  // close stays silent.
   useBackKey(open, goBack);
 
   return (
@@ -292,7 +296,7 @@ export function GamerPicPicker({
   );
 }
 
-/** Live HH:MM AM/PM clock for the header, mirroring the dashboard's. */
+/** A live HH:MM AM/PM clock for the header, as on the dashboard. */
 function Clock() {
   const [now, setNow] = useState<string>(() => formatTime(new Date()));
   useEffect(() => {
@@ -330,7 +334,7 @@ function PencilIcon() {
   );
 }
 
-/** Greyed-out trophy with a padlock, like the dashboard's locked slots. */
+/** A grey trophy with a padlock, as on a locked slot of the dashboard. */
 function TrophyIcon() {
   return (
     <svg

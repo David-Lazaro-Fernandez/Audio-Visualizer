@@ -11,49 +11,50 @@ import {
 
 /**
  * The spectrogram visualizer (DESIGN.md §6.16): a waterfall of the
- * spectrum's own history.
+ * history of the spectrum.
  *
- * Every row is one snapshot of the 28 bands, drawn as a single polyline
- * with a peak wherever a band had energy. A new row is laid down at the
- * front on a fixed beat and every older one steps back, so the display
- * reads front-to-back as *time* and left-to-right as *frequency* — a
- * ridge running away from you is a note holding, and a lone spike that
- * recedes and dims is a hit that has passed.
+ * Each row is one snapshot of the 28 bands, drawn as one polyline with
+ * a peak at each band that had energy. The code adds a new row at the
+ * front at a constant rate, and each older row moves back. Thus the
+ * display shows the time from the front to the back and the frequency
+ * from the left to the right. A ridge that goes away from the viewer is
+ * a note that holds, and one spike that moves back and becomes dim is a
+ * hit that passed.
  *
- * **Orthographic, not perspective.** The rows have to stay parallel. A
- * perspective camera converges them toward a vanishing point, which
- * turns a time axis into a horizon and makes the older rows unreadable
- * exactly when there are most of them; a parallel projection keeps every
- * row the same width, so age reads purely as position and brightness.
- * It also makes the frustum measurable from the geometry instead of a
- * camera-distance puzzle: the eight corners of the box the rows live in
- * are transformed into camera space, which gives the exact half-extents
- * to frame and how far off centre the content sits.
+ * The projection is orthographic and not perspective. The rows must
+ * stay parallel. A perspective camera moves them together toward a
+ * vanishing point, which makes the time axis a horizon and makes the
+ * older rows unreadable where there are the most rows. A parallel
+ * projection keeps each row at the same width, thus the age shows only
+ * as a position and a brightness. It also lets the code measure the
+ * frustum from the geometry and not from a camera distance: the code
+ * transforms the eight corners of the box of the rows into camera
+ * space, which gives the exact half-extents to frame and the offset of
+ * the content from the centre.
  *
- * Lines are 1 px: WebGL ignores `linewidth` on essentially every
- * platform, so real thickness would mean the `Line2` addon and its
- * instanced geometry. Additive blending on a near-black panel carries it
- * instead — crossing rows brighten where they overlap, which is what
- * gives the tangle its density.
+ * The lines are 1 px. WebGL ignores `linewidth` on almost each
+ * platform, thus a real thickness would need the `Line2` addon and its
+ * instanced geometry. Additive blending on a near-black panel replaces
+ * the thickness: two rows that cross become brighter where they
+ * overlap, which gives the display its density.
  *
- * Everything is live-adjustable from `spectrogram-controls.ts`. The
- * scene subscribes to that store directly rather than taking props, so
- * dragging a slider never rebuilds the renderer.
+ * Each value is adjustable at run time from `spectrogram-controls.ts`.
+ * The scene subscribes to that store directly and does not take props,
+ * thus a slider drag does not rebuild the renderer.
  */
 
 /**
- * Distance the camera sits from what it looks at. Arbitrary: the
- * projection is orthographic, so this changes nothing you can see, and
- * only has to stay inside the clip planes.
+ * The distance from the camera to its target. The value is arbitrary:
+ * the projection is orthographic, thus the distance changes nothing on
+ * the screen. It must only stay inside the clip planes.
  */
 const CAMERA_RADIUS = 40;
 const DEG = Math.PI / 180;
 
 /**
- * The level scale the other visualizers are coloured by, as numbers.
- * Their copies are a CSS string list and a GLSL constant respectively,
- * so the three cannot share one representation; the values are what
- * match.
+ * The level scale of the other visualizers, as numbers. Their copies
+ * are a list of CSS strings and a GLSL constant, thus the three cannot
+ * share one representation. Only the values are the same.
  */
 const RAMP: [number, number, number][] = [
   [0.298, 0.78, 1.0], // blue
@@ -115,7 +116,7 @@ export function SpectrogramVisualizer({
     const scene = new THREE.Scene();
     scene.add(lines);
 
-    /** History as a ring: `head` is where the next row will be written. */
+    /** The history as a ring. `head` is the position of the next row. */
     let history = new Float32Array(0);
     let positions = new Float32Array(0);
     let colors = new Float32Array(0);
@@ -132,8 +133,9 @@ export function SpectrogramVisualizer({
     };
 
     // --- camera ----------------------------------------------------------
-    // Clip planes are generous because the row count and spacing are both
-    // adjustable: at their limits the rows run nearly 200 units deep.
+    // The clip planes are far apart, because the row count and the row
+    // spacing are both adjustable. At their maximums the rows are almost
+    // 200 units deep.
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -500, 1000);
     const target = new THREE.Vector3();
     const corner = new THREE.Vector3();
@@ -142,15 +144,15 @@ export function SpectrogramVisualizer({
     let fit = { halfWidth: 1, halfHeight: 1 };
 
     /**
-     * Measures the content's footprint on the camera's own axes.
+     * Measures the size of the content on the axes of the camera.
      *
-     * Transforming the eight corners of the box the rows live in into
-     * camera space gives exactly the half-width and half-height the
-     * frustum needs, and the y centre says how far the view axis misses
-     * the content's middle. Measuring beats a hand-tuned number twice
-     * over: a fixed frustum wasted a quarter of the panel on margin
-     * because the content sat well above the target, and it would have
-     * to be re-tuned every time a knob moved.
+     * The code transforms the eight corners of the box of the rows into
+     * camera space. That gives the exact half-width and half-height of
+     * the frustum, and the y centre gives the offset of the view axis
+     * from the middle of the content. A measurement is better than a
+     * tuned number for two reasons: a fixed frustum used a quarter of
+     * the panel as a margin, because the content was above the target,
+     * and each change of a knob would need a new value.
      */
     const measure = () => {
       camera.updateMatrixWorld();
@@ -173,11 +175,12 @@ export function SpectrogramVisualizer({
     };
 
     /**
-     * Places the camera from azimuth and elevation, then corrects its aim.
+     * Puts the camera at an azimuth and an elevation, then corrects its
+     * direction.
      *
-     * Aim, measure how far off centre the content sits, aim again. One
-     * correction is enough, and the second measurement is what the
-     * frustum is built from.
+     * The steps are: point the camera, measure the offset of the content
+     * from the centre, then point the camera again. One correction is
+     * sufficient, and the frustum comes from the second measurement.
      */
     const aim = () => {
       const az = config.azimuth * DEG;
@@ -204,12 +207,12 @@ export function SpectrogramVisualizer({
     const tint: [number, number, number] = [0, 0, 0];
 
     /**
-     * Rewrites the whole buffer from the ring.
+     * Writes the full buffer again from the ring.
      *
-     * Every row's depth and brightness depend on its *age*, and every row
-     * ages when a new one arrives, so there is nothing to update
-     * incrementally — and at a few thousand vertices a dozen times a
-     * second there is no reason to try.
+     * The depth and the brightness of each row depend on its age, and
+     * each row becomes older when a new row arrives. Thus there is no
+     * incremental update to make. At some thousands of vertices and 12
+     * updates a second, an incremental update has no value.
      */
     const rebuild = () => {
       const { rows, spanX, peakY, rowGap, fade, brightness } = config;
@@ -218,8 +221,8 @@ export function SpectrogramVisualizer({
         const row = (((head - 1 - age) % rows) + rows) % rows;
         const base = row * VISUALIZER_BANDS;
         const z = -age * rowGap;
-        // Older rows dim toward the background rather than vanishing, so
-        // the trail reads as depth and not as rows switching off.
+        // An older row becomes dim toward the background and does not
+        // disappear. Thus the trail shows depth and not rows that stop.
         const dim = Math.pow(1 - age / rows, fade) * brightness;
 
         for (let band = 0; band < segments; band++) {
@@ -230,7 +233,8 @@ export function SpectrogramVisualizer({
             positions[i] = (at / (VISUALIZER_BANDS - 1) - 0.5) * spanX;
             positions[i + 1] = level * peakY;
             positions[i + 2] = z;
-            // Colour by the band's own level, dimmed by the row's age.
+            // The colour comes from the level of the band, made dim by
+            // the age of the row.
             levelColor(level, tint);
             colors[i] = tint[0] * dim;
             colors[i + 1] = tint[1] * dim;
@@ -258,10 +262,10 @@ export function SpectrogramVisualizer({
       if (!width || !height) return;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(width, height, false);
-      // Fit to whichever axis binds. A wide tile is limited by the rows'
-      // height, a narrow one by their width, and fitting the larger of
-      // the two means the frequency axis never runs off the sides
-      // whatever shape the panel is.
+      // Fit the axis with the limit. A wide tile has a limit from the
+      // height of the rows, and a narrow tile from their width. A fit to
+      // the larger of the two keeps the frequency axis in the frame at
+      // each shape of the panel.
       const aspect = width / height;
       const margin = 1 + config.marginPct / 100;
       const half = Math.max(fit.halfHeight, fit.halfWidth / aspect) * margin;
@@ -299,8 +303,9 @@ export function SpectrogramVisualizer({
       if (!still) frozenAt = -1;
       const t = ((still ? frozenAt : now) - origin) / 1000;
 
-      // Rows are laid down on a beat, not per frame: the display is a
-      // history at a known rate, so its depth is a known span of time.
+      // The code adds a row at a constant rate and not at each frame.
+      // Thus the display is a history at a known rate and its depth is a
+      // known interval of time.
       if (!still && t >= nextRow) {
         push();
         nextRow = t + config.intervalMs / 1000;
@@ -341,7 +346,7 @@ export function SpectrogramVisualizer({
     };
   }, []);
 
-  // `tick` stops the loop when paused, so resuming has to start it again.
+  // `tick` stops the loop at a pause, thus a resume must start it again.
   useEffect(() => {
     if (!paused) startRef.current?.();
   }, [paused]);

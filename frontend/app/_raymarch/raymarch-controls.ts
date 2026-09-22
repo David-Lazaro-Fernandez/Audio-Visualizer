@@ -5,15 +5,20 @@ import type { TuningSpec } from "@/app/_ui/TuningPanel";
 /**
  * Live tuning for the raymarched core.
  *
- * Same one-way store as the other overlays: the panel writes, the scene
- * reads and subscribes.
+ * It uses the same one-way store as the other overlays: the panel
+ * writes, the scene reads and subscribes.
  *
- * The knobs split the audio the way the *surface* can actually show it.
- * Twenty-eight bands cannot be read off a lump of rock — mapping them to
- * spherical harmonics would be correct and illegible — so the shape is
- * driven by two bands' worth of energy at two spatial scales: bass makes
- * broad slow swells, treble makes a fine crust. That reads at a glance,
- * which individual bands would not.
+ * The tunnel knobs are the exception to the two energies at two scales
+ * below. The tunnel is not the surface of the core. It is the space
+ * around the core, thus it takes the bass as light and not as
+ * displacement.
+ *
+ * The knobs divide the audio in the way that the surface can show it.
+ * You cannot read 28 bands off a lump of rock. Spherical harmonics would
+ * be correct and impossible to read. Thus two energies at two spatial
+ * scales drive the shape: the bass makes broad slow swells and the
+ * treble makes a fine crust. A viewer can read that immediately, but
+ * cannot read separate bands.
  */
 export const RAYMARCH_SPECS = {
   bassAmp: {
@@ -85,6 +90,58 @@ export const RAYMARCH_SPECS = {
     driftScale: 0.5,
     hint: "Radians a second the camera circles. Zero holds still",
   },
+  tunnelGlow: {
+    label: "Tunnel",
+    min: 0,
+    max: 2,
+    step: 0.05,
+    primary: true,
+    driftScale: 0.5,
+    hint: "Brightness of the tunnel the core hangs in. Zero leaves it on plain black",
+  },
+  tunnelFlash: {
+    label: "Tunnel flash",
+    min: 0,
+    max: 2,
+    step: 0.05,
+    primary: true,
+    driftScale: 0.4,
+    hint: "How hard a bass onset throws a ring of light down the tunnel. It is gone in under a fifth of a second",
+  },
+  tunnelSpeed: {
+    label: "Flight speed",
+    min: 0,
+    max: 2,
+    step: 0.05,
+    primary: true,
+    driftScale: 0.6,
+    hint: "How fast the tunnel flies past. Zero holds it still",
+  },
+  tunnelRings: {
+    label: "Ring spacing",
+    min: 1,
+    max: 12,
+    step: 0.5,
+    driftScale: 0.4,
+    hint: "Rings per unit of depth. High is a dense ladder, low is a few wide hoops",
+  },
+  tunnelCurve: {
+    label: "Bend",
+    min: -6,
+    max: 6,
+    step: 0.05,
+    primary: true,
+    driftScale: 0.6,
+    hint: "How far the corridor wanders off a straight line, and which way it leans first. Zero is a straight pipe, negative is the same curve mirrored; past about 4 either way the vanishing point stops resolving and the extra bend is noise",
+  },
+  tunnelSegments: {
+    label: "Segments",
+    min: 3,
+    max: 16,
+    step: 1,
+    driftScale: 0.4,
+    hint: "Lines running away from you around the wall",
+  },
   resolution: {
     label: "Resolution",
     min: 0.25,
@@ -100,25 +157,36 @@ export type RaymarchState = Record<RaymarchKey, number>;
 
 export const RAYMARCH_KEYS = Object.keys(RAYMARCH_SPECS) as RaymarchKey[];
 
-/** How often the knobs wander, in ms. */
+/** The interval between two steps of the walk, in ms. */
 export const RAYMARCH_DRIFT_MS = 1000;
 
 export const RAYMARCH_DEFAULTS: RaymarchState = {
-  bassAmp: 0.45,
-  bassScale: 2,
-  trebleAmp: 0.09,
-  trebleScale: 10,
-  glow: 1,
-  radius: 1,
-  distance: 3.6,
-  spin: 0.12,
+  bassAmp: 1.5,
+  bassScale: 8,
+  trebleAmp: 0.585,
+  trebleScale: 21,
+  glow: 1.15,
+  radius: 1.03,
+  distance: 4.4,
+  spin: 0.51,
+  tunnelGlow: 1.55,
+  tunnelFlash: 0.92,
+  tunnelSpeed: 1.4,
+  tunnelCurve: 4.05,
+  tunnelRings: 2.5,
+  tunnelSegments: 15,
   resolution: 0.6,
 };
 
 let state: RaymarchState = { ...RAYMARCH_DEFAULTS };
 const listeners = new Set<(state: RaymarchState) => void>();
 
-/** Whether the knobs wander on their own. On by default, like the field. */
+/**
+ * Whether the knobs wander without input. It is on by default, as with
+ * the field. A scene that does not want the walk sets the `drift` prop
+ * on `RaymarchCore` when it mounts the core. Thus one scene does not
+ * change this flag for the other scenes.
+ */
 let drifting = true;
 const driftListeners = new Set<(on: boolean) => void>();
 

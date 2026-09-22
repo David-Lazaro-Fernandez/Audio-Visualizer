@@ -18,39 +18,45 @@ import { MenuIcon } from "./MenuIcons";
 import { getPortalRoot } from "./portal";
 
 /**
- * The "Music" screen the Media blade's Music row opens (DESIGN.md §6.11).
- * Full-screen on the Media blade's sky blue and the same concentric wave
- * sheen (BladeScreenSurface, unclipped), like the Games Library on green:
- * darker header and legend bands top and bottom, the content raised as one
- * slab between them. The portal root sits outside the canvas, whose theme
- * variables are green by default (§2.2), so the screen sets the media
- * theme on its own root to keep the rows, rules and watermark blue.
+ * The Music screen, which the Music row of the Media blade opens
+ * (DESIGN.md §6.11). It is full-screen, on the sky blue of the Media
+ * blade and the same concentric wave sheen (BladeScreenSurface, with no
+ * clip), as the Games Library is on green. There are darker header and
+ * legend bands at the top and the bottom, and the content is one raised
+ * slab between them. The portal root is outside the canvas, whose theme
+ * variables are green by default (§2.2). Thus the screen sets the media
+ * theme on its own root to keep the rows, the rules and the watermark
+ * blue.
  *
- * Left column: the console's source list as blade rows. "Music Player"
- * heads it as an `unavailable` row (§7.2) — faded, but still where the
- * cursor lands, so the pane can say why it can't be used yet. Below it the
- * sources sit on a darker slab (the chrome-band tint, §5.2) that runs to
- * the bottom of the content: Hard Drive and Computer live, Current Disc and
- * Portable Device disabled with no disc or device attached. Right column:
- * the pane shows the highlighted row's name, its artwork and a
- * one-sentence blurb.
+ * The left column is the source list of the console, as blade rows.
+ * "Music Player" is the first row and is `unavailable` (§7.2): it is
+ * faded, but the cursor lands on it, thus the pane can explain why it is
+ * not usable yet. The sources below it sit on a darker slab, the
+ * chrome-band tint of §5.2, that continues to the bottom of the content.
+ * Hard Drive and Computer are live. Current Disc and Portable Device are
+ * disabled, because there is no disc and no device. The right column is
+ * the pane, which shows the name of the highlighted row, its artwork and
+ * one sentence.
  *
- * Icons: the console's source glyphs (hard drive, monitor, USB plug) and the
- * pane's big music note are full-colour bitmaps, so per §6.2 they are not
- * redrawn in the monochrome finish. Those rows show the neutral square and
- * the pane the striped placeholder (§6.7) until the images are dropped in
- * as `icon: <Image src="/assets/…" />` / an `<Image>` in the pane. The two
- * glyphs the set already has — the disc-and-note for Music Player and the
- * disc for Current Disc — are reused.
+ * Icons: the source glyphs of the console, which are the hard drive, the
+ * monitor and the USB plug, and the large music note of the pane are
+ * full-colour bitmaps. Thus §6.2 does not redraw them in the monochrome
+ * finish. Those rows show the neutral square and the pane shows the
+ * striped placeholder (§6.7) until someone adds the images, as
+ * `icon: <Image src="/assets/..." />` and as an `<Image>` in the pane.
+ * The set already has two of the glyphs and this screen uses them: the
+ * disc and note for Music Player and the disc for Current Disc.
  *
  * Hard Drive opens the Audiobooks browse screen (§6.12) as the next
- * surface in the stack; the row owns it and its Back key (`MenuListItem`).
+ * surface in the stack. That row owns the screen and its Back key
+ * (`MenuListItem`).
  *
- * Keyboard: its own `data-nav-list` column; `aria-modal` keeps Left/Right
- * from flipping blades underneath. Focus moves to the first live row on
- * open and back to the opener on close. Back is handled by the row that
- * opened this screen (`MenuListItem`), so like the Games Library it takes
- * no props and satisfies `MenuScreenProps` by ignoring `onClose`.
+ * Keyboard: the screen has its own `data-nav-list` column. `aria-modal`
+ * stops Left and Right from switching the blades below. The focus moves
+ * to the first live row at the open and returns to the row that opened
+ * the screen at the close. That row handles Back (`MenuListItem`), thus,
+ * as with the Games Library, this screen takes no props and satisfies
+ * `MenuScreenProps` and ignores `onClose`.
  */
 const MUSIC_PLAYER_ITEM: LibraryMenuItem = {
   label: "Music Player",
@@ -63,7 +69,7 @@ const MUSIC_SOURCE_ITEMS: LibraryMenuItem[] = [
   {
     label: "Hard Drive",
     description: "Play music saved on your console's hard drive.",
-    // Opens the Audiobooks browse screen (§6.12) over this one.
+    // Opens the Audiobooks browse screen (§6.12) above this screen.
     screen: "audiobooks",
   },
   {
@@ -83,7 +89,7 @@ const MUSIC_SOURCE_ITEMS: LibraryMenuItem[] = [
   },
 ];
 
-/** Same radial blue as the Media blade canvas (§2.1). */
+/** The same radial blue as the canvas of the Media blade (§2.1). */
 const BACKGROUND = gradientCss(MEDIA_GRADIENT);
 
 export function MusicScreen() {
@@ -108,7 +114,7 @@ export function MusicScreen() {
     >
       <BladeScreenSurface gradient={MEDIA_GRADIENT} />
 
-      {/* Header and legend sit at z-0, beneath the content band's shadow. */}
+      {/* The header and the legend are at z-0, below the shadow of the content band. */}
       <BladeChromeBand
         edge="top"
         className="relative z-0 px-[12%] pt-8 pb-5 md:pt-10 md:pb-6"
@@ -126,9 +132,9 @@ export function MusicScreen() {
         >
           <div className="flex min-w-0 flex-col">
             <LibraryMenu items={[MUSIC_PLAYER_ITEM]} ariaLabel="Music player" />
-            {/* The source slab: the chrome-band tint with the corner facing
-                the pane rounded like the bands (§5.2), running to the
-                bottom of the content. */}
+            {/* The source slab: the chrome-band tint, with the corner that
+                faces the pane rounded as on the bands (§5.2). It
+                continues to the bottom of the content. */}
             <LibraryMenu
               items={MUSIC_SOURCE_ITEMS}
               ariaLabel="Music sources"

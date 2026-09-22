@@ -8,16 +8,17 @@ import {
 } from "./water-params";
 
 /**
- * The slider panel (spec section 9). Hand-rolled rather than lil-gui from
- * a CDN: the project already has React and Tailwind, and a controlled
- * `<input type="range">` is the whole requirement.
+ * The slider panel (spec section 9). It is written here and does not use
+ * lil-gui from a CDN. The project has React and Tailwind, and a
+ * controlled `<input type="range">` is all that the panel needs.
  *
- * Every change goes straight into the live uniform objects, so the
- * simulation never pauses and no shader is recompiled. The panel keeps
- * React state only so the numbers it prints stay in sync.
+ * Each change goes directly into the live uniform objects, thus the
+ * simulation does not pause and no shader is recompiled. The panel keeps
+ * React state only to print the current numbers.
  *
- * The spec's first-priority knobs are shown up front; the rest of the
- * model sits behind a disclosure so the panel does not bury them.
+ * The panel shows the knobs with the highest priority first. The other
+ * parts of the model are behind a disclosure, thus the panel does not
+ * hide the first knobs.
  */
 
 const PARAM_KEYS = Object.keys(WATER_PARAMS) as WaterParamKey[];
@@ -53,7 +54,7 @@ function Slider({
   onChange: (key: WaterParamKey, value: number) => void;
 }) {
   const spec = WATER_PARAMS[paramKey];
-  // Step 0.0005 needs 4 decimals; step 1 needs none.
+  // A step of 0.0005 needs 4 decimals. A step of 1 needs none.
   const decimals = Math.max(0, Math.ceil(-Math.log10(spec.step)));
   return (
     <label className="block" title={spec.hint}>

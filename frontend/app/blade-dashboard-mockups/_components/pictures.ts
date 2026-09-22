@@ -1,20 +1,21 @@
 /**
- * The pictures the Media blade's Pictures screen shows (DESIGN.md §6.13).
- * Images live in `public/assets/pictures/`; add a file there and an entry
- * here. The grid has nine slots — extra entries are not shown, and slots
- * beyond the list show the striped placeholder (§6.7) so you can see where
- * a picture will land.
+ * The pictures that the Pictures screen of the Media blade shows
+ * (DESIGN.md §6.13). The images are in `public/assets/pictures/`. To add
+ * a picture, put the file there and add an entry here. The grid has nine
+ * slots. It does not show more than nine entries, and a slot after the
+ * end of the list shows the striped placeholder (§6.7), thus you can see
+ * the position of the next picture.
  */
 export interface Picture {
-  /** File name under `public/assets/pictures/`. */
+  /** The file name, under `public/assets/pictures/`. */
   file: string;
-  /** Caption shown under the grid while the cursor is on the picture; also the alt text. */
+  /** The caption below the grid while the cursor is on the picture. It is also the alt text. */
   name: string;
 }
 
 export const PICTURES_DIR = "/assets/pictures";
 
-/** How many pictures the grid holds: 3 × 3. */
+/** The number of pictures in the grid: 3 x 3. */
 export const PICTURE_GRID_COLS = 3;
 export const PICTURE_SLOTS = PICTURE_GRID_COLS * PICTURE_GRID_COLS;
 
