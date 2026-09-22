@@ -844,12 +844,42 @@ which buys the panel's glow without an expensive blur.
 Columns run left to right by frequency, bass at the left, as the
 hardware does.
 
+The Curl Field is the particle system the `/particles` page runs, shared
+from `app/_particles/` rather than reimplemented: particles are born on a
+sphere at the latitude of the band that spawned them, carried by a
+**divergence-free curl noise field** integrated on the GPU, and fade out.
+
+It is the one visualizer where the four-stop ramp means **frequency**
+rather than level — blue is bass, red is treble — with loudness moved to
+intensity. Colouring by level made it unreadable: brightness decays over
+a particle's life, so every particle swept the whole ramp as it died and
+the colour ended up encoding age, identically for every band. Hue is
+also the only channel that survives the flow, since a particle's birth
+latitude is advected away within a fraction of its lifetime while its
+band travels with it.
+The field is shared because nothing about it is specific to where the
+spectrum came from — the caller hands over a `sample` function that
+fills a band array, which here reads the live analyser and on
+`/particles` advances an offline transform of a decoded preview.
+Orbiting is off here: a pointer-grabbing canvas has no business in a
+10-foot UI (§8), so the view drifts on its own instead.
+
+**The field's knobs also wander on their own**, a random walk of about
+two percent of each value a second (`useDrift`), so the effect keeps
+changing without anyone touching it. That walk runs from the *scene*,
+not from a panel — the dashboard shows no tuning overlay at all
+(`SHOW_VISUALIZER_CONTROLS`, off, because a 10-foot UI has no controls),
+and the field still has to breathe there. `/particles` keeps its panel,
+where the same switch turns the walk off; both read one store, so a
+value set in either shows in the other.
+
 **LB and RB cycle the visualizer** (`1` and `2` on the keyboard, §8), as
-the console's did. There are four, all reading the same band array — so
+the console's did. There are seven, all reading the same band array — so
 switching costs nothing and needs no second analyser
 (`visualizer-styles.ts`): the LED matrix, a pair of mirrored continuous
 bars, which is what the console itself drew, a radial ring whose spokes
-grow outward from the centre, and **Water**.
+grow outward from the centre, **Water**, a **Spectrogram**, a
+**Curl Field**, and a raymarched **Core**.
 
 Water (`WaterVisualizer.tsx`) is the same WebGL wave field the blade
 background uses (§3.1), with the music dropping the stones. No physics
@@ -902,15 +932,91 @@ multiplier of `uK`: a `vec4` had no room left for it, and with one global
 in size. Viscous damping goes as k², so a short-wavelength drop also
 dies faster on its own — the cymbal's ripple is brief and the kick's
 lingers, for free. Colour comes from the surface's **slope**, not its
-height, so flat water reads black and only the moving rings light up. The bumpers
+height, so flat water reads black and only the moving rings light up.
+
+The Spectrogram (`SpectrogramVisualizer.tsx`) is the spectrum's own
+history: each row is one snapshot of the 28 bands as a polyline, a new
+row is laid down every 70 ms and the older ones step back, so the
+display reads front-to-back as *time* and left-to-right as *frequency*.
+A ridge running away from you is a note holding; a lone spike that
+recedes and dims is a hit that has passed. Forty-eight rows at that
+interval is about three seconds of history.
+
+It is drawn **orthographically**, which is the one thing that has to be
+right: a perspective camera converges the rows toward a vanishing point,
+turning the time axis into a horizon and making the oldest rows
+unreadable exactly where there are most of them. A parallel projection
+keeps every row the same width, so age reads purely as position and
+brightness — and framing becomes one number instead of a
+camera-distance puzzle. The camera sits mostly front-on and tipped left,
+because side-on would put the frequency axis and the time axis on the
+same diagonal and the two would be impossible to tell apart. Lines are
+1 px, since WebGL ignores `linewidth` almost everywhere; additive
+blending on the near-black panel carries them instead, and crossing rows
+brighten where they overlap.
+
+The spectrogram has more worth tuning than the others put together — row
+count, how often a row is laid down, peak height, row spacing, trail
+fade, brightness, and the camera's azimuth and elevation — so it carries
+its own overlay (`SpectrogramControls`, fed by
+`spectrogram-controls.ts`), mounted only while it is the visualizer on
+screen. Camera *angles* rather than a position, because "azimuth 20
+degrees" is something you can reason about and `(-7, 9, 20)` is not;
+the projection is orthographic, so distance changes nothing and is not
+exposed. Changing the row count reallocates the geometry; everything
+else is picked up on the next row.
+
+The Core (`app/_raymarch/`) is the only visualizer with **no geometry
+at all**. Every other one draws points, lines or a mesh; this draws one
+fullscreen quad and derives the whole image per pixel by marching a
+signed distance function. The shape is not modelled, it is *generated*:
+a sphere whose radius is displaced by octaves of gradient noise, so it
+has detail at every scale you care to look at and none of it is stored.
+The noise is the same chunk the curl field integrates (`app/_glsl/`),
+which is why it was pulled out of there.
+
+The audio drives it at **two spatial scales**, which is as much as a
+surface can honestly show. Bass swells the whole body in broad slow
+lumps; treble roughens it into a fine crust. Twenty-eight separate bands
+cannot be read off a lump of rock — projecting them onto spherical
+harmonics would be faithful and illegible — so the spectrum is folded
+on the CPU into two energies plus a **spectral centroid**, and the
+centroid picks the hue from the four-stop ramp: where the energy sits,
+not how much of it there is. The envelopes rise fast and fall slowly, so
+a hit inflates the core and it subsides rather than flickering.
+
+Two things about the marcher matter if it is ever changed. It is **not a
+true distance field**: displacing a sphere's radius by noise breaks the
+Lipschitz bound a real SDF guarantees, so a full step can overshoot
+through the surface, and steps are scaled to just over half the reported
+distance to compensate. And **cost is per pixel, not per object**:
+seventy steps of multi-octave noise is about 2.4 G noise evaluations a
+second in the player's tile and ten times that full-screen, which no
+integrated GPU will do. So Resolution is a knob, applied through the
+renderer's pixel ratio — the canvas keeps its CSS size and marches
+fewer pixels, which on an image this soft is nearly invisible. The
+silhouette bloom is free: the marcher already tracks how close each
+missed ray passed.
+
+Its knobs wander like the curl field's, on the same one-second walk run
+from the scene, for the same reason — the dashboard mounts no panel.
+
+That overlay, the core's, the curl field's and the background water's
+(§3.1) are all the same component, `TuningPanel` — a title, a table of
+knobs and which corner to sit in are the only differences, and each was
+about to grow its own copy of the collapse, the reset and the decimal
+handling. The bumpers
 are advertised by the hints in the panel's bottom corners rather than by
 the legend, which is a four-slot grammar with no room for them (§6.5);
 the current visualizer is named between them. They wrap, so there is no
 end of the list to get stuck against.
 
-All three fall back to a synthesised signal when no analyser is feeding
-them, freeze when paused and under `prefers-reduced-motion`, and stop
-asking for frames when still.
+The three canvas readings fall back to a synthesised signal when no
+analyser is feeding them, and stop asking for frames when still. The
+WebGL ones instead keep painting and **freeze their clock**, which comes
+to the same thing on screen and avoids a canvas that goes blank: under
+`prefers-reduced-motion` or while paused, the shape, the camera and the
+spectrum all hold where they were.
 
 ---
 

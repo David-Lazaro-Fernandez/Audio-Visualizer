@@ -14,7 +14,17 @@ import {
 } from "./MenuListItem";
 import { MusicVisualizer } from "./MusicVisualizer";
 import { WaterVisualizer } from "./WaterVisualizer";
-import { VISUALIZER_BANDS, VISUALIZER_STYLES } from "./visualizer-styles";
+import { SpectrogramVisualizer } from "./SpectrogramVisualizer";
+import { SpectrogramControls } from "./SpectrogramControls";
+import { CurlParticles } from "@/app/_particles/CurlParticles";
+import { RaymarchCore } from "@/app/_raymarch/RaymarchCore";
+import { RaymarchControls } from "@/app/_raymarch/RaymarchControls";
+import { CurlControls } from "@/app/_particles/CurlControls";
+import {
+  SHOW_VISUALIZER_CONTROLS,
+  VISUALIZER_BANDS,
+  VISUALIZER_STYLES,
+} from "./visualizer-styles";
 import { ScrollColumn } from "./ScrollColumn";
 import { useAudioSpectrum } from "./use-audio-spectrum";
 import { MEDIA_THEME, themeVars } from "./blade-theme";
@@ -237,13 +247,36 @@ export function MusicPlayerScreen({
 
   const visualizer = VISUALIZER_STYLES[styleIndex];
 
-  // Three of the four are canvas-2D readings of the spectrum; the water
-  // one is a WebGL wave field the music drops stones into (§6.16). Held
-  // as an element rather than a component so switching styles does not
-  // hand React a new component type and tear the canvas down twice.
+  // Three of the seven are canvas-2D readings of the spectrum; the rest
+  // are WebGL scenes — a wave field the music drops stones into, a
+  // scrolling spectrogram, a curl-noise particle flow and a raymarched
+  // core (§6.16). Held as an element rather than a component so
+  // switching styles does not hand React a new component type and tear
+  // the canvas down twice.
   const visual =
     visualizer.id === "water" ? (
       <WaterVisualizer paused={paused} spectrum={spectrum} />
+    ) : visualizer.id === "spectrogram" ? (
+      <SpectrogramVisualizer paused={paused} spectrum={spectrum} />
+    ) : visualizer.id === "core" ? (
+      // No geometry at all: a fullscreen quad marched per pixel. It is
+      // fed the same live band array as everything else and folds it
+      // into bass, treble and a centroid itself.
+      <RaymarchCore
+        bands={VISUALIZER_BANDS}
+        paused={paused}
+        sample={(out) => out.set(spectrum.subarray(0, out.length))}
+      />
+    ) : visualizer.id === "curl" ? (
+      // The same particle system `/particles` runs, fed from the live
+      // analyser instead of an offline transform. Orbiting is off: this
+      // sits in a 10-foot UI, so the view drifts on its own.
+      <CurlParticles
+        bands={VISUALIZER_BANDS}
+        orbit={false}
+        paused={paused}
+        sample={(out) => out.set(spectrum.subarray(0, out.length))}
+      />
     ) : (
       <MusicVisualizer paused={paused} spectrum={spectrum} style={visualizer.id} />
     );
@@ -504,6 +537,16 @@ export function MusicPlayerScreen({
           />
         </BladeChromeBand>
       </div>
+
+      {/* Tuning overlays, off by default: the dashboard is a 10-foot UI
+          and has no controls (§8). Flip SHOW_VISUALIZER_CONTROLS to tune
+          a field in place. The curl field and the core keep drifting
+          either way — the walk runs from the scene, not the panel. */}
+      {SHOW_VISUALIZER_CONTROLS && visualizer.id === "spectrogram" && (
+        <SpectrogramControls />
+      )}
+      {SHOW_VISUALIZER_CONTROLS && visualizer.id === "curl" && <CurlControls />}
+      {SHOW_VISUALIZER_CONTROLS && visualizer.id === "core" && <RaymarchControls />}
 
       {fullScreen && (
         <div

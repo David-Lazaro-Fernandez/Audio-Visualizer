@@ -127,7 +127,21 @@ export { SongScreen, songScreenFor } from "./SongScreen";
 export { MusicPlayerScreen, musicPlayerFor } from "./MusicPlayerScreen";
 export { MusicVisualizer } from "./MusicVisualizer";
 export { WaterVisualizer } from "./WaterVisualizer";
+export { SpectrogramVisualizer } from "./SpectrogramVisualizer";
+export { SpectrogramControls } from "./SpectrogramControls";
 export {
+  SPECTROGRAM_SPECS,
+  SPECTROGRAM_KEYS,
+  SPECTROGRAM_DEFAULTS,
+  spectrogramState,
+  setSpectrogramControl,
+  resetSpectrogramControls,
+  subscribeSpectrogram,
+  type SpectrogramKey,
+  type SpectrogramState,
+} from "./spectrogram-controls";
+export {
+  SHOW_VISUALIZER_CONTROLS,
   VISUALIZER_BANDS,
   VISUALIZER_STYLES,
   type VisualizerStyle,

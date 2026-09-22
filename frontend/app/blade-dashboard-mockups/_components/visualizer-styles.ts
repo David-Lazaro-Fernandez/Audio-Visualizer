@@ -1,15 +1,36 @@
 /**
  * The visualizers the Music Player's bumpers cycle (DESIGN.md §6.16).
  *
- * Its own module because the list has two owners: three of the four are
- * canvas-2D readings of the spectrum (`MusicVisualizer.tsx`) and the
- * fourth is a WebGL wave field (`WaterVisualizer.tsx`). Keeping the
- * registry with either one would make the other import it for a constant,
- * which is how `WaterVisualizer` ended up depending on `MusicVisualizer`
- * for a band count.
+ * Its own module because the list has several owners: three are
+ * canvas-2D readings of the spectrum (`MusicVisualizer.tsx`) and four
+ * are WebGL scenes (`WaterVisualizer.tsx`, `SpectrogramVisualizer.tsx`,
+ * the shared `CurlParticles` from `app/_particles/` and the raymarched
+ * core from `app/_raymarch/`).
+ * Keeping the registry with any one of them would make the others import
+ * it for a constant, which is how `WaterVisualizer` ended up depending on
+ * `MusicVisualizer` for a band count.
  */
 
-export type VisualizerStyle = "led" | "mirror" | "radial" | "water";
+/**
+ * Whether the visualizers' tuning overlays are mounted in the dashboard.
+ *
+ * Off, and it should stay off: this is a 10-foot UI and it has no
+ * controls (§8). The panels exist to tune a field, not to ship inside
+ * it — `/particles` keeps the curl one on screen, and this flag is the
+ * way back in for the spectrogram. Switching it off does not stop the
+ * curl field or the raymarched core drifting: those run from the scene,
+ * not the panel.
+ */
+export const SHOW_VISUALIZER_CONTROLS: boolean = false;
+
+export type VisualizerStyle =
+  | "led"
+  | "mirror"
+  | "radial"
+  | "water"
+  | "spectrogram"
+  | "curl"
+  | "core";
 
 /**
  * How many frequency bands every style is drawn from, and therefore how
@@ -23,4 +44,7 @@ export const VISUALIZER_STYLES: { id: VisualizerStyle; label: string }[] = [
   { id: "mirror", label: "Mirror Bars" },
   { id: "radial", label: "Radial" },
   { id: "water", label: "Water" },
+  { id: "spectrogram", label: "Spectrogram" },
+  { id: "curl", label: "Curl Field" },
+  { id: "core", label: "Core" },
 ];
