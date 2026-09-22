@@ -11,6 +11,11 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // `scripts/*.mts` run under `node --experimental-strip-types`, which
+    // resolves a relative import only with its `.ts` extension. Those
+    // scripts are in `include`, so the extension has to be legal here.
+    // Safe with `noEmit`, since nothing rewrites the specifier.
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
