@@ -13,6 +13,8 @@
  *   button or the ×.
  * - `pageLeft` and `pageRight`: a blade switch to the left or the right.
  */
+import { asset } from "@/app/_lib/asset-path";
+
 export type UiSound = "select" | "selectA" | "back" | "pageLeft" | "pageRight";
 
 const SOUND_FILES: Record<UiSound, string> = {
@@ -28,7 +30,7 @@ const cache = new Map<UiSound, HTMLAudioElement>();
 function audioFor(name: UiSound): HTMLAudioElement {
   let el = cache.get(name);
   if (!el) {
-    el = new Audio(encodeURI(`/assets/sounds/${SOUND_FILES[name]}`));
+    el = new Audio(asset(encodeURI(`/assets/sounds/${SOUND_FILES[name]}`)));
     el.preload = "auto";
     cache.set(name, el);
   }

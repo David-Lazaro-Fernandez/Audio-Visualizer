@@ -9,6 +9,7 @@ import type { ProfileStat } from "./GamerProfileCard";
 import { useBackKey } from "./back-stack";
 import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
+import { asset } from "@/app/_lib/asset-path";
 
 /** The number of columns in the picture grid. It also gives `KeyboardNav` the step of Up and Down. */
 const GRID_COLS = 4;
@@ -89,7 +90,7 @@ export function GamerPicPicker({
       >
         {current ? (
           <Image
-            src={current}
+            src={asset(current)}
             alt="Gamerpic"
             fill
             sizes="76px"
@@ -145,7 +146,7 @@ export function GamerPicPicker({
                 {effective && (
                   <div className="absolute left-1/2 top-2 h-[52px] w-[52px] -translate-x-1/2">
                     <Image
-                      src={effective}
+                      src={asset(effective)}
                       alt=""
                       fill
                       sizes="52px"
@@ -187,7 +188,7 @@ export function GamerPicPicker({
                         >
                           <div className="relative h-[72px] w-[72px]">
                             <Image
-                              src={src}
+                              src={asset(src)}
                               alt=""
                               fill
                               sizes="72px"
@@ -221,7 +222,7 @@ export function GamerPicPicker({
                       <div className="relative h-[76px] w-[76px] shrink-0">
                         {effective && (
                           <Image
-                            src={effective}
+                            src={asset(effective)}
                             alt=""
                             fill
                             sizes="76px"
@@ -248,7 +249,7 @@ export function GamerPicPicker({
                   {/* dashboard logo */}
                   <div className="flex items-center gap-3 px-6 pt-6">
                     <Image
-                      src="/assets/XBOX_LOGO.png"
+                      src={asset("/assets/XBOX_LOGO.png")}
                       alt=""
                       width={500}
                       height={500}

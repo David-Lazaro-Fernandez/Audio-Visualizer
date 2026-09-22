@@ -19,6 +19,7 @@ import {
 } from "./pictures";
 import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
+import { asset } from "@/app/_lib/asset-path";
 
 /**
  * The Pictures screen, which the Pictures row of the Media blade opens
@@ -164,7 +165,7 @@ function PictureTile({
       {picture ? (
         <span className="relative block h-full w-full overflow-hidden rounded-[6px]">
           <Image
-            src={pictureSrc(picture)}
+            src={asset(pictureSrc(picture))}
             alt={picture.name}
             fill
             sizes="(min-width: 768px) 25vw, 33vw"
