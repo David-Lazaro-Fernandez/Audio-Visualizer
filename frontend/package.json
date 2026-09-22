@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "album-data": "node --experimental-strip-types scripts/fetch-apple-music.mts"
   },
   "dependencies": {
     "next": "16.4.0-canary.11",

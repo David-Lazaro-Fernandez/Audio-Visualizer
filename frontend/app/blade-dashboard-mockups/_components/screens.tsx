@@ -18,6 +18,11 @@ import { PicturesScreen } from "./PicturesScreen";
  * Achievements row opens "achievements" directly. Media blade → "music" →
  * "audiobooks" (from the Music screen's Hard Drive row); the Media blade's
  * Pictures row opens "pictures" directly.
+ *
+ * Not every screen can live here. A key names a destination that exists
+ * exactly once, and the album (§6.14) and song (§6.15) screens exist once
+ * per album and per track, so their rows pass a component bound to their
+ * data instead — see `LibraryMenuItem.screen`, which accepts either.
  */
 export type ScreenKey =
   | "games-library"

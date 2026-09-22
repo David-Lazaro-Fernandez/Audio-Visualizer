@@ -476,6 +476,11 @@ art, achievement art) are not redrawn in this finish: the row takes an
 `<Image>` node from `public/assets/` as its `icon` instead, and shows the
 striped placeholder (§6.7) until the bitmap is available.
 
+Omitting `icon` leaves the neutral square, which is the placeholder for a
+bitmap not yet redrawn. Passing `icon={null}` means the row has **no**
+icon at all and closes the gap where one would sit — the console's track
+lists and playlists carried none (§6.14, §6.16).
+
 ### 6.3 Gamer profile card
 
 Appears identically wherever identity matters. Structure: gamertag header bar,
@@ -671,6 +676,30 @@ The body is two equal columns:
   returns the cursor to the category that owns the list. Selecting an
   entry only plays Select A until the player exists.
 
+  Album rows carry their **cover art** in the 24 px icon box, in place of
+  the neutral square — the only category that has any, as on the console.
+
+  Artwork, genre and the track listing all come from the **iTunes Search
+  API**, which needs no key. `scripts/fetch-apple-music.mts` (`npm run
+  album-data`) resolves each album once and writes
+  `album-details.json`; the store's `collectionId` is then pasted back
+  into `albums.ts`, so the app never searches at render time and a re-run
+  is deterministic. Artwork is *linked*, not checked in: Apple's URLs
+  carry the size in the path and are served CORS-open, so one stored URL
+  serves every size the UI needs (`albumArtworkUrl`, plus
+  `remotePatterns` in `next.config.ts`).
+
+  Store search ranks editions ahead of originals and pulls in tributes by
+  other artists, so the match is structural: the artist must match, the
+  collection name must begin with the album's title, and remixes, live
+  albums, karaoke and covers are rejected. Of what survives an exact
+  name wins, else the fewest tracks — which picks the album over a deluxe
+  edition padded with a bonus disc. Some albums are not in the store's
+  search index at all; those keep the neutral square rather than take a
+  wrong match, exactly as §6.10 prefers no art to broken art (though
+  unlike there, the row stays: the art illustrates the title, it is not
+  the item).
+
 Two highlight providers nest (`LibraryMenuProvider`): the outer follows
 the category rows and picks the list, the inner follows the entries and
 drives the counter, so hovering an entry never changes the category. The
@@ -698,6 +727,296 @@ and listed in `pictures.ts` (file name and caption). The grid shows the
 first nine. Selecting a picture only plays Select A until the viewer
 exists. The grid is `data-nav-list="3"` (§8): Up/Down step a row,
 Left/Right a column.
+
+### 6.14 Album screen
+
+Opened by an album row in the Audiobooks browse list
+(`AlbumScreen.tsx`) — Media blade → Music → Audiobooks → here. Same
+full-screen structure and Media blue as §6.12.
+
+The header is the album and its artist in parentheses, `Album (Artist)`.
+The console put the record *label* there; no music file carries one, and
+the artist is both the field a library really has and the one worth
+reading from a couch.
+
+It reuses §6.12's two-column grammar with the roles swapped. The left
+column is a fixed menu of four blade rows (§6.2 `row`) — Play Album, Add
+to Current Playlist, Edit Album Info, Delete Album — rather than a
+filter. The right column is the track listing as compact raised buttons
+(§6.2 `button`, `compact`) with the duration in the meta slot, in a
+`ScrollColumn` with the "N of M" counter at its foot following the
+cursor. Left/Right hand the cursor between the columns exactly as on
+§6.12. Legend: Y and X dimmed, Back B, Select A.
+
+Track listings come from MusicBrainz (`album-details.ts`), fetched by the
+same script as the art (§6.12). Every row plays Select A only: there is
+no player, no playlist and no tag editor yet.
+
+### 6.15 Song screen
+
+Opened by a track row on the album screen (`SongScreen.tsx`). Same
+structure again, and the same left column of four actions — Play Song,
+Add to Current Playlist, Edit Song Info, Delete Song.
+
+What differs is the right column. Where §6.14 lists tracks, this is a
+**readout** of one song's tags, so it takes the detail panel skin from
+§6.9: translucent white at 12% over the section color, the 1 px border
+and one-sided bevel (`RAISED_BORDER`, `RAISED_INSET_SHADOW`), and a
+header strip in the chrome-band tint carrying the song's name. Below it
+the music glyph, then the tags stacked as label-over-value pairs —
+Artist, Album, Genre — the label at 20 px in the soft ink, the value at
+24 px in the primary ink. The console's note here is a full-colour
+bitmap and is not redrawn (§6.2); the icon set's own disc-and-note glyph
+stands in. Like every §6.9 panel it is a readout, never a cursor stop.
+
+The tags are album-level facts, so they come from the album the song sits
+on. Genre is MusicBrainz's most-tagged genre for the release group,
+capitalised for display since MusicBrainz records genres in lowercase.
+
+Screens stack four deep here: Media blade → Music (§6.11) → Audiobooks
+(§6.12) → album (§6.14) → song (§6.15). Each is its own portal and Back
+peels off one at a time (§5.4).
+
+### 6.16 Music Player
+
+Opened by Play Song on the song screen (§6.15) or Play Album on the album
+screen (§6.14) — `MusicPlayerScreen.tsx`. Same full-screen structure and
+Media blue as the rest of the chain, which now runs five deep: Media
+blade → Music → Audiobooks → album → song → player.
+
+Two columns. The **left** is the player, gathered into one raised panel
+(§6.9 skin): a row of five transport buttons — pause/play, previous,
+stop, next, and a sort that reverses the queue — then the wide "Edit or
+Save Playlist" button, then the now-playing plate. That plate is a dark
+frame carrying the artist over the title in bold, the visualizer beneath,
+and the LB / RB bumper hints in its bottom corners. The transport glyphs
+are simple monochrome shapes, so unlike the console's bitmaps they *are*
+redrawn (§6.2), as inline SVG in the icon set's finish; they live with
+this screen rather than in `MenuIcons.tsx`, which is the menu-row set.
+
+The **right** is the queue: "Current Playlist" at 30 px over the same
+compact raised rows the album screen uses (§6.2 `button`, `compact`) with
+the duration in the meta slot, and the "N of M" counter at the foot. The
+track in progress is marked with a play triangle in its icon slot; the
+rest carry `icon={null}`.
+
+The left column is not one list, so Up/Down hand the cursor between the
+transport row and the button under it, and Left/Right between the two
+columns; the transport row is a 5-wide grid, so §8's D-pad already walks
+it with Left/Right.
+
+Y and X are live here — the first screen in the chain whose contextual
+legend slots are bound rather than dimmed (§6.5). Y toggles the
+visualization, X opens it full-screen, and that overlay owns its own
+Back, so one press peels it off before the player (§5.4).
+
+**It really plays.** Every track carries the store's 30-second preview
+(§6.12), served with `Access-Control-Allow-Origin: *`. With
+`crossOrigin="anonymous"` on the `<audio>` element its samples are
+readable, so a Web Audio `AnalyserNode` can see them and the visualizer
+shows the spectrum of the actual audio (`use-audio-spectrum.ts`). That
+header is the whole reason this is possible: without it the preview would
+still play, but `getByteFrequencyData` would return zeros and the bars
+would sit flat. Thirty seconds is all the store gives, so a track ends
+early and the queue advances — the preview's limit, not a placeholder.
+A browser will not start audio without a user gesture; opening the screen
+is one, and a refused play leaves the transport showing Play rather than
+lying about it.
+
+The spectrum reaches the visualizer as one `Float32Array` mutated in
+place, never as React state: it moves sixty times a second.
+
+The visualizer (`MusicVisualizer.tsx`) is drawn as a hardware **LED
+spectrum analyser** — a matrix of discrete cells lit from the bottom of
+each column, the way a rack graphic EQ does it — on a near-black plate,
+deliberately the one surface not in the section palette, since on the
+console it was a graphic effect rather than chrome. Three details are
+what make it read as hardware rather than as a chart: unlit cells keep a
+faint cool tint, so the whole matrix is visible at rest and a quiet
+passage is a dim panel rather than an empty box; colour comes from the
+*row*, blue through violet to amber and red, so a band is red because it
+is high, not because of its frequency; and each column holds its loudest
+recent cell and lets it sink slowly, which is the detached dot floating
+above a column on a real unit. Lit cells are composited with `lighter`
+and a bloom that spills just past the cell but never fills the gap,
+which buys the panel's glow without an expensive blur.
+
+Columns run left to right by frequency, bass at the left, as the
+hardware does.
+
+The Curl Field is the particle system the `/particles` page runs, shared
+from `app/_particles/` rather than reimplemented: particles are born on a
+sphere at the latitude of the band that spawned them, carried by a
+**divergence-free curl noise field** integrated on the GPU, and fade out.
+
+It is the one visualizer where the four-stop ramp means **frequency**
+rather than level — blue is bass, red is treble — with loudness moved to
+intensity. Colouring by level made it unreadable: brightness decays over
+a particle's life, so every particle swept the whole ramp as it died and
+the colour ended up encoding age, identically for every band. Hue is
+also the only channel that survives the flow, since a particle's birth
+latitude is advected away within a fraction of its lifetime while its
+band travels with it.
+The field is shared because nothing about it is specific to where the
+spectrum came from — the caller hands over a `sample` function that
+fills a band array, which here reads the live analyser and on
+`/particles` advances an offline transform of a decoded preview.
+Orbiting is off here: a pointer-grabbing canvas has no business in a
+10-foot UI (§8), so the view drifts on its own instead.
+
+**The field's knobs also wander on their own**, a random walk of about
+two percent of each value a second (`useDrift`), so the effect keeps
+changing without anyone touching it. That walk runs from the *scene*,
+not from a panel — the dashboard shows no tuning overlay at all
+(`SHOW_VISUALIZER_CONTROLS`, off, because a 10-foot UI has no controls),
+and the field still has to breathe there. `/particles` keeps its panel,
+where the same switch turns the walk off; both read one store, so a
+value set in either shows in the other.
+
+**LB and RB cycle the visualizer** (`1` and `2` on the keyboard, §8), as
+the console's did. There are seven, all reading the same band array — so
+switching costs nothing and needs no second analyser
+(`visualizer-styles.ts`): the LED matrix, a pair of mirrored continuous
+bars, which is what the console itself drew, a radial ring whose spokes
+grow outward from the centre, **Water**, a **Spectrogram**, a
+**Curl Field**, and a raymarched **Core**.
+
+Water (`WaterVisualizer.tsx`) is the same WebGL wave field the blade
+background uses (§3.1), with the music dropping the stones. No physics
+is added: `ripplePacket` is already a damped radial sinusoid under a
+Gaussian envelope, which is the shape a drop makes, so this only decides
+when and where one lands. `audio-drops.ts` watches each band for an
+*onset* — a jump above its own rolling mean, not a level, or a loud band
+would fire sixty drops a second. Cooldowns rise with frequency and no
+more than two drops land per frame, because otherwise cymbals would
+flush the budget and erase the bass swell.
+
+**How many ripples can be in flight is the constraint that shapes the
+rest.** A ripple is visible for about two seconds, so capacity divided
+by that life is the only drop rate the field can sustain. Sixteen slots
+recycled one every 110 ms in a busy passage, which cut every wave almost
+as soon as it started and read as the animation being chopped rather
+than decaying. So the shader's array is sized for the visualizer's
+needs (`MAX_DROPS`, 48) while the slow surfaces declare a smaller
+capacity of their own and keep their original cost — `surface()` breaks
+at `uDropCount`, so an oversized array is free to the surfaces that do
+not fill it.
+
+Within that budget the visualizer allocates slots rather than ringing
+through them: it takes an unused or faded one, and when every ripple is
+still live it would rather **miss a hit** than truncate a visible wave,
+since a dropped onset is invisible and a cut wave is not. A drop loud
+enough still displaces the quietest live one, so a kick is never refused
+because a faded tick is nominally ringing, and a minimum gap between
+drops stops one loud bar from spending the whole budget in three frames.
+
+The bands themselves are spaced **logarithmically**, about a third of an
+octave each, over 30 Hz to 14 kHz (`use-audio-spectrum.ts`). Splitting
+the FFT's bins evenly is the obvious thing and it is wrong: it puts
+everything from 20 to 470 Hz in one band, so the whole bass register —
+where a kick, a bass line and most of the rhythm live — gets a
+twenty-eighth of the display while twenty-seven bands share the upper
+harmonics, and the result looks unrelated to the music because the part
+you can feel is not resolved at all. Log spacing gives 20–250 Hz ten
+bands of its own, and since radius follows band index they land inside
+the middle third: the bass animates the centre. It needs `fftSize`
+4096 — at 1024 a bin is 47 Hz wide, which cannot tell 40 Hz from 80 Hz.
+
+Each band then sets three properties of its drop: **where** it lands
+(bass at the centre, treble at the rim, each band keeping its own
+direction so a sound is always tied to a place), **how hard** (the
+band's level becomes `strength`), and **how tight its rings are**. That last one is
+why the shared field gained `uDropK`, a per-drop wavenumber carried as a
+multiplier of `uK`: a `vec4` had no room left for it, and with one global
+`uK` a kick and a cymbal would ring at identical spacing and differ only
+in size. Viscous damping goes as k², so a short-wavelength drop also
+dies faster on its own — the cymbal's ripple is brief and the kick's
+lingers, for free. Colour comes from the surface's **slope**, not its
+height, so flat water reads black and only the moving rings light up.
+
+The Spectrogram (`SpectrogramVisualizer.tsx`) is the spectrum's own
+history: each row is one snapshot of the 28 bands as a polyline, a new
+row is laid down every 70 ms and the older ones step back, so the
+display reads front-to-back as *time* and left-to-right as *frequency*.
+A ridge running away from you is a note holding; a lone spike that
+recedes and dims is a hit that has passed. Forty-eight rows at that
+interval is about three seconds of history.
+
+It is drawn **orthographically**, which is the one thing that has to be
+right: a perspective camera converges the rows toward a vanishing point,
+turning the time axis into a horizon and making the oldest rows
+unreadable exactly where there are most of them. A parallel projection
+keeps every row the same width, so age reads purely as position and
+brightness — and framing becomes one number instead of a
+camera-distance puzzle. The camera sits mostly front-on and tipped left,
+because side-on would put the frequency axis and the time axis on the
+same diagonal and the two would be impossible to tell apart. Lines are
+1 px, since WebGL ignores `linewidth` almost everywhere; additive
+blending on the near-black panel carries them instead, and crossing rows
+brighten where they overlap.
+
+The spectrogram has more worth tuning than the others put together — row
+count, how often a row is laid down, peak height, row spacing, trail
+fade, brightness, and the camera's azimuth and elevation — so it carries
+its own overlay (`SpectrogramControls`, fed by
+`spectrogram-controls.ts`), mounted only while it is the visualizer on
+screen. Camera *angles* rather than a position, because "azimuth 20
+degrees" is something you can reason about and `(-7, 9, 20)` is not;
+the projection is orthographic, so distance changes nothing and is not
+exposed. Changing the row count reallocates the geometry; everything
+else is picked up on the next row.
+
+The Core (`app/_raymarch/`) is the only visualizer with **no geometry
+at all**. Every other one draws points, lines or a mesh; this draws one
+fullscreen quad and derives the whole image per pixel by marching a
+signed distance function. The shape is not modelled, it is *generated*:
+a sphere whose radius is displaced by octaves of gradient noise, so it
+has detail at every scale you care to look at and none of it is stored.
+The noise is the same chunk the curl field integrates (`app/_glsl/`),
+which is why it was pulled out of there.
+
+The audio drives it at **two spatial scales**, which is as much as a
+surface can honestly show. Bass swells the whole body in broad slow
+lumps; treble roughens it into a fine crust. Twenty-eight separate bands
+cannot be read off a lump of rock — projecting them onto spherical
+harmonics would be faithful and illegible — so the spectrum is folded
+on the CPU into two energies plus a **spectral centroid**, and the
+centroid picks the hue from the four-stop ramp: where the energy sits,
+not how much of it there is. The envelopes rise fast and fall slowly, so
+a hit inflates the core and it subsides rather than flickering.
+
+Two things about the marcher matter if it is ever changed. It is **not a
+true distance field**: displacing a sphere's radius by noise breaks the
+Lipschitz bound a real SDF guarantees, so a full step can overshoot
+through the surface, and steps are scaled to just over half the reported
+distance to compensate. And **cost is per pixel, not per object**:
+seventy steps of multi-octave noise is about 2.4 G noise evaluations a
+second in the player's tile and ten times that full-screen, which no
+integrated GPU will do. So Resolution is a knob, applied through the
+renderer's pixel ratio — the canvas keeps its CSS size and marches
+fewer pixels, which on an image this soft is nearly invisible. The
+silhouette bloom is free: the marcher already tracks how close each
+missed ray passed.
+
+Its knobs wander like the curl field's, on the same one-second walk run
+from the scene, for the same reason — the dashboard mounts no panel.
+
+That overlay, the core's, the curl field's and the background water's
+(§3.1) are all the same component, `TuningPanel` — a title, a table of
+knobs and which corner to sit in are the only differences, and each was
+about to grow its own copy of the collapse, the reset and the decimal
+handling. The bumpers
+are advertised by the hints in the panel's bottom corners rather than by
+the legend, which is a four-slot grammar with no room for them (§6.5);
+the current visualizer is named between them. They wrap, so there is no
+end of the list to get stuck against.
+
+The three canvas readings fall back to a synthesised signal when no
+analyser is feeding them, and stop asking for frames when still. The
+WebGL ones instead keep painting and **freeze their clock**, which comes
+to the same thing on screen and avoids a canvas that goes blank: under
+`prefers-reduced-motion` or while paused, the shape, the camera and the
+spectrum all hold where they were.
 
 ---
 
@@ -783,7 +1102,12 @@ its half of the switch on exactly the same curve as the CSS transitions.
 ## 8. Input model
 
 Keys map to the controller (`keys.ts`): Space, Enter or A is the A button;
-Escape or B is the B button. The global D-pad (`KeyboardNav.tsx`) works off two data
+Escape or B is the B button; Y and X are their own letters; the shoulder
+bumpers are `1` and `2`, since there are no letters to borrow and the
+number row sits where the bumpers do. Y and X are
+bound only by the screen that lights those legend slots — the Music
+Player (§6.16) is the only one so far — because a dimmed slot (§7.2) must
+not answer a key. The global D-pad (`KeyboardNav.tsx`) works off two data
 attributes:
 
 - `data-nav-list="column"` (or a number N for an N-wide grid) on a container.

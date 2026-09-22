@@ -18,3 +18,31 @@ export function isNativeButtonActivationKey(e: AnyKeyEvent) {
 export function isBackKey(e: AnyKeyEvent) {
   return e.key === "Escape" || e.key === "b" || e.key === "B";
 }
+
+/**
+ * The Y and X buttons — the contextual half of the legend (§6.5). Only
+ * the Music Player binds them so far; everywhere else those slots are
+ * dimmed, and a dimmed slot must not answer a key.
+ */
+export function isYKey(e: AnyKeyEvent) {
+  return e.key === "y" || e.key === "Y";
+}
+
+export function isXKey(e: AnyKeyEvent) {
+  return e.key === "x" || e.key === "X";
+}
+
+/**
+ * The shoulder bumpers, as 1 and 2 — there are no letters to borrow, and
+ * the number row sits where the bumpers do: leftmost and next to it. The
+ * console cycled the Music Player's visualizer with them (§6.16), and
+ * showed them as hints in the corners of the visualizer itself rather
+ * than in the four-slot legend (§6.5), which has no room for them.
+ */
+export function isLeftBumperKey(e: AnyKeyEvent) {
+  return e.key === "1";
+}
+
+export function isRightBumperKey(e: AnyKeyEvent) {
+  return e.key === "2";
+}

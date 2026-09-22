@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
-import { MenuListItem } from "./MenuListItem";
+import { MenuListItem, type MenuScreenProps } from "./MenuListItem";
 import { resolveScreen, type ScreenKey } from "./screens";
 
 export interface LibraryMenuItem {
@@ -13,8 +13,15 @@ export interface LibraryMenuItem {
   unavailable?: boolean;
   detailTitle?: string;
   detail?: React.ReactNode;
-  /** Full-screen destination opened on select; see `screens.tsx`. Wins over `detail`. */
-  screen?: ScreenKey;
+  /**
+   * Full-screen destination opened on select; wins over `detail`.
+   *
+   * Normally a key from `screens.tsx`, so the page can stay a server
+   * component and pass plain data. A screen that needs *arguments* - the
+   * album screen, which exists once per album - cannot be named by a
+   * string, so a bound component is accepted too.
+   */
+  screen?: ScreenKey | React.ComponentType<MenuScreenProps>;
   icon?: React.ReactNode;
   /** Blurb shown in the pane beside the menu while this row is highlighted. */
   description?: string;
@@ -143,7 +150,9 @@ export function LibraryMenu({
               <MenuListItem
                 {...item}
                 variant={variant ?? (buttons ? "button" : "row")}
-                screen={screen ? resolveScreen(screen) : undefined}
+                screen={
+                  typeof screen === "string" ? resolveScreen(screen) : screen
+                }
                 autoFocus={autoFocusFirst && index === 0}
                 growOnFocus={growOnFocus}
                 iconOnly={iconOnly}

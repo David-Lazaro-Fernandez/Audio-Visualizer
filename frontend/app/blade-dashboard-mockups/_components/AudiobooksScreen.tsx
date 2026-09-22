@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { BladeScreenSurface } from "./BladeBackground";
 import { gradientCss, MEDIA_GRADIENT } from "./blade-gradient";
 import { BladeChromeBand, CONTENT_BAND_SHADOW } from "./BladeChromeBand";
@@ -13,6 +14,10 @@ import {
   type LibraryMenuItem,
 } from "./LibraryMenu";
 import { MenuIcon } from "./MenuIcons";
+import { ALBUMS, type Album } from "./albums";
+import { albumArtworkUrl } from "./album-details";
+import { AlbumScreen } from "./AlbumScreen";
+import type { MenuScreenProps } from "./MenuListItem";
 import { MEDIA_THEME, themeVars } from "./blade-theme";
 import { getPortalRoot } from "./portal";
 import { ScrollColumn } from "./ScrollColumn";
@@ -46,46 +51,107 @@ import { playSound } from "./sounds";
  * images are dropped in as `icon: <Image src="/assets/…" />`. Albums reuses
  * the disc-and-note `music` glyph the set already has.
  *
+ * The album rows themselves carry their sleeve, linked from Apple's
+ * artwork CDN (`album-details.ts`, `scripts/fetch-apple-music.mts`). An
+ * album with no cover keeps the neutral square, so the shelf reads the
+ * same whether or not a sleeve was found.
+ *
  * Legend, as on the console: Y Play All Music, X unbound; Back B, A unbound.
  * Back is owned by the row that opened this screen (`MenuListItem` +
  * `useBackKey`), so this takes no props.
  */
+interface CategoryEntry {
+  label: string;
+  /** Album sleeve; the other categories are text only, as on the console. */
+  icon?: React.ReactNode;
+  /** Full-screen destination, for the album rows (§6.14). */
+  screen?: React.ComponentType<MenuScreenProps>;
+}
+
 interface Category {
   label: string;
   icon?: React.ReactNode;
-  entries: string[];
+  entries: CategoryEntry[];
 }
+
+/** Text-only entries, for every category but Albums. */
+const plain = (...labels: string[]): CategoryEntry[] =>
+  labels.map((label) => ({ label }));
+
+/**
+ * One album's sleeve, at the 24 px the neutral square it replaces
+ * occupies — `MenuListItem` only oversizes `svg` glyphs, so a bitmap sits
+ * in the icon box as-is.
+ *
+ * A row whose file is missing falls back to that same neutral square
+ * rather than a broken image, the way the Achievements screen reacts to
+ * art that will not load (§6.10). It does *not* drop the row: there the
+ * art is the item, here it only illustrates a title that stands on its
+ * own.
+ */
+/** Box the sleeve sits in, matching the neutral square's `h-6 w-6`. */
+const ART_PX = 24;
+
+function AlbumArt({ album }: { album: Album }) {
+  const [failed, setFailed] = useState(false);
+  // Apple's CDN resizes from the path, so ask for what we display.
+  const src = albumArtworkUrl(album, ART_PX * 4);
+  if (!src || failed) {
+    return (
+      <span
+        aria-hidden="true"
+        className="block h-6 w-6 shrink-0 rounded-[4px] bg-[rgba(0,0,0,.22)]"
+      />
+    );
+  }
+  return (
+    <Image
+      src={src}
+      // Decorative: the row's own label already names the album.
+      alt=""
+      // Twice the box, so it is crisp on a retina panel without asking
+      // the optimizer for a variant ten times bigger than it can show.
+      width={ART_PX * 2}
+      height={ART_PX * 2}
+      onError={() => setFailed(true)}
+      className="h-6 w-6 shrink-0 rounded-[4px] object-cover"
+    />
+  );
+}
+
+/**
+ * Every album row opens its own album screen (§6.14). The screen takes
+ * the album as an argument, so it cannot be referenced by a `ScreenKey`
+ * the way the fixed destinations are — each row carries a component bound
+ * to its album instead. Built once at module scope so those component
+ * types are stable and opening a screen does not remount it.
+ */
+const ALBUM_ENTRIES: CategoryEntry[] = ALBUMS.map((album) => {
+  // Annotated so `displayName` is assignable: a bare arrow has no such
+  // property, only a FunctionComponent does. `AlbumScreen` is referenced
+  // from inside the body, not at module-evaluation time, which keeps the
+  // import cycle through `screens.tsx` harmless the same way
+  // `resolveScreen` does.
+  const Screen: React.ComponentType<MenuScreenProps> = () => (
+    <AlbumScreen album={album} />
+  );
+  Screen.displayName = `AlbumScreen(${album.title})`;
+  return {
+    label: album.title,
+    icon: <AlbumArt album={album} />,
+    screen: Screen,
+  };
+});
 
 const CATEGORIES: Category[] = [
   {
     label: "Albums",
     icon: <MenuIcon name="music" />,
-    entries: [
-      "Unknown Album",
-      "#3",
-      "(What's the Story), Morning Glory?",
-      "21",
-      "21st Century Breakdown",
-      "A Flock Of Seagulls",
-      "A Girl Like Me",
-      "A Hangover You Don't Deserve",
-      "A Momentary Lapse of Reason",
-      "A Night at the Opera",
-      "A Rush of Blood to the Head",
-      "Abbey Road",
-      "Absolution",
-      "American Idiot",
-      "Appetite for Destruction",
-      "Back in Black",
-      "Blue Lines",
-      "Boxer",
-      "Discovery",
-      "Hybrid Theory",
-    ],
+    entries: ALBUM_ENTRIES,
   },
   {
     label: "Artists",
-    entries: [
+    entries: plain(
       "Unknown Artist",
       "A Flock Of Seagulls",
       "Adele",
@@ -99,15 +165,15 @@ const CATEGORIES: Category[] = [
       "Pink Floyd",
       "Queen",
       "The National",
-    ],
+    ),
   },
   {
     label: "Saved Playlists",
-    entries: ["Driving", "Late Night", "Party Mix", "Workout"],
+    entries: plain("Driving", "Late Night", "Party Mix", "Workout"),
   },
   {
     label: "Songs",
-    entries: [
+    entries: plain(
       "Unknown Song",
       "21 Guns",
       "Around the World",
@@ -120,11 +186,11 @@ const CATEGORIES: Category[] = [
       "Rolling in the Deep",
       "Teardrop",
       "Uprising",
-    ],
+    ),
   },
   {
     label: "Genres",
-    entries: ["Unknown Genre", "Alternative", "Electronic", "Pop", "Rock", "Trip Hop"],
+    entries: plain("Unknown Genre", "Alternative", "Electronic", "Pop", "Rock", "Trip Hop"),
   },
 ];
 
@@ -239,10 +305,12 @@ function Browser() {
     onSelect: focusFirstEntry,
   }));
 
-  const entryItems: LibraryMenuItem[] = category.entries.map((label) => ({
-    label,
-    // Nothing to open yet: Select just plays Select A, as on the
-    // Achievements grid before its detail screen existed.
+  const entryItems: LibraryMenuItem[] = category.entries.map((entry) => ({
+    label: entry.label,
+    icon: entry.icon,
+    screen: entry.screen,
+    // Categories with no destination yet just play Select A, as the
+    // Achievements grid did before its detail screen existed.
     onSelect: () => {},
   }));
 
@@ -273,9 +341,9 @@ function Browser() {
 }
 
 /** "1 of 273" at the foot of the list, following the cursor through the inner provider. */
-function EntryCounter({ entries }: { entries: string[] }) {
+function EntryCounter({ entries }: { entries: CategoryEntry[] }) {
   const highlighted = useHighlightedItem();
-  const index = entries.indexOf(highlighted?.label ?? "");
+  const index = entries.findIndex((entry) => entry.label === highlighted?.label);
   return (
     <p aria-live="polite" className="pl-5 text-[22px] text-(--blade-ink)">
       {entries.length === 0 ? 0 : Math.max(index, 0) + 1} of {entries.length}
