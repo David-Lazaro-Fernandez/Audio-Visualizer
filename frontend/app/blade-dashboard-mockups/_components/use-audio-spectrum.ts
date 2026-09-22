@@ -77,7 +77,10 @@ export function useAudioSpectrum(
     const spectrum = spectrumRef.current;
     let context: AudioContext | null = null;
     let analyser: AnalyserNode | null = null;
-    let bins: Uint8Array | null = null;
+    // `getByteFrequencyData` takes a view over an ArrayBuffer, not over
+    // a SharedArrayBuffer, thus the buffer type is spelled out. Bare
+    // `Uint8Array` widens to `ArrayBufferLike` and does not fit.
+    let bins: Uint8Array<ArrayBuffer> | null = null;
     let edges: Int32Array | null = null;
     let frame = 0;
 
