@@ -33,6 +33,7 @@ import {
   XboxLiveBanner,
   DEFAULT_ACTIVE_INDEX,
 } from "./_components";
+import { asset } from "@/app/_lib/asset-path";
 
 /**
  * The blade order, left to right (DESIGN.md §1). The index in this array
@@ -256,7 +257,7 @@ export default function BladeDashboardMockupsPage() {
             <GamerProfileCard profile={PROFILE} stats={liveStats(PROFILE)} />
             <div className="flex min-w-0 items-center justify-center">
               <Image
-                src="/assets/Xbox-Live-Logo-2005.png"
+                src={asset("/assets/Xbox-Live-Logo-2005.png")}
                 alt="Xbox LIVE"
                 width={2000}
                 height={1125}
@@ -287,7 +288,7 @@ export default function BladeDashboardMockupsPage() {
             <GamerProfileCard profile={PROFILE} stats={gamerStats(PROFILE)} />
             <div className="flex min-w-0 items-center justify-center">
               <Image
-                src="/assets/XBOX_LOGO.png"
+                src={asset("/assets/XBOX_LOGO.png")}
                 alt="Xbox 360"
                 width={500}
                 height={500}
@@ -313,7 +314,7 @@ export default function BladeDashboardMockupsPage() {
             <GamerProfileCard profile={PROFILE} stats={liveStats(PROFILE)} />
             <div className="flex min-w-0 items-center justify-center">
               <Image
-                src="/assets/XBOX_LOGO.png"
+                src={asset("/assets/XBOX_LOGO.png")}
                 alt="Xbox 360"
                 width={500}
                 height={500}

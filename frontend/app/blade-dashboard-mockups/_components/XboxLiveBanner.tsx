@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { asset } from "@/app/_lib/asset-path";
 
 /**
  * The filled media slot of DESIGN.md §6.7: the grey Xbox LIVE tile. It
@@ -38,7 +39,7 @@ export function XboxLiveBanner({
         />
       )}
       <Image
-        src="/assets/Xbox-Live-Logo-2005.png"
+        src={asset("/assets/Xbox-Live-Logo-2005.png")}
         alt="Xbox LIVE"
         width={2000}
         height={1125}

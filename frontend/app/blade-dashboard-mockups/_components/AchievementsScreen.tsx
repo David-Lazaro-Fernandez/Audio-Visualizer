@@ -28,6 +28,7 @@ import { RAISED_BORDER, RAISED_INSET_SHADOW } from "./MenuListItem";
 import { getPortalRoot } from "./portal";
 import { ScrollColumn } from "./ScrollColumn";
 import { playSound } from "./sounds";
+import { asset } from "@/app/_lib/asset-path";
 
 /**
  * The Achievements screen, which the Achievements row of the Games blade
@@ -523,7 +524,7 @@ function Art({
   return (
     <span className={`relative block aspect-square ${className ?? ""}`}>
       <Image
-        src={image}
+        src={asset(image)}
         alt=""
         fill
         sizes="96px"

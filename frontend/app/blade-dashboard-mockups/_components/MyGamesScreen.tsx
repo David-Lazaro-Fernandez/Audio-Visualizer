@@ -17,6 +17,7 @@ import { isSelectKey } from "./keys";
 import { RAISED_BORDER, RAISED_INSET_SHADOW } from "./MenuListItem";
 import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
+import { asset } from "@/app/_lib/asset-path";
 
 /**
  * The My Games screen, which the My Games row of the Games Library
@@ -490,7 +491,7 @@ function GameDetailPanel({ games }: { games: MyGame[] }) {
 function GameArt({ game, sizePx }: { game: MyGame; sizePx: number }) {
   return (
     <Image
-      src={game.image}
+      src={asset(game.image)}
       alt=""
       width={64}
       height={64}
