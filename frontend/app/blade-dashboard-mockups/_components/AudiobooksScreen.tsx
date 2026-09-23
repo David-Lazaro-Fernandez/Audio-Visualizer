@@ -50,10 +50,9 @@ import { playSound } from "./sounds";
  * and drives the counter. Thus a hover on an album does not change the
  * open category.
  *
- * Icons: the category glyphs of the console are full-colour bitmaps,
- * thus §6.2 does not redraw them. The rows show the neutral square until
- * someone adds the images as `icon: <Image src="/assets/..." />`. Albums
- * uses the disc-and-note `music` glyph that the set already has.
+ * Icons: each category has a glyph of the monochrome set (§6.2): the
+ * disc and note for Albums, a microphone for Artists, a list with a note
+ * for Saved Playlists, one note for Songs and a guitar for Genres.
  *
  * Each album row carries its sleeve, linked from the artwork CDN of
  * Apple (`album-details.ts`, `scripts/fetch-apple-music.mts`). An album
@@ -157,6 +156,7 @@ const CATEGORIES: Category[] = [
   },
   {
     label: "Artists",
+    icon: <MenuIcon name="artists" />,
     entries: plain(
       "Unknown Artist",
       "A Flock Of Seagulls",
@@ -175,10 +175,12 @@ const CATEGORIES: Category[] = [
   },
   {
     label: "Saved Playlists",
+    icon: <MenuIcon name="playlist" />,
     entries: plain("Driving", "Late Night", "Party Mix", "Workout"),
   },
   {
     label: "Songs",
+    icon: <MenuIcon name="song" />,
     entries: plain(
       "Unknown Song",
       "21 Guns",
@@ -196,6 +198,7 @@ const CATEGORIES: Category[] = [
   },
   {
     label: "Genres",
+    icon: <MenuIcon name="genre" />,
     entries: plain("Unknown Genre", "Alternative", "Electronic", "Pop", "Rock", "Trip Hop"),
   },
 ];

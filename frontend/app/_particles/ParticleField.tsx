@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import type { SlidingSpectrogram } from "./song-spectrogram";
 
 /**
  * The spectrogram of a song as a cloud of particles that a user can
@@ -36,7 +35,30 @@ import type { SlidingSpectrogram } from "./song-spectrogram";
  * Use only ASCII characters in the GLSL. WebGL rejects source that
  * contains characters outside the GLSL ES set, comments included, and it
  * rejects the source before the compiler runs.
+ *
+ * The scene is shared, thus it takes a ring of levels and a function
+ * that advances it, and it knows nothing of where they come from.
+ * `/particles` hands it the offline window of a decoded preview, whose
+ * `SlidingSpectrogram` already is such a ring, and the Music Player
+ * hands it a ring that a live analyser fills one row at a time
+ * (`GridVisualizer.tsx`). The curl field and the core are shared the
+ * same way, with a `sample` function. A ring and not a `sample` here,
+ * because this scene draws the history itself and not only the current
+ * moment: a caller that owns the history can also scrub it.
  */
+
+/**
+ * A ring of spectrum slices. `head` is the row of the newest one, and
+ * the scene reads back from it. `version` changes whenever `levels`
+ * changed, thus the scene writes its buffers again only then.
+ */
+export interface LevelHistory {
+  frames: number;
+  bands: number;
+  levels: Float32Array;
+  head: number;
+  version: number;
+}
 
 /** The box that holds the cloud, in world units. */
 const SPAN_X = 44;
@@ -45,6 +67,34 @@ const HEIGHT = 11;
 
 /** The shader does not draw a cell with a level below this value. */
 const FLOOR = 0.07;
+
+/**
+ * The point size, and the height of the mount that it is right for.
+ *
+ * `gl_PointSize` is in pixels and the framing is by field of view, thus
+ * a smaller mount shows the same cloud with the same fat points and the
+ * landscape becomes a blur. The tile of the Music Player is a fifth of
+ * the height of `/particles`. Thus the size follows the height of the
+ * mount and the scene keeps its proportions at any size.
+ */
+const POINT_SIZE = 2.6;
+const POINT_SIZE_AT = 700;
+
+/** The three-quarter view that the camera starts from, as polar values. */
+const VIEW_AZIMUTH = Math.atan2(-SPAN_X * 0.42, SPAN_Z * 1.9);
+const VIEW_RADIUS = Math.hypot(SPAN_X * 0.42, SPAN_Z * 1.9);
+const VIEW_HEIGHT = HEIGHT * 1.9;
+
+/**
+ * The sway of the view where there is no orbit, in radians and in
+ * radians a second.
+ *
+ * The camera sways about the start angle and does not turn full circle.
+ * The x axis is the time with the newest slice at the lit edge, thus a
+ * full turn would put the landscape the wrong way round for half of it.
+ */
+const SWAY = 0.32;
+const SWAY_RATE = 0.16;
 
 const VERTEX = /* glsl */ `
 attribute float aLevel;
@@ -107,19 +157,48 @@ void main() {
 `;
 
 export function ParticleField({
-  analyser,
-  timeRef,
-  followRef,
-  className,
+  history,
+  advance,
+  orbit = true,
+  paused = false,
+  className = "h-full w-full",
 }: {
-  analyser: SlidingSpectrogram;
-  /** Playback position in seconds. It is mutated in place, not state. */
-  timeRef: { current: number };
-  /** Whether the window must follow the playback now. */
-  followRef: { current: boolean };
+  /** The slices to draw. The component reads it, it does not own it. */
+  history: LevelHistory;
+  /**
+   * Brings `history` up to date. The component calls it one time a
+   * frame, before it looks at `version`. The caller does the work of
+   * its own source in it: move an offline window to the playback
+   * position, or push one row from a live analyser.
+   */
+  advance: () => void;
+  /**
+   * Whether a drag orbits the camera. The dashboard sets it to false:
+   * its visualizer is in a 10-foot UI, where a canvas must not take the
+   * pointer. The view sways on its own instead.
+   */
+  orbit?: boolean;
+  /**
+   * Freezes the picture. The component still paints, thus the canvas
+   * does not go blank, but no slice arrives and the view holds.
+   */
+  paused?: boolean;
+  /**
+   * Classes for the mount. They must give the element a height: the
+   * canvas takes its size from this element, and a block div with no
+   * height leaves the renderer at its default 300x150.
+   */
   className?: string;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
+  // Written after the render and not during it. The loop reads them on
+  // the next frame, thus one frame of an old value is not observable.
+  const advanceRef = useRef(advance);
+  const pausedRef = useRef(paused);
+  useEffect(() => {
+    advanceRef.current = advance;
+    pausedRef.current = paused;
+  });
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -138,7 +217,7 @@ export function ParticleField({
     renderer.domElement.style.touchAction = "none";
 
     // --- the grid, one point per cell ------------------------------------
-    const { frames, bands } = analyser;
+    const { frames, bands } = history;
     const count = frames * bands;
     const positions = new Float32Array(count * 3);
     const strengths = new Float32Array(count);
@@ -169,7 +248,7 @@ export function ParticleField({
      * This removes a third of the writes at each frame of the playback.
      */
     const refresh = () => {
-      const { levels, head } = analyser;
+      const { levels, head } = history;
       for (let age = 0; age < frames; age++) {
         const row = (((head - age) % frames) + frames) % frames;
         for (let band = 0; band < bands; band++) {
@@ -185,7 +264,7 @@ export function ParticleField({
     refresh();
 
     const uniforms = {
-      uSize: { value: 2.6 },
+      uSize: { value: POINT_SIZE },
       // The newest slice is the current moment, thus the lit edge is the
       // front of the cloud. There is no separate playhead to position.
       uPlayhead: { value: SPAN_X / 2 },
@@ -212,16 +291,19 @@ export function ParticleField({
     scene.add(grid);
 
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 500);
-    camera.position.set(-SPAN_X * 0.42, HEIGHT * 1.9, SPAN_Z * 1.9);
+    camera.position.set(-SPAN_X * 0.42, VIEW_HEIGHT, SPAN_Z * 1.9);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, HEIGHT * 0.3, 0);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.maxPolarAngle = Math.PI / 2 - 0.02;
-    controls.minDistance = 8;
-    controls.maxDistance = 140;
-    controls.update();
+    let controls: OrbitControls | null = null;
+    if (orbit) {
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, HEIGHT * 0.3, 0);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.maxPolarAngle = Math.PI / 2 - 0.02;
+      controls.minDistance = 8;
+      controls.maxDistance = 140;
+      controls.update();
+    }
 
     const resize = () => {
       const { clientWidth, clientHeight } = mount;
@@ -229,25 +311,62 @@ export function ParticleField({
       renderer.setSize(clientWidth, clientHeight);
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
+      // A floor on the scale: below it the quiet dust disappears and
+      // only the ridges stay, which is worse than points a little large.
+      uniforms.uSize.value =
+        POINT_SIZE * Math.max(0.45, Math.min(1, clientHeight / POINT_SIZE_AT));
     };
     resize();
     const observer = new ResizeObserver(resize);
     observer.observe(mount);
 
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const origin = performance.now();
+    /** The moment the clock stopped, or -1 while it runs. */
+    let frozenAt = -1;
+    /** Total ms spent stopped, thus a resume continues and does not jump. */
+    let frozen = 0;
     let frame = 0;
     let seen = -1;
-    const tick = () => {
+
+    const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      if (followRef.current) analyser.advanceTo(timeRef.current);
+
+      // Freeze the clock and not the frame, as the core and the water
+      // tile do. The canvas keeps painting, thus it does not go blank,
+      // but no slice arrives and the view holds where it was.
+      const still = motion.matches || pausedRef.current;
+      if (still && frozenAt < 0) frozenAt = now;
+      if (!still && frozenAt >= 0) {
+        frozen += now - frozenAt;
+        frozenAt = -1;
+      }
+      const t = ((still ? frozenAt : now) - origin - frozen) / 1000;
+
+      if (!still) advanceRef.current();
       // Write the buffers only when the levels changed. At 60 fps there
       // are frames between two slices, and a scrub during a pause can end
       // on the same ring index. Thus this code reads the revision and not
       // the head.
-      if (analyser.version !== seen) {
-        seen = analyser.version;
+      if (history.version !== seen) {
+        seen = history.version;
         refresh();
       }
-      controls.update();
+
+      if (controls) {
+        controls.update();
+      } else {
+        // There is no orbit here, thus the view sways on its own. A
+        // fixed three-quarter view of a landscape looks like a still
+        // image, and the cells alone do not show that it is not one.
+        const angle = VIEW_AZIMUTH + Math.sin(t * SWAY_RATE) * SWAY;
+        camera.position.set(
+          Math.sin(angle) * VIEW_RADIUS,
+          VIEW_HEIGHT,
+          Math.cos(angle) * VIEW_RADIUS,
+        );
+        camera.lookAt(0, HEIGHT * 0.3, 0);
+      }
       renderer.render(scene, camera);
     };
     frame = requestAnimationFrame(tick);
@@ -255,7 +374,7 @@ export function ParticleField({
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
-      controls.dispose();
+      controls?.dispose();
       geometry.dispose();
       material.dispose();
       grid.geometry.dispose();
@@ -263,9 +382,10 @@ export function ParticleField({
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-    // Rebuilt only for another song. The refs are stable.
+    // Rebuilt only for another ring or another orbit mode. The advance
+    // function and the paused flag reach the loop through a ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analyser]);
+  }, [history, orbit]);
 
   return <div ref={mountRef} className={className} />;
 }

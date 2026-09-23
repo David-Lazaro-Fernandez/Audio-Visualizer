@@ -405,6 +405,20 @@ The portal root sits outside the canvas, so a surface opened from a blade
 other than Games sets its own section theme (§2.2) on its root, as the
 Music screen does with the media blue.
 
+**Only the topmost surface paints.** Each screen carries its own water
+shader (§3.1), and each one is opaque and full-bleed, so reaching the
+Music Player means six WebGL2 contexts drawing a full viewport each and
+five of them behind an opaque cover. A second module-level stack
+(`surface-stack.ts`) tracks which layer is on top; the ones below stop
+asking for frames and hold their last one. They are correct again on the
+frame after the cover closes, because the water is a function of the
+clock and not of the frames it drew — and they keep `painted` true
+throughout, so the CSS twins stay down and the reveal cannot flash. It
+is a second stack rather than a field on the back stack because the two
+answer different questions: Back is a key and belongs to a screen, while
+a cover is any opaque layer, and the Music Player's full-screen
+visualization is one without being a screen.
+
 ### 5.5 Tab strip
 
 Filter tabs sit directly under the header band as a row of plain text
@@ -472,7 +486,13 @@ controller, joystick and disc for the Games blade, globe (with a small
 controller) for "Connect to Xbox LIVE", and music (disc with a note),
 pictures (camera) and videos (camcorder) for the Media blade, two fanned
 game cards with a controller for the Achievements screen's "All Games"
-row, plus the Marketplace "m" roundel, currently unused. Icons that are
+row, plus the Marketplace "m" roundel, currently unused. The music menus
+have their own: hard drive, monitor and pocket player for the Music
+screen's sources (§6.11); microphone, list with a note, single note and
+guitar for the Audiobooks categories (§6.12); and a play roundel, a list
+with a plus, a pencil and a bin for the Play / Add to Current Playlist /
+Edit Info / Delete actions shared by the album and song screens (§6.14,
+§6.15). Icons that are
 full-colour bitmaps on the console (Media Center's Windows flag, title
 art, achievement art) are not redrawn in this finish: the row takes an
 `<Image>` node from `public/assets/` as its `icon` instead, and shows the
@@ -645,11 +665,12 @@ columns, the left 45% wide:
 - **Description pane** (right): the highlighted row's name at 30 px, its
   artwork, then the blurb at 24–26 px.
 
-The console's source icons (hard drive, monitor, USB plug) and the pane's
-music note are full-colour bitmaps and are not redrawn (§6.2): those rows
-show the neutral square and the pane a 120 px striped placeholder (§6.7)
-until the images are dropped in. Music Player reuses the `music` glyph and
-Current Disc the `disc` glyph. Hard Drive opens the Audiobooks screen (§6.12).
+Every source row carries a glyph from the monochrome set (§6.2): Music
+Player the `music` glyph, Current Disc the `disc`, and Hard Drive,
+Computer and Portable Device their own drive, monitor and pocket player,
+redrawn rather than waiting on the console's bitmaps. The pane's music
+note is still a full-colour bitmap and shows a 120 px striped placeholder
+(§6.7) until the image is dropped in. Hard Drive opens the Audiobooks screen (§6.12).
 
 ### 6.12 Audiobooks screen
 
@@ -664,10 +685,10 @@ the shared rows take the blue ink and rules (§2.2). The header reads
 The body is two equal columns:
 
 - **Categories** (left): Albums, Artists, Saved Playlists, Songs, Genres
-  as blade rows (§6.2 `row`) with the `chevron` cue. The console's
-  category glyphs are full-colour bitmaps and are not redrawn (§6.2): the
-  rows show the neutral square until the images are dropped in, except
-  Albums, which reuses the `music` glyph. Hover or focus on a category
+  as blade rows (§6.2 `row`) with the `chevron` cue. Each carries a glyph
+  from the monochrome set (§6.2): Albums the `music` glyph, Artists a
+  microphone, Saved Playlists a list with a note, Songs a single note and
+  Genres a guitar. Hover or focus on a category
   swaps the list beside it, as on the console; Select or Right moves the
   cursor into the list.
 - **Entries** (right): the highlighted category's items as compact raised
@@ -891,6 +912,16 @@ the colour ended up encoding age, identically for every band. Hue is
 also the only channel that survives the flow, since a particle's birth
 latitude is advected away within a fraction of its lifetime while its
 band travels with it.
+**The pool is what a frame costs.** A curl is six samples of a
+three-component potential, so 18 noise calls per particle per frame, and
+every particle is also an additive sprite. Neither scales with the
+canvas — `gl_PointSize` is in pixels, so a postcard-sized tile would pay
+a full window's fill — so the tile asks for a smaller pool than the
+full-screen copy and the point size follows the height of the mount.
+Only one of the two is ever mounted: the tile stands down while the
+full-screen copy is up, since a second field simulating behind an opaque
+overlay is the one cost with nothing at all to show for it.
+
 The field is shared because nothing about it is specific to where the
 spectrum came from — the caller hands over a `sample` function that
 fills a band array, which here reads the live analyser and on
@@ -908,12 +939,12 @@ where the same switch turns the walk off; both read one store, so a
 value set in either shows in the other.
 
 **LB and RB cycle the visualizer** (`1` and `2` on the keyboard, §8), as
-the console's did. There are seven, all reading the same band array — so
+the console's did. There are eight, all reading the same band array — so
 switching costs nothing and needs no second analyser
 (`visualizer-styles.ts`): the LED matrix, a pair of mirrored continuous
 bars, which is what the console itself drew, a radial ring whose spokes
-grow outward from the centre, **Water**, a **Spectrogram**, a
-**Curl Field**, and a raymarched **Core**.
+grow outward from the centre, **Water**, a **Spectrogram**, a **Grid**,
+a **Curl Field**, and a raymarched **Core**.
 
 Water (`WaterVisualizer.tsx`) is the same WebGL wave field the blade
 background uses (§3.1), with the music dropping the stones. No physics
@@ -972,6 +1003,14 @@ The Spectrogram (`SpectrogramVisualizer.tsx`) is the spectrum's own
 history: each row is one snapshot of the 28 bands as a polyline, a new
 row is laid down every 70 ms and the older ones step back, so the
 display reads front-to-back as *time* and left-to-right as *frequency*.
+**The rows arrive at a rate; they do not move at one.** A push shifts
+every row back a full gap at once, so on its own the whole image steps
+fourteen times a second and reads as a renderer at fourteen frames a
+second. Between pushes the stack therefore glides back by the fraction
+of the interval that has passed, and the push cancels that offset
+exactly — a row becomes one age older, which is one gap back, as the
+offset returns to zero. One assignment a frame, and the rate stays a
+rate.
 A ridge running away from you is a note holding; a lone spike that
 recedes and dims is a hit that has passed. Forty-eight rows at that
 interval is about three seconds of history.
@@ -999,6 +1038,48 @@ degrees" is something you can reason about and `(-7, 9, 20)` is not;
 the projection is orthographic, so distance changes nothing and is not
 exposed. Changing the row count reallocates the geometry; everything
 else is picked up on the next row.
+
+The Grid (`app/_particles/ParticleField.tsx`, wrapped by
+`GridVisualizer.tsx`) is the same history the Spectrogram draws, read as
+a **landscape** instead of a waterfall: one point per cell, x is time
+with the newest slice at the lit front edge, z is frequency with the
+bass nearest, and y is level. So a bass line is a ridge along the front,
+a hi-hat pattern is a row of spikes at the back, and a drop is a cliff
+across every band. It is points and not a surface, because a spectrogram
+*is* a grid of discrete measurements and a skin over them would claim a
+continuity between adjacent cells that nothing measured. Quiet cells are
+hidden by the shader rather than removed from the buffer: the window
+slides, so which cells are loud changes every few milliseconds and
+rebuilding the geometry each frame would cost more than drawing nothing.
+
+It is the grid view of `/particles`, shared the way the Curl Field and
+the Core are — but shared as a **ring of slices plus a function that
+advances it**, not as a `sample` callback, because this scene draws the
+history itself and a caller that owns the history can also scrub it.
+`/particles` hands over its offline window, which already is such a
+ring; the player hands over one it fills from the live analyser.
+
+**It lays down a row per frame.** Both this and the Spectrogram hit the
+same wall — a new row moves the whole display, so at 70 ms the image
+steps fourteen times a second and reads as fourteen frames a second, no
+matter what the renderer is doing, and 1,344 points cannot be slow on a
+machine where the raymarched Core is smooth. `/particles` advances a
+slice every 5.8 ms, which is why the same scene looks fluid there.
+
+They take opposite ways out, because the constraint differs. The
+Spectrogram glides between rows and keeps its rate, since its depth in
+time is a knob and `rebuild` rewrites every vertex at each push. This
+one just pushes faster: `refresh` touches only a height and a level per
+cell, and a row per frame is the source's own rate, since the analyser
+gives exactly one reading per frame — anything slower throws readings
+away. The price is that the depth becomes a frame count rather than an
+interval, about 1.6 s at 60 fps, and here the motion is what the display
+is for.
+
+Orbiting is off here for the reason it is off on the Curl Field (§8), so
+instead the view **sways** about its three-quarter angle rather than
+turning full circle: x is time, and half of a full turn would show it
+running backwards.
 
 The Core (`app/_raymarch/`) is the only visualizer with **no geometry
 at all**. Every other one draws points, lines or a mesh; this draws one
@@ -1145,6 +1226,36 @@ to the same thing on screen and avoids a canvas that goes blank: under
 `prefers-reduced-motion` or while paused, the shape, the camera and the
 spectrum all hold where they were.
 
+### 6.17 Controller sign-in toast
+
+When a controller connects (`gamepadconnected`, §8), a toast reads
+"<gamertag> signed in" and plays the notification cue (§7.3) —
+`ControllerNotification.tsx`, mounted by `GamepadNav`. It lives 7 s in
+total: a 1 s open, 5 s on screen and a 1 s close. It is `absolute` at a fixed
+`bottom: 100px`, centred, `z-50` so it sits over the full-screen
+surfaces too, and never takes pointer events or focus.
+
+It is one container, the dark translucent pill (`rgba(44,52,40,.9)`,
+2 px grey rim, 96 px tall), holding the logo and the text. The logo
+fills the pill's height as a square, so the two are always the same
+height; the text is the gamertag over "signed in" at 26 px in
+`#dfe3da`. The logo is the controller's ring of light: four grey
+quadrants split by a black cross, the pad's own quadrant lit green (pad
+0 top left, then top right, bottom left, bottom right, the console's
+player order). Inside the ring the icon alternates every 1.5 s between
+the Xbox 360 ball (`public/assets/ball.png`) and the standing console,
+crossfading over 300 ms.
+
+It comes in as the console's did: the whole shape first shows as a
+faint, blurred ghost, then the pill draws itself left to right over it
+(a mask twice the pill's width, opaque on one half and faint on the
+other, sliding across), and the whole ring glows green before settling
+on the lit quadrant, all within the first second. The close is the open
+backwards within the last second: the pill un-draws right to left, then
+the ghost blurs and fades. Under
+`prefers-reduced-motion` it simply shows. A second connect restarts it
+rather than extending it.
+
 ---
 
 ## 7. States and feedback
@@ -1185,9 +1296,20 @@ Every cue maps to a controller action (`sounds.ts`):
 | Select A | Confirming an item |
 | Back | Leaving a screen you can actually leave (ESC, B, `×`, backdrop) |
 | Page Left / Right | Switching blades toward the left / right |
+| Notification | A notification toast appears (controller signed in, §6.17) |
 
 Back is only listened for while something is open, so it is silent when there
 is nothing to go back from. Replaying a cue restarts it; different cues overlap.
+
+Cues play through one Web Audio context from buffers decoded up front,
+so each starts on its first sample the moment it is asked for. The
+browser keeps that context silent until the page gets a real user
+activation — a click, a tap or a key press. Controller input is not
+one in any browser and nothing in the page can make it one, so a
+session that only the controller has touched is silent until the first
+click or key press; after that every cue plays, whatever device sent
+it. A cue asked for while the audio is still locked is dropped rather
+than queued, so unlocking never releases a burst of stale sounds.
 
 ### 7.4 Blade transition
 
@@ -1244,6 +1366,16 @@ Up/Down step through a column (or by N in a grid). Left/Right switch blades,
 except inside a grid or under a modal. Movement clamps at the ends and plays
 Select. Every navigable element, including tabs and the gamer picture, is a
 `data-nav-item`.
+
+A real controller drives the same keys (`GamepadNav.tsx`). The left stick
+and the D-pad are the arrows, A/B/X/Y their letters, LB/RB `1`/`2`; each
+becomes a `keydown` on the focused element, so every handler above
+answers it exactly as it answers the keyboard. The rules live in the pure
+`gamepad-input.ts`: fire on the press edge only, a stick deadzone of 0.5
+with release at 0.35, the dominant axis on a diagonal, and a 300 ms /
+100 ms repeat for a held direction, standing in for the OS key repeat the
+arrows rely on. Buttons do not repeat. Only pads with the `standard`
+mapping are read.
 
 ---
 

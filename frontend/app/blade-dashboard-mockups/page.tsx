@@ -29,6 +29,7 @@ import {
   MenuIcon,
   OpenTrayBar,
   KeyboardNav,
+  GamepadNav,
   PROFILE,
   XboxLiveBanner,
   DEFAULT_ACTIVE_INDEX,
@@ -227,6 +228,8 @@ export default function BladeDashboardMockupsPage() {
     {/* Up and Down move the cursor, Left and Right switch blades,
         Space and A select, and ESC and B go back. */}
     <KeyboardNav />
+    {/* A controller drives the same keys. */}
+    <GamepadNav />
     <BladeCanvas>
       <BladeMenuGutters />
       <BladeEdges />

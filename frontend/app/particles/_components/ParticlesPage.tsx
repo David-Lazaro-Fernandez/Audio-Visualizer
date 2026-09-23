@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ParticleField } from "./ParticleField";
 import { ParticleSphere } from "./ParticleSphere";
 import { SphereControls } from "./SphereControls";
 import { CurlParticles } from "@/app/_particles/CurlParticles";
+import { ParticleField } from "@/app/_particles/ParticleField";
 import { CurlControls } from "@/app/_particles/CurlControls";
 import { RaymarchCore } from "@/app/_raymarch/RaymarchCore";
 import { RaymarchControls } from "@/app/_raymarch/RaymarchControls";
@@ -147,6 +147,17 @@ export function ParticlesPage() {
     },
     [analyser],
   );
+
+  /**
+   * Supplies the grid, which draws the full window and not one slice.
+   * Thus it needs only the move of the window and reads the ring of the
+   * analyser itself. The dashboard pushes a row from a live analyser in
+   * the same place (`GridVisualizer.tsx`).
+   */
+  const advanceWindow = useCallback(() => {
+    if (!analyser) return;
+    if (followRef.current) analyser.advanceTo(timeRef.current);
+  }, [analyser]);
 
   const toggle = () => {
     const audio = audioRef.current;
@@ -304,9 +315,8 @@ export function ParticlesPage() {
             />
           ) : (
             <ParticleField
-              analyser={analyser}
-              timeRef={timeRef}
-              followRef={followRef}
+              history={analyser}
+              advance={advanceWindow}
               className="absolute inset-0"
             />
           ))}

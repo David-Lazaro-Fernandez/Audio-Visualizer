@@ -12,6 +12,7 @@ import {
   useHighlightedItem,
   type LibraryMenuItem,
 } from "./LibraryMenu";
+import { MenuIcon, type MenuIconName } from "./MenuIcons";
 import { MEDIA_THEME, themeVars } from "./blade-theme";
 import { getPortalRoot } from "./portal";
 import { ScrollColumn } from "./ScrollColumn";
@@ -55,12 +56,12 @@ import { musicPlayerFor } from "./MusicPlayerScreen";
  */
 
 /** The actions that the console gave for an album. None of them works yet. */
-const ACTIONS = [
-  "Play Album",
-  "Add to Current Playlist",
-  "Edit Album Info",
-  "Delete Album",
-] as const;
+const ACTIONS: { label: string; icon: MenuIconName }[] = [
+  { label: "Play Album", icon: "play" },
+  { label: "Add to Current Playlist", icon: "addToPlaylist" },
+  { label: "Edit Album Info", icon: "edit" },
+  { label: "Delete Album", icon: "delete" },
+];
 
 /** The same radial blue as the canvas of the Media blade (DESIGN.md §2.1). */
 const BACKGROUND = gradientCss(MEDIA_GRADIENT);
@@ -163,10 +164,10 @@ function Columns({ album, tracks }: { album: Album; tracks: Track[] }) {
    // actions have no behaviour yet and play Select A only.
   const actionItems: LibraryMenuItem[] = useMemo(
     () =>
-      ACTIONS.map((label) =>
+      ACTIONS.map(({ label, icon }) =>
         label === "Play Album"
-          ? { label, screen: musicPlayerFor(album, tracks) }
-          : { label, onSelect: () => {} },
+          ? { label, icon: <MenuIcon name={icon} />, screen: musicPlayerFor(album, tracks) }
+          : { label, icon: <MenuIcon name={icon} />, onSelect: () => {} },
       ),
     [album, tracks],
   );

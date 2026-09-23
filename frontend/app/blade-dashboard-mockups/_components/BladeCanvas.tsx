@@ -5,6 +5,7 @@ import { useBladeNav } from "./BladeNavContext";
 import { themeVars } from "./blade-theme";
 import { gradientCss } from "./blade-gradient";
 import { BladeSurface, BladeSurfacePaintedProvider } from "./BladeSurface";
+import { useCoveredSurface } from "./surface-stack";
 
 /**
  * The full-bleed blade surface (DESIGN.md §1: the top-level UI expands
@@ -27,6 +28,9 @@ import { BladeSurface, BladeSurfacePaintedProvider } from "./BladeSurface";
 export function BladeCanvas({ children }: { children: React.ReactNode }) {
   const { active, geometry } = useBladeNav();
   const [painted, setPainted] = useState(false);
+  // The blade is the floor: it covers nothing, and any open full-screen
+  // surface hides it completely (`surface-stack.ts`).
+  const covered = useCoveredSurface(false);
   return (
     <div
       className="relative h-screen w-full overflow-hidden rounded-[6px]"
@@ -38,6 +42,7 @@ export function BladeCanvas({ children }: { children: React.ReactNode }) {
       <BladeSurface
         gradient={active.gradient}
         panel={{ leftX: geometry.leftX, rightX: geometry.rightX }}
+        covered={covered}
         onPaintedChange={setPainted}
       />
       <BladeSurfacePaintedProvider painted={painted}>

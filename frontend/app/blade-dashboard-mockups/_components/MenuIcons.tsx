@@ -6,8 +6,12 @@
  * the Xbox LIVE blade; the disc with a note, the camera, the camcorder
  * and the Marketplace "m" roundel for the Media blade; the two stacked
  * game cards with a controller for the "All Games" filter of the
- * Achievements screen; and the same trophy under a padlock for a locked
- * achievement tile.
+ * Achievements screen; the same trophy under a padlock for a locked
+ * achievement tile; and the music menus (§6.11, §6.12, §6.14, §6.15):
+ * the hard drive, the monitor and the portable player of the sources,
+ * the microphone, the playlist, the note and the guitar of the browse
+ * categories, and the play roundel, the playlist with a plus, the pencil
+ * and the bin of the album and song actions.
  *
  * All the icons use one finish: translucent white at 50%, a lighter
  * white edge, inked details in translucent black, and a soft drop
@@ -28,7 +32,18 @@ export type MenuIconName =
   | "videos"
   | "videoStore"
   | "allGames"
-  | "lockedTrophy";
+  | "lockedTrophy"
+  | "hardDrive"
+  | "computer"
+  | "portableDevice"
+  | "artists"
+  | "playlist"
+  | "song"
+  | "genre"
+  | "play"
+  | "addToPlaylist"
+  | "edit"
+  | "delete";
 
 /** The body fill: white at 50%, thus the gradient of the blade tints the glyph. */
 const FILL = "rgba(255,255,255,.5)";
@@ -274,6 +289,150 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
       <rect x="11.4" y="15.2" width="9.2" height="7" rx="1.4" fill={INK} stroke="none" />
       <rect x="11.4" y="15.2" width="9.2" height="7" rx="1.4" fill="none" stroke={EDGE} />
       <circle cx="16" cy="18.4" r="1" fill="#fff" stroke="none" opacity=".85" />
+    </>
+  ),
+
+  /* Hard Drive, on the Music screen: a drive unit with its lid off. It
+     has an inked platter with a hub, the read arm across the platter,
+     and an activity light at the lower right. */
+  hardDrive: (
+    <>
+      <rect x="4" y="8" width="24" height="17" rx="2" />
+      <circle cx="13.5" cy="16.5" r="5.4" fill="none" stroke={INK} strokeWidth="1.2" />
+      <circle cx="13.5" cy="16.5" r="1.4" fill={INK} stroke="none" />
+      <path d="M24 11.5l-7.6 6.2" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="24" cy="11.5" r="1.3" fill={INK} stroke="none" />
+      <rect x="22" y="21.2" width="3.4" height="1.6" rx=".8" fill={INK} stroke="none" />
+      <ellipse cx="7.4" cy="12.6" rx=".9" ry="2.4" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* Computer, on the Music screen: a monitor on a short neck and a flat
+     foot. The screen is inked, thus it reads as glass in the frame, with
+     one diagonal gleam. */
+  computer: (
+    <>
+      <path d="M14 21h4l1 4.2h-6z" />
+      <rect x="9.5" y="24.8" width="13" height="2.6" rx="1.3" />
+      <rect x="4" y="4.5" width="24" height="17" rx="1.8" />
+      <rect x="6.6" y="7" width="18.8" height="12" rx=".8" fill={INK} stroke="none" />
+      <path d="M9 17l7-8" fill="none" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" opacity=".5" />
+    </>
+  ),
+
+  /* Portable Device, on the Music screen: a pocket music player. It has
+     an inked screen at the top and a click wheel with its centre button
+     below. */
+  portableDevice: (
+    <>
+      <rect x="9" y="3.5" width="14" height="25" rx="3" />
+      <rect x="11.4" y="6.2" width="9.2" height="8" rx="1" fill={INK} stroke="none" />
+      <circle cx="16" cy="21.2" r="4.4" fill="none" stroke={INK} strokeWidth="1.2" />
+      <circle cx="16" cy="21.2" r="1.5" fill={INK} stroke="none" />
+      <ellipse cx="11" cy="18" rx=".7" ry="2.4" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* Artists, on the Audiobooks screen: a stage microphone. It has a
+     round capsule with an inked grille, a U-shaped holder on a stem, and
+     a foot. The code draws the capsule last, thus it sits in the holder. */
+  artists: (
+    <>
+      <path d="M8.2 12.2h1.8a6 6 0 0 0 12 0h1.8a7.8 7.8 0 0 1-6.9 7.75V24h-1.8v-4.05a7.8 7.8 0 0 1-6.9-7.75z" />
+      <rect x="11" y="24" width="10" height="2.6" rx="1.3" />
+      <rect x="12" y="3.5" width="8" height="12.5" rx="4" />
+      <path d="M12.6 7.6h6.8M12.3 10h7.4M12.6 12.4h6.8" fill="none" stroke={INK} strokeWidth=".9" />
+      <ellipse cx="14" cy="6.6" rx=".7" ry="1.6" fill="#fff" stroke="none" opacity=".7" />
+    </>
+  ),
+
+  /* Saved Playlists, on the Audiobooks screen: three lines of a list,
+     the last one short, and the eighth note of `music` at their right. */
+  playlist: (
+    <>
+      <rect x="4" y="7" width="14" height="3" rx="1.5" />
+      <rect x="4" y="13" width="14" height="3" rx="1.5" />
+      <rect x="4" y="19" width="9" height="3" rx="1.5" />
+      <g transform="translate(-1 1.5)">
+        <path d="M22.6 21.6V5.2c2.9.5 5.2 2.4 5.7 5.3-1.3-1.2-2.5-1.7-3.9-1.7v12.8z" />
+        <ellipse cx="20.6" cy="22.6" rx="3.4" ry="2.4" transform="rotate(-18 20.6 22.6)" />
+      </g>
+    </>
+  ),
+
+  /* Songs, on the Audiobooks screen: one large eighth note, the stem
+     with a curled flag and then the head. */
+  song: (
+    <>
+      <path d="M17 23V4.5c3.8.6 6.9 3.1 7.6 7-1.8-1.6-3.4-2.3-5.2-2.3V23z" />
+      <ellipse cx="14.4" cy="23.4" rx="4.6" ry="3.3" transform="rotate(-18 14.4 23.4)" />
+      <ellipse cx="12.6" cy="22.4" rx=".8" ry="1.6" fill="#fff" stroke="none" opacity=".6" transform="rotate(60 12.6 22.4)" />
+    </>
+  ),
+
+  /* Genres, on the Audiobooks screen: an acoustic guitar, leaning to the
+     right. The body is one figure-eight path, thus the two bouts have
+     one outline. It has an inked sound hole and bridge. The code draws
+     the neck first, thus the body overlaps it. */
+  genre: (
+    <g transform="rotate(40 16 16)">
+      <rect x="13.8" y="1" width="4.4" height="5" rx="1" />
+      <rect x="15" y="5" width="2" height="7" />
+      <path d="M16 10a4.5 4.5 0 0 0-4.5 4.5c0 2.5 1.5 3.5 1.1 4.7C11 20 10 21.3 10 23a6 6 0 0 0 12 0c0-1.7-1-3-2.6-3.8-.4-1.2 1.1-2.2 1.1-4.7A4.5 4.5 0 0 0 16 10z" />
+      <circle cx="16" cy="20.2" r="2.1" fill={INK} stroke="none" />
+      <rect x="13.5" y="24.2" width="5" height="1.4" rx=".7" fill={INK} stroke="none" />
+      <ellipse cx="12.4" cy="23.4" rx=".8" ry="2" fill="#fff" stroke="none" opacity=".6" />
+    </g>
+  ),
+
+  /* Play Album and Play Song: a roundel, as the `videoStore` one, with
+     an inked play triangle across it. */
+  play: (
+    <>
+      <circle cx="16" cy="16" r="11.5" />
+      <path d="M13 10.5v11l9-5.5z" fill={INK} stroke="none" />
+      <ellipse cx="11.2" cy="9.4" rx="1.6" ry="3" fill="#fff" stroke="none" opacity=".6" transform="rotate(35 11.2 9.4)" />
+    </>
+  ),
+
+  /* Add to Current Playlist: the three list lines of `playlist`, with a
+     plus sign in place of the note. */
+  addToPlaylist: (
+    <>
+      <rect x="4" y="7" width="15" height="3" rx="1.5" />
+      <rect x="4" y="13" width="15" height="3" rx="1.5" />
+      <rect x="4" y="19" width="9" height="3" rx="1.5" />
+      <path d="M20.6 15h2.8v4.6H28v2.8h-4.6V27h-2.8v-4.6H16v-2.8h4.6z" />
+    </>
+  ),
+
+  /* Edit Album Info and Edit Song Info: a pencil, tip to the lower left.
+     It has an inked eraser band and an inked lead at the tip. */
+  edit: (
+    <g transform="rotate(45 16 16)">
+      <rect x="13" y="2.5" width="6" height="4" rx="1.4" />
+      <path d="M13 6.5h6V22h-6z" />
+      <path d="M13 22h6l-3 6z" />
+      <path d="M15 26h2l-1 2z" fill={INK} stroke="none" />
+      <path d="M13 6.5h6" fill="none" stroke={INK} strokeWidth="1.4" />
+      <path d="M14.6 8.5V20" fill="none" stroke="#fff" strokeWidth="1" strokeLinecap="round" opacity=".6" />
+    </g>
+  ),
+
+  /* Delete Album and Delete Song: a bin. It has a handle on the lid, a
+     body that narrows to the bottom, and three inked ribs. */
+  delete: (
+    <>
+      <rect x="12.5" y="3.5" width="7" height="3.6" rx="1" />
+      <rect x="6" y="6.5" width="20" height="3" rx="1" />
+      <path d="M8 11h16l-1.4 15.2a2 2 0 0 1-2 1.8h-9.2a2 2 0 0 1-2-1.8z" />
+      <path
+        d="M12.5 14l.5 10.5M16 14v10.5M19.5 14l-.5 10.5"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
     </>
   ),
 };

@@ -31,7 +31,10 @@ import { useDrift } from "@/app/_ui/use-drift";
  * The state is in a float texture that is ping-ponged. A fragment shader
  * reads the current positions, advances them and writes the next
  * positions. The vertex shader of the point cloud then reads the
- * positions from that texture. This is one 160x160 pass a frame.
+ * positions from that texture. This is one `side` x `side` pass a
+ * frame. The swap itself is two assignments; the cost is what the pass
+ * computes, thus `side` is a prop and a tile asks for a smaller pool
+ * than a window does.
  *
  * All the state fits in one RGBA texture. Thus there is no second pass
  * and no multiple-render-target plumbing:
@@ -65,9 +68,26 @@ import { useDrift } from "@/app/_ui/use-drift";
  * Use only ASCII characters in the GLSL. Refer to `curl-noise.ts`.
  */
 
-/** Pool is SIDE x SIDE, one texel of state per particle. */
-const SIDE = 160;
-const POOL = SIDE * SIDE;
+/**
+ * The pool is `side` x `side`, one texel of state per particle, and
+ * `CURL_SIDE` is the size for a scene that fills a window. The cost of
+ * a frame is the square of it: the simulation runs 18 noise calls for
+ * each texel (`curl-noise.ts`), and the draw puts one additive sprite
+ * on the screen for each. A caller that shows the field in a tile the
+ * size of a postcard passes a smaller number.
+ */
+export const CURL_SIDE = 160;
+
+/**
+ * The point size, and the mount height that it is right for.
+ *
+ * `gl_PointSize` is in pixels, thus the area a sprite covers does not
+ * fall with the canvas. A tile a fifth of the height of a window shows
+ * the same cloud with sprites five times too wide, which costs the same
+ * fill as the full window and reads as a blur. Thus the size follows
+ * the height of the mount.
+ */
+const POINT_SIZE_AT = 700;
 /** Brightness below which a particle counts as dead. */
 const DEAD = 0.02;
 /** Sampling radius for the curl's central differences. */
@@ -221,12 +241,18 @@ void main() {
 export function CurlParticles({
   bands,
   sample,
+  side = CURL_SIDE,
   paused = false,
   orbit = true,
   className = "h-full w-full",
 }: {
   /** How many frequency bands the spectrum has. */
   bands: number;
+  /**
+   * The side of the square pool, thus `side * side` particles. It is
+   * the one knob that sets the cost of a frame; see `CURL_SIDE`.
+   */
+  side?: number;
   /**
    * Fills `out` with the current levels, 0..1 for each band. The
    * component calls it one time a frame. The caller does the necessary
@@ -281,6 +307,8 @@ export function CurlParticles({
     const mount = mountRef.current;
     if (!mount) return;
 
+    const pool = side * side;
+
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -300,7 +328,7 @@ export function CurlParticles({
       : THREE.HalfFloatType;
 
     const makeTarget = () =>
-      new THREE.WebGLRenderTarget(SIDE, SIDE, {
+      new THREE.WebGLRenderTarget(side, side, {
         type,
         format: THREE.RGBAFormat,
         minFilter: THREE.NearestFilter,
@@ -346,7 +374,7 @@ export function CurlParticles({
       uSpectrum: { value: spectrum },
       uTime: { value: 0 },
       uDt: { value: 0 },
-      uSide: { value: SIDE },
+      uSide: { value: side },
       uBands: { value: bands },
       uRadial: { value: config.radial },
       uCurlStrength: { value: config.curlStrength },
@@ -370,6 +398,8 @@ export function CurlParticles({
     const simulateCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     // --- draw pass -------------------------------------------------------
+    /** Set by `resize`; the knob is multiplied by it. */
+    let viewScale = 1;
     const drawUniforms = {
       uState: { value: read.texture },
       uSize: { value: config.size },
@@ -386,11 +416,11 @@ export function CurlParticles({
 
     // One point for each texel. `position` is not used, because the
     // vertex shader reads the true position from the state texture.
-    const lookup = new Float32Array(POOL * 2);
-    const bandOf = new Float32Array(POOL);
-    for (let i = 0; i < POOL; i++) {
-      lookup[i * 2] = ((i % SIDE) + 0.5) / SIDE;
-      lookup[i * 2 + 1] = (Math.floor(i / SIDE) + 0.5) / SIDE;
+    const lookup = new Float32Array(pool * 2);
+    const bandOf = new Float32Array(pool);
+    for (let i = 0; i < pool; i++) {
+      lookup[i * 2] = ((i % side) + 0.5) / side;
+      lookup[i * 2 + 1] = (Math.floor(i / side) + 0.5) / side;
       // This must agree with `index % uBands` in the simulation. Point i
       // reads texel i, because the lookup above is in that order.
       bandOf[i] = bands > 1 ? (i % bands) / (bands - 1) : 0.5;
@@ -398,7 +428,7 @@ export function CurlParticles({
     const drawGeometry = new THREE.BufferGeometry();
     drawGeometry.setAttribute(
       "position",
-      new THREE.BufferAttribute(new Float32Array(POOL * 3), 3),
+      new THREE.BufferAttribute(new Float32Array(pool * 3), 3),
     );
     drawGeometry.setAttribute("aUv", new THREE.BufferAttribute(lookup, 2));
     drawGeometry.setAttribute("aBand", new THREE.BufferAttribute(bandOf, 1));
@@ -418,7 +448,7 @@ export function CurlParticles({
       simulateUniforms.uFloor.value = config.floor;
       simulateUniforms.uCore.value = config.core;
       simulateUniforms.uSpread.value = config.spread;
-      drawUniforms.uSize.value = config.size;
+      drawUniforms.uSize.value = config.size * viewScale;
       drawUniforms.uGain.value = config.gain;
     });
 
@@ -444,6 +474,10 @@ export function CurlParticles({
       renderer.setSize(clientWidth, clientHeight);
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
+      // A floor on the scale: below it the faint outer particles go and
+      // only the core stays, which is worse than sprites a little wide.
+      viewScale = Math.max(0.45, Math.min(1, clientHeight / POINT_SIZE_AT));
+      drawUniforms.uSize.value = config.size * viewScale;
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -512,10 +546,10 @@ export function CurlParticles({
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-    // Rebuilt only when the band count or the orbit mode changes. The
-    // spectrum source reaches the loop through a ref.
+    // Rebuilt only when the band count, the pool size or the orbit mode
+    // changes. The spectrum source reaches the loop through a ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bands, orbit]);
+  }, [bands, side, orbit]);
 
   return <div ref={mountRef} className={className} />;
 }

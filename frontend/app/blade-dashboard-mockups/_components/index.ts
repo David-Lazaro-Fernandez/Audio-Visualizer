@@ -179,6 +179,7 @@ export { ButtonLegendBar, type LegendButton } from "./ButtonLegendBar";
 export { MenuBoundary, useMenuBoundary } from "./MenuBoundary";
 export { playSound, preloadSounds, pageTurnSound, type UiSound } from "./sounds";
 export { KeyboardNav } from "./KeyboardNav";
+export { GamepadNav } from "./GamepadNav";
 export {
   BladeNavProvider,
   useBladeNav,

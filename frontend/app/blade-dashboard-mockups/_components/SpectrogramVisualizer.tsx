@@ -21,6 +21,13 @@ import {
  * a note that holds, and one spike that moves back and becomes dim is a
  * hit that passed.
  *
+ * The rows arrive at a constant rate, but they do not move at one:
+ * between two pushes the whole stack glides back by the fraction of the
+ * interval that has passed, and the push cancels that offset exactly.
+ * A push moves every row one gap back at once, thus without the glide
+ * the display steps fourteen times a second and looks like a renderer
+ * at fourteen frames a second.
+ *
  * The projection is orthographic and not perspective. The rows must
  * stay parallel. A perspective camera moves them together toward a
  * vanishing point, which makes the time axis a horizon and makes the
@@ -306,10 +313,31 @@ export function SpectrogramVisualizer({
       // The code adds a row at a constant rate and not at each frame.
       // Thus the display is a history at a known rate and its depth is a
       // known interval of time.
+      const interval = Math.max(0.001, config.intervalMs / 1000);
       if (!still && t >= nextRow) {
         push();
-        nextRow = t + config.intervalMs / 1000;
+        nextRow = t + interval;
       }
+
+      // Then glide the whole stack back by the part of the interval that
+      // has passed.
+      //
+      // A row is discrete, but the motion must not be. Each push moves
+      // every row back one gap, thus without this the full image jumps
+      // fourteen times a second and reads as fourteen frames a second,
+      // whatever the renderer does. The offset and the push cancel
+      // exactly: at the push a row becomes one age older, which is one
+      // gap back, and the offset returns to zero at the same moment.
+      //
+      // The alternative was a row for each frame, which is what the
+      // point landscape of the Grid does (§6.16). It is wrong here. The
+      // depth of this display is an interval of time that a knob sets,
+      // and `rebuild` writes every vertex of every row at each push,
+      // thus a rate of 60 would cost twelve times more and take the
+      // meaning out of the knob. One assignment a frame buys the same
+      // smoothness and keeps both.
+      const frac = Math.min(1, Math.max(0, 1 - (nextRow - t) / interval));
+      lines.position.z = -frac * config.rowGap;
 
       renderer.render(scene, camera);
       if (still) {

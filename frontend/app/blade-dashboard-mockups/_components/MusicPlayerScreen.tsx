@@ -16,7 +16,9 @@ import { MusicVisualizer } from "./MusicVisualizer";
 import { WaterVisualizer } from "./WaterVisualizer";
 import { SpectrogramVisualizer } from "./SpectrogramVisualizer";
 import { SpectrogramControls } from "./SpectrogramControls";
-import { CurlParticles } from "@/app/_particles/CurlParticles";
+import { GridVisualizer } from "./GridVisualizer";
+import { useCoveredSurface } from "./surface-stack";
+import { CurlParticles, CURL_SIDE } from "@/app/_particles/CurlParticles";
 import { RaymarchCore } from "@/app/_raymarch/RaymarchCore";
 import { RaymarchControls } from "@/app/_raymarch/RaymarchControls";
 import { CurlControls } from "@/app/_particles/CurlControls";
@@ -133,6 +135,12 @@ const CONTROL_SKIN =
   "transition-[background-color,box-shadow] duration-150 " +
   "hover:bg-[rgba(255,255,255,.55)] focus:bg-[rgba(255,255,255,.55)] focus:outline-none";
 
+/**
+ * The curl pool for the visualizer tile. It is a third of the particles
+ * of the full-screen field, for a canvas a fifth of its height.
+ */
+const CURL_TILE_SIDE = 96;
+
 export function MusicPlayerScreen({
   album,
   tracks,
@@ -155,6 +163,10 @@ export function MusicPlayerScreen({
   const [visualization, setVisualization] = useState(true);
   const [styleIndex, setStyleIndex] = useState(0);
   const [fullScreen, setFullScreen] = useState(false);
+  // The full-screen visualization is opaque and covers everything,
+  // including this screen's own water (`surface-stack.ts`). It has no
+  // surface of its own, thus it registers and ignores the answer.
+  useCoveredSurface(fullScreen);
 
   // A sort changes only the order of the queue. The code tracks the
   // current track by its title, thus the track stays correct after a
@@ -263,17 +275,23 @@ export function MusicPlayerScreen({
 
   const visualizer = VISUALIZER_STYLES[styleIndex];
 
-  // Three of the seven styles are canvas-2D views of the spectrum. The
+  // Three of the eight styles are canvas-2D views of the spectrum. The
   // others are WebGL scenes: a wave field that the music drops stones
-  // into, a scrolling spectrogram, a curl-noise particle flow and a
-  // raymarched core (§6.16). The code holds an element and not a
-  // component, thus a change of style does not give React a new
-  // component type and does not destroy the canvas two times.
+  // into, a scrolling spectrogram, the same history as a landscape of
+  // points, a curl-noise particle flow and a raymarched core (§6.16).
+  // The code holds an element and not a component, thus a change of
+  // style does not give React a new component type and does not destroy
+  // the canvas two times.
   const visual =
     visualizer.id === "water" ? (
       <WaterVisualizer paused={paused} spectrum={spectrum} />
     ) : visualizer.id === "spectrogram" ? (
       <SpectrogramVisualizer paused={paused} spectrum={spectrum} />
+    ) : visualizer.id === "grid" ? (
+      // The grid view of `/particles`, fed from the live analyser. It
+      // keeps its own ring of slices, because the analyser gives one
+      // moment and this scene draws a history.
+      <GridVisualizer paused={paused} spectrum={spectrum} />
     ) : visualizer.id === "core" ? (
       // There is no geometry: a fullscreen quad, marched for each
       // pixel. It takes the same live band array as the other styles and
@@ -293,6 +311,10 @@ export function MusicPlayerScreen({
       // this is a 10-foot UI, thus the view drifts on its own.
       <CurlParticles
         bands={VISUALIZER_BANDS}
+        // The cost of the field is the square of the pool, and the tile
+        // is a fraction of the window. Only one of the two mounts at a
+        // time, thus this is the pool of the canvas on the screen.
+        side={fullScreen ? CURL_SIDE : CURL_TILE_SIDE}
         orbit={false}
         paused={paused}
         sample={(out) => out.set(spectrum.subarray(0, out.length))}
@@ -486,7 +508,12 @@ export function MusicPlayerScreen({
                   ternary. Thus the element needs no braces: `{visual}`
                   here would be an object literal and not a JSX
                   container. */}
-              {visualization ? (
+              {/* Not while the full-screen copy is up. The tile is
+                  behind an opaque overlay, thus a second instance here
+                  would simulate and draw a whole second field that
+                  nothing can see. One remount on the way in and one on
+                  the way out is the cheaper trade. */}
+              {visualization && !fullScreen ? (
                 visual
               ) : (
                 <div className="h-full w-full bg-[#07060c]" />

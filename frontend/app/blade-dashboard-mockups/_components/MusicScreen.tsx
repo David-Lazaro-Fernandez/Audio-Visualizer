@@ -38,14 +38,12 @@ import { getPortalRoot } from "./portal";
  * the pane, which shows the name of the highlighted row, its artwork and
  * one sentence.
  *
- * Icons: the source glyphs of the console, which are the hard drive, the
- * monitor and the USB plug, and the large music note of the pane are
- * full-colour bitmaps. Thus §6.2 does not redraw them in the monochrome
- * finish. Those rows show the neutral square and the pane shows the
- * striped placeholder (§6.7) until someone adds the images, as
- * `icon: <Image src="/assets/..." />` and as an `<Image>` in the pane.
- * The set already has two of the glyphs and this screen uses them: the
- * disc and note for Music Player and the disc for Current Disc.
+ * Icons: each row has a glyph of the monochrome set (§6.2): the disc and
+ * note for Music Player, the hard drive, the monitor, the disc for
+ * Current Disc, and a pocket player for Portable Device. The large music
+ * note of the pane is a full-colour bitmap on the console, thus the pane
+ * shows the striped placeholder (§6.7) until someone adds the image as
+ * an `<Image>`.
  *
  * Hard Drive opens the Audiobooks browse screen (§6.12) as the next
  * surface in the stack. That row owns the screen and its Back key
@@ -68,12 +66,14 @@ const MUSIC_PLAYER_ITEM: LibraryMenuItem = {
 const MUSIC_SOURCE_ITEMS: LibraryMenuItem[] = [
   {
     label: "Hard Drive",
+    icon: <MenuIcon name="hardDrive" />,
     description: "Play music saved on your console's hard drive.",
     // Opens the Audiobooks browse screen (§6.12) above this screen.
     screen: "audiobooks",
   },
   {
     label: "Computer",
+    icon: <MenuIcon name="computer" />,
     description: "Play music streamed from a Windows PC on your network.",
   },
   {
@@ -85,6 +85,7 @@ const MUSIC_SOURCE_ITEMS: LibraryMenuItem[] = [
   {
     label: "Portable Device",
     disabled: true,
+    icon: <MenuIcon name="portableDevice" />,
     description: "Play music from a connected portable device.",
   },
 ];

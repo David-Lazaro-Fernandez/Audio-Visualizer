@@ -65,6 +65,7 @@ export function BladeSurfacePaintedProvider({
 export function BladeSurface({
   gradient,
   panel = null,
+  covered = false,
   onPaintedChange,
 }: {
   /** The gradient of the open section (§2.1). A change crossfades (§7.4). */
@@ -77,6 +78,14 @@ export function BladeSurface({
    * surface: it has no panel, thus its water is not clipped (§5.4).
    */
   panel?: PanelEdges | null;
+  /**
+   * Whether an opaque layer above this surface hides it
+   * (`surface-stack.ts`). A hidden surface stops asking for frames and
+   * holds its last one. It is not `painted = false`: the canvas keeps
+   * the image it had, thus the CSS twins must stay down and the reveal
+   * must not flash.
+   */
+  covered?: boolean;
   onPaintedChange?: (painted: boolean) => void;
 }) {
   const [painted, setPainted] = useState(false);
@@ -88,6 +97,7 @@ export function BladeSurface({
   const frameRef = useRef(0);
   const runningRef = useRef(false);
   const reducedRef = useRef(false);
+  const coveredRef = useRef(covered);
 
   // The mount effect reads this. That effect must not run again at each
   // update of the parent, or it would destroy the GL context during a
@@ -107,6 +117,13 @@ export function BladeSurface({
       runningRef.current = false;
       return;
     }
+    // Nothing can see this surface. Stop before the draw and not after
+    // it: the frame would be correct and invisible, which is the whole
+    // cost this avoids.
+    if (coveredRef.current) {
+      runningRef.current = false;
+      return;
+    }
     const now = performance.now();
     renderer.draw(now);
     // The ripples continue without an end, thus only a reduced-motion
@@ -119,10 +136,18 @@ export function BladeSurface({
   }, []);
 
   const request = useCallback(() => {
-    if (runningRef.current) return;
+    if (runningRef.current || coveredRef.current) return;
     runningRef.current = true;
     frameRef.current = requestAnimationFrame(tick);
   }, [tick]);
+
+  // Ask for frames again the moment the cover closes. The water is a
+  // function of the clock, thus the first frame back is the frame it
+  // would have drawn and there is nothing to catch up on.
+  useEffect(() => {
+    coveredRef.current = covered;
+    if (!covered) request();
+  }, [covered, request]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
