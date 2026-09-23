@@ -51,6 +51,37 @@ export const MEDIA_THEME: BladeTheme = {
   watermark: "#123a60",
 };
 
+/**
+ * The system blade, DESIGN.md §2.2, in purple. The rules are lighter
+ * than the panel, as on Media: the purple dividers of the console are
+ * pale lines. The full-screen surfaces that the System blade opens,
+ * such as Console Settings, also use this theme.
+ */
+export const SYSTEM_THEME: BladeTheme = {
+  ink: "#1f0f33",
+  inkSoft: "#2d1a45",
+  rule: "#a17dc6",
+  ruleStrong: "#b797d6",
+  glyph: "#5c3480",
+  glyphHover: "#331b4d",
+  watermark: "#3a2154",
+};
+
+/**
+ * The store blade, DESIGN.md §2.2, in Marketplace orange. The rules are
+ * darker than the panel, as on Games: the dividers of the console are
+ * brown shadow lines on the peach.
+ */
+export const STORE_THEME: BladeTheme = {
+  ink: "#2e1a0c",
+  inkSoft: "#40250f",
+  rule: "#c97a45",
+  ruleStrong: "#d48a56",
+  glyph: "#a8581c",
+  glyphHover: "#5e2e0a",
+  watermark: "#6a3812",
+};
+
 /** The theme as inline-style custom properties: `--blade-ink` and the others. */
 export function themeVars(theme: BladeTheme): React.CSSProperties {
   return {

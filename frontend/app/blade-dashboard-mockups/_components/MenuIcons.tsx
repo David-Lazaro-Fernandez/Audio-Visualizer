@@ -4,14 +4,19 @@
  * the trophy, the controller, the arcade stick and the disc for the
  * Games blade; the globe with a controller of "Connect to Xbox LIVE" for
  * the Xbox LIVE blade; the disc with a note, the camera, the camcorder
- * and the Marketplace "m" roundel for the Media blade; the two stacked
+ * and the Marketplace "m" roundel, which no row uses now; the down arrow
+ * with a star, the starburst, the film case with a disc, the card, the
+ * download roundel and the crown of the Marketplace blade; the two stacked
  * game cards with a controller for the "All Games" filter of the
  * Achievements screen; the same trophy under a padlock for a locked
  * achievement tile; and the music menus (§6.11, §6.12, §6.14, §6.15):
  * the hard drive, the monitor and the portable player of the sources,
  * the microphone, the playlist, the note and the guitar of the browse
  * categories, and the play roundel, the playlist with a plus, the pencil
- * and the bin of the album and song actions.
+ * and the bin of the album and song actions; and the System blade: the
+ * standing console, the adult and the child, the memory unit, the
+ * linked nodes of the network and the seated player of Initial Setup
+ * (Computers reuses the monitor).
  *
  * All the icons use one finish: translucent white at 50%, a lighter
  * white edge, inked details in translucent black, and a soft drop
@@ -30,7 +35,13 @@ export type MenuIconName =
   | "music"
   | "pictures"
   | "videos"
+  | "marketplace"
+  | "spotlight"
+  | "newArrivals"
   | "videoStore"
+  | "redeemCode"
+  | "activeDownloads"
+  | "accountManagement"
   | "allGames"
   | "lockedTrophy"
   | "hardDrive"
@@ -43,7 +54,12 @@ export type MenuIconName =
   | "play"
   | "addToPlaylist"
   | "edit"
-  | "delete";
+  | "delete"
+  | "consoleSettings"
+  | "family"
+  | "memory"
+  | "network"
+  | "initialSetup";
 
 /** The body fill: white at 50%, thus the gradient of the blade tints the glyph. */
 const FILL = "rgba(255,255,255,.5)";
@@ -226,9 +242,9 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Video Store: the Marketplace roundel, a sphere with a lowercase "m"
-     inked across it. */
-  videoStore: (
+  /* The Marketplace roundel, a sphere with a lowercase "m" inked across
+     it. No row uses it now. */
+  marketplace: (
     <>
       <circle cx="16" cy="16" r="11.5" />
       <path
@@ -385,7 +401,7 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </g>
   ),
 
-  /* Play Album and Play Song: a roundel, as the `videoStore` one, with
+  /* Play Album and Play Song: a roundel, as the `marketplace` one, with
      an inked play triangle across it. */
   play: (
     <>
@@ -433,6 +449,144 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
         strokeWidth="1.4"
         strokeLinecap="round"
       />
+    </>
+  ),
+
+  /* Console Settings, on the System blade: the console standing up. A
+     slim case with concave long sides, the inked seam of the disc tray
+     and the power button. */
+  consoleSettings: (
+    <>
+      <path d="M11 3.5h10q-2.2 12.5 0 25H11q2.2-12.5 0-25z" />
+      <path d="M13.6 8h4.8" fill="none" stroke={INK} strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="16" cy="17" r="1.4" fill={INK} stroke="none" />
+      <ellipse cx="12.8" cy="12" rx=".7" ry="4" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* Family Settings, on the System blade: an adult and a child side by
+     side, each a round head over a rounded body. The code draws the
+     adult first, thus the child stands in front. */
+  family: (
+    <>
+      <circle cx="11.5" cy="7.5" r="4" />
+      <path d="M5 27v-7.5a6.5 6.5 0 0 1 13 0V27z" />
+      <circle cx="22" cy="14" r="3" />
+      <path d="M17.2 27v-4.2a4.8 4.8 0 0 1 9.6 0V27z" />
+      <ellipse cx="10" cy="6" rx=".8" ry="1.6" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* Memory, on the System blade: a memory unit, a flat wedge seen at an
+     angle, with an inked contact edge and a gleam. */
+  memory: (
+    <>
+      <path d="M3.5 15.5L17 8.5l11.5 4.5-13.5 9z" />
+      <path d="M3.5 15.5v2.6l11.5 6.5v-2.6z" />
+      <path d="M15 22v2.6l13.5-9V13z" />
+      <path d="M18 19.6l7.8-5.2" fill="none" stroke={INK} strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M8 15l8-4" fill="none" stroke="#fff" strokeWidth="1" strokeLinecap="round" opacity=".6" />
+    </>
+  ),
+
+  /* Network Settings, on the System blade: three nodes joined by inked
+     links, the largest at the lower left. */
+  network: (
+    <>
+      <path d="M10 21L22.5 8.5M10 21l14.5 3M22.5 8.5l2 15.5" fill="none" stroke={INK} strokeWidth="1.6" />
+      <circle cx="10" cy="21" r="5.5" />
+      <circle cx="22.5" cy="8.5" r="4" />
+      <circle cx="24.5" cy="24" r="3.5" />
+      <ellipse cx="8.4" cy="18.8" rx=".8" ry="1.8" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* Initial Setup, on the System blade: a player seated on a low chair,
+     leaning to the console at the right. */
+  initialSetup: (
+    <>
+      <circle cx="10" cy="6.5" r="3.5" />
+      <path d="M6.5 12.5a3.5 3.5 0 0 1 7 0V18h6.5a2 2 0 0 1 2 2v7h-3.2v-5.8H9a2.5 2.5 0 0 1-2.5-2.5z" />
+      <rect x="4" y="22.5" width="11" height="4.5" rx="1" />
+      <path d="M24 9h4q-.8 9 0 18h-4q.8-9 0-18z" />
+      <circle cx="26" cy="17" r=".9" fill={INK} stroke="none" />
+    </>
+  ),
+
+  /* Spotlight, on the Marketplace blade: a wide down arrow with a star
+     at its upper right. The code draws the star last, thus it is in
+     front of the shaft. */
+  spotlight: (
+    <>
+      <path d="M8 3.5h8v10.5h5L12 26 3 14h5z" />
+      <path d="M22.5 5.5l1.7 3.9 4.2.4-3.2 2.8 1 4.1-3.7-2.2-3.7 2.2 1-4.1-3.2-2.8 4.2-.4z" />
+      <ellipse cx="9.8" cy="8.5" rx=".8" ry="3" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* New Arrivals, on the Marketplace blade: a starburst. Eight tapered
+     rays of two lengths around an empty centre, as a flash of light. */
+  newArrivals: (
+    <g transform="translate(16 16)">
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => (
+        <path
+          key={deg}
+          d={i % 2 === 0 ? "M-1.6 -5l1.6-8.5 1.6 8.5z" : "M-1.3 -5l1.3-6 1.3 6z"}
+          transform={`rotate(${deg + 12})`}
+        />
+      ))}
+    </g>
+  ),
+
+  /* Video Store, on the Marketplace blade: a film case, leaning left,
+     with a disc half out of it at the lower right. The code draws the
+     disc last, thus it is in front of the case. */
+  videoStore: (
+    <>
+      <rect x="4" y="6" width="15" height="19" rx="1.6" transform="rotate(-10 11.5 15.5)" />
+      <path d="M6.6 9.6l10.8-1.9" fill="none" stroke={INK} strokeWidth="1.2" transform="rotate(-10 11.5 15.5)" />
+      <path
+        fillRule="evenodd"
+        d="M20 11.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 1 0 0-15zm0 5.6a1.9 1.9 0 1 1 0 3.8 1.9 1.9 0 1 1 0-3.8z"
+      />
+      <circle cx="20" cy="19" r="4.2" fill="none" stroke={INK} strokeWidth=".8" />
+      <ellipse cx="16.6" cy="15.6" rx=".8" ry="1.8" fill="#fff" stroke="none" opacity=".6" transform="rotate(40 16.6 15.6)" />
+    </>
+  ),
+
+  /* Redeem Code, on the Marketplace blade: a flat card seen at an angle,
+     with an inked stripe across it and its edge below. */
+  redeemCode: (
+    <>
+      <path d="M4 14.5L22 8l6 6.5-18 6.5z" />
+      <path d="M4 14.5v2.4l6 6.5v-2.4z" />
+      <path d="M10 21v2.4l18-6.5v-2.4z" />
+      <path d="M8.2 15.6l15.2-5.5" fill="none" stroke={INK} strokeWidth="1.6" />
+    </>
+  ),
+
+  /* Active Downloads, on the Marketplace blade: a roundel with an inked
+     down arrow over a short bar. */
+  activeDownloads: (
+    <>
+      <circle cx="16" cy="16" r="11.5" />
+      <path d="M14.4 8h3.2v7.6h3.4L16 21l-5-5.4h3.4z" fill={INK} stroke="none" />
+      <rect x="10.5" y="22.2" width="11" height="1.8" rx=".9" fill={INK} stroke="none" />
+      <ellipse cx="10.4" cy="10.4" rx="1.4" ry="2.8" fill="#fff" stroke="none" opacity=".6" transform="rotate(40 10.4 10.4)" />
+    </>
+  ),
+
+  /* Account Management, on the Marketplace blade: a crown. Three points
+     with a ball on each, over a band with an inked jewel. */
+  accountManagement: (
+    <>
+      <path d="M5 11l5.5 5L16 8l5.5 8L27 11l-2 11H7z" />
+      <rect x="6.5" y="22" width="19" height="4" rx="1" />
+      <circle cx="5" cy="10" r="1.6" />
+      <circle cx="16" cy="6.8" r="1.6" />
+      <circle cx="27" cy="10" r="1.6" />
+      <circle cx="16" cy="24" r="1.2" fill={INK} stroke="none" />
+      <path d="M9.5 19.5l2.4-2" fill="none" stroke="#fff" strokeWidth="1" strokeLinecap="round" opacity=".6" />
     </>
   ),
 };

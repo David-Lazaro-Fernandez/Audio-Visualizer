@@ -29,14 +29,15 @@ import { getPortalRoot } from "./portal";
  * blue.
  *
  * The left column is the source list of the console, as blade rows.
- * "Music Player" is the first row and is `unavailable` (§7.2): it is
- * faded, but the cursor lands on it, thus the pane can explain why it is
- * not usable yet. The sources below it sit on a darker slab, the
- * chrome-band tint of §5.2, that continues to the bottom of the content.
- * Hard Drive and Computer are live. Current Disc and Portable Device are
- * disabled, because there is no disc and no device. The right column is
- * the pane, which shows the name of the highlighted row, its artwork and
- * one sentence.
+ * "Music Player" is the first row and opens the Audiobooks browse screen
+ * (§6.12) as the next surface in the stack; that row owns the screen and
+ * its Back key (`MenuListItem`). The sources below it sit on a darker
+ * slab, the chrome-band tint of §5.2, that continues to the bottom of the
+ * content, and are all disabled: Hard Drive and Computer because the
+ * catalogue lives behind Music Player now, Current Disc and Portable
+ * Device because there is no disc and no device. The right column is the
+ * pane, which shows the name of the highlighted row, its artwork and one
+ * sentence.
  *
  * Icons: each row has a glyph of the monochrome set (§6.2): the disc and
  * note for Music Player, the hard drive, the monitor, the disc for
@@ -44,10 +45,6 @@ import { getPortalRoot } from "./portal";
  * note of the pane is a full-colour bitmap on the console, thus the pane
  * shows the striped placeholder (§6.7) until someone adds the image as
  * an `<Image>`.
- *
- * Hard Drive opens the Audiobooks browse screen (§6.12) as the next
- * surface in the stack. That row owns the screen and its Back key
- * (`MenuListItem`).
  *
  * Keyboard: the screen has its own `data-nav-list` column. `aria-modal`
  * stops Left and Right from switching the blades below. The focus moves
@@ -58,21 +55,22 @@ import { getPortalRoot } from "./portal";
  */
 const MUSIC_PLAYER_ITEM: LibraryMenuItem = {
   label: "Music Player",
-  unavailable: true,
   icon: <MenuIcon name="music" />,
-  description: "Select a music source to play your music in the music player.",
+  description: "Play music saved on your console's hard drive.",
+  // Opens the Audiobooks browse screen (§6.12) above this screen.
+  screen: "audiobooks",
 };
 
 const MUSIC_SOURCE_ITEMS: LibraryMenuItem[] = [
   {
     label: "Hard Drive",
+    disabled: true,
     icon: <MenuIcon name="hardDrive" />,
     description: "Play music saved on your console's hard drive.",
-    // Opens the Audiobooks browse screen (§6.12) above this screen.
-    screen: "audiobooks",
   },
   {
     label: "Computer",
+    disabled: true,
     icon: <MenuIcon name="computer" />,
     description: "Play music streamed from a Windows PC on your network.",
   },

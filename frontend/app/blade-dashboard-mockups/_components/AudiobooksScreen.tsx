@@ -24,7 +24,7 @@ import { ScrollColumn } from "./ScrollColumn";
 import { playSound } from "./sounds";
 
 /**
- * The Audiobooks browse screen, which the Hard Drive row of the Music
+ * The Audiobooks browse screen, which the Music Player row of the Music
  * screen opens (DESIGN.md §6.12). The path is: Media blade, Music, this
  * screen. It has the same full-screen structure as the Games Library and
  * My Games (§5.4): the section gradient with the wave sheen and no clip,
@@ -222,7 +222,7 @@ export function AudiobooksScreen() {
       ref={rootRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Audiobooks"
+      aria-label="Music Player"
       className="fixed inset-0 z-40 flex flex-col text-(--blade-ink)"
       style={{ background: BACKGROUND, ...themeVars(MEDIA_THEME) }}
     >
@@ -234,7 +234,7 @@ export function AudiobooksScreen() {
         className="relative z-0 px-[12%] pt-8 pb-5 md:pt-10 md:pb-6"
       >
         <h1 className="text-3xl text-white [text-shadow:0_1px_2px_rgba(0,0,0,.28)] sm:text-4xl">
-          Audiobooks
+          Music Player
         </h1>
       </BladeChromeBand>
 

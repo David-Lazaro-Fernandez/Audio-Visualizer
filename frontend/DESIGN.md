@@ -24,8 +24,7 @@ Games is the default open blade. Left/Right (or clicking a tab) moves through
 this order. Panel titles follow the console: Marketplace, Xbox LIVE, Games,
 Media, System. Each blade is declared once as a `BladeSection` (label, title,
 section colors) and its content once as a `BladePanel`; only the open blade's
-panel renders. Games, Xbox LIVE and Media are built; store and system show a
-titled, empty panel with every legend slot dimmed until they are.
+panel renders. All five blades are built.
 
 The active blade's panel is laid out as:
 
@@ -131,8 +130,23 @@ reads the same numbers, so the two painters cannot drift. Every section
 deliberately shares the same four stop positions — that is what makes a
 blade switch a per-stop interpolation (§7.4) rather than a crossfade.
 
-Store (orange) and system (steel) carry placeholder gradients of the same
-structure until those blades are designed. The
+System, purple, with `#804EA9` as the blade colour at the 30% stop:
+
+```
+radial-gradient(90% 80% at 50% 44%, #9c6fc6 0%, #804ea9 30%, #6d4094 62%, #58327b 100%)
+```
+
+Active tab fill: `linear-gradient(90deg, #613889, #b58ad9 35%, #8a58b6)`.
+
+Marketplace (store), orange around a pale peach core:
+
+```
+radial-gradient(90% 80% at 50% 44%, #f7c9a0 0%, #eea673 30%, #e0834a 62%, #c9652b 100%)
+```
+
+Active tab fill: `linear-gradient(90deg, #b8500f, #ff9d4e 35%, #e06a1a)`.
+
+The
 Nova mockups also define steel (system task blade) and gold (decision
 dialog) surfaces for overlays; use the same radial structure when adding them.
 
@@ -146,18 +160,19 @@ values as the default, so full-screen surfaces (which portal outside the
 canvas) stay green unless they set another theme on their root, as the
 Audiobooks screen does with `MEDIA_THEME`.
 
-| Role | Variable | Green (games) | Gold (Xbox LIVE) | Blue (media) |
-| --- | --- | --- | --- | --- |
-| Primary text | `--blade-ink` | `#17300a` | `#2a1a04` | `#0a2240` |
-| Secondary / meta text | `--blade-ink-soft` | `#1f3b0d` | `#3d2707` | `#123056` |
-| Row divider lines (3 px) | `--blade-rule` | `#379226` | `#f2c66a` | `#7cc4f2` |
-| List top/bottom rule (2 px) | `--blade-rule-strong` | `#43AB33` | `#f7d585` | `#a3d7f7` |
-| Eject glyph, rest / cursor | `--blade-glyph` / `--blade-glyph-hover` | `#3e941d` / `#1f5c0c` | `#a86a12` / `#5e3a06` | `#2a74b8` / `#143f6e` |
-| Placeholder watermark | `--blade-watermark` | `#2b4a12` | `#5a3a0a` | `#123a60` |
+| Role | Variable | Green (games) | Gold (Xbox LIVE) | Blue (media) | Purple (system) | Orange (store) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Primary text | `--blade-ink` | `#17300a` | `#2a1a04` | `#0a2240` | `#1f0f33` | `#2e1a0c` |
+| Secondary / meta text | `--blade-ink-soft` | `#1f3b0d` | `#3d2707` | `#123056` | `#2d1a45` | `#40250f` |
+| Row divider lines (3 px) | `--blade-rule` | `#379226` | `#f2c66a` | `#7cc4f2` | `#a17dc6` | `#c97a45` |
+| List top/bottom rule (2 px) | `--blade-rule-strong` | `#43AB33` | `#f7d585` | `#a3d7f7` | `#b797d6` | `#d48a56` |
+| Eject glyph, rest / cursor | `--blade-glyph` / `--blade-glyph-hover` | `#3e941d` / `#1f5c0c` | `#a86a12` / `#5e3a06` | `#2a74b8` / `#143f6e` | `#5c3480` / `#331b4d` | `#a8581c` / `#5e2e0a` |
+| Placeholder watermark | `--blade-watermark` | `#2b4a12` | `#5a3a0a` | `#123a60` | `#3a2154` | `#6a3812` |
 
-Rules are darker than the panel on Games and lighter on Xbox LIVE and
-Media, following the console: the dividers read as shadow lines on green
-and as pale lines on gold and blue.
+Rules are darker than the panel on Games and Marketplace and lighter on
+Xbox LIVE, Media and System, following the console: the dividers read as
+shadow lines on green and peach and as pale lines on gold, blue and
+purple.
 
 Fixed regardless of section:
 
@@ -394,7 +409,7 @@ than in the seam.
 
 Screens stack: Games blade → Games Library → My Games; the blade's
 Achievements row opens the Achievements screen (§6.10) directly. On Media,
-the blade's Music row opens the Music screen (§6.11), whose Hard Drive row
+the blade's Music row opens the Music screen (§6.11), whose Music Player row
 opens the Audiobooks screen (§6.12), and the Pictures row opens the
 Pictures grid (§6.13). Each is
 its own portal, so later screens simply paint over earlier ones. Back (ESC / B) is
@@ -461,6 +476,9 @@ Variants:
   `chevron` a right-pointing triangle in `--blade-glyph` (a CSS shape, like
   the eject mark) sits at the row's end and fades in with the wash: the
   console's cue that the row has a list to its right (Audiobooks, §6.12).
+  With `subtitle` the label stacks over a second, softer line in place of
+  a single line, for a row named by its content type rather than by a
+  trailing value (the Spotlight list, §6.20).
 - **button**: the raised skin for full-screen menus. Two stacked bands: a
   transparent 26 px top band, and the row band with a left-to-right gradient
   from transparent to white at 39%. Icon and label left, meta right. 1 px
@@ -486,7 +504,9 @@ controller, joystick and disc for the Games blade, globe (with a small
 controller) for "Connect to Xbox LIVE", and music (disc with a note),
 pictures (camera) and videos (camcorder) for the Media blade, two fanned
 game cards with a controller for the Achievements screen's "All Games"
-row, plus the Marketplace "m" roundel, currently unused. The music menus
+row, and for the Marketplace blade (§6.19) a down arrow with a star, a
+starburst, a film case with a disc, a flat card, a download roundel and
+a crown, plus the Marketplace "m" roundel, currently unused. The music menus
 have their own: hard drive, monitor and pocket player for the Music
 screen's sources (§6.11); microphone, list with a note, single note and
 guitar for the Audiobooks categories (§6.12); and a play roundel, a list
@@ -656,12 +676,13 @@ slab, and a legend of Y/X dimmed, Back B and Select A. The content is two
 columns, the left 45% wide:
 
 - **Source list** (left): blade rows (§6.2 `row`). "Music Player" heads
-  the list as an `unavailable` row (§7.2): the cursor lands on it by
-  default and the pane explains that a source has to be chosen first. The
-  sources below it sit on a slab in the chrome-band tint (`bg-black/10`,
-  §5.2) with the corner facing the pane rounded 25 px, running to the
-  bottom of the content: Hard Drive and Computer live, Current Disc and
-  Portable Device disabled while nothing is inserted or attached.
+  the list and is live: the cursor lands on it by default and opens the
+  Audiobooks screen (§6.12). The sources below it sit on a slab in the
+  chrome-band tint (`bg-black/10`, §5.2) with the corner facing the pane
+  rounded 25 px, running to the bottom of the content, and are all
+  disabled: Hard Drive and Computer because the catalogue now lives
+  behind Music Player, Current Disc and Portable Device while nothing is
+  inserted or attached.
 - **Description pane** (right): the highlighted row's name at 30 px, its
   artwork, then the blurb at 24–26 px.
 
@@ -670,17 +691,17 @@ Player the `music` glyph, Current Disc the `disc`, and Hard Drive,
 Computer and Portable Device their own drive, monitor and pocket player,
 redrawn rather than waiting on the console's bitmaps. The pane's music
 note is still a full-colour bitmap and shows a 120 px striped placeholder
-(§6.7) until the image is dropped in. Hard Drive opens the Audiobooks screen (§6.12).
+(§6.7) until the image is dropped in.
 
 ### 6.12 Audiobooks screen
 
-Opened by the Music screen's Hard Drive row (`AudiobooksScreen.tsx`).
+Opened by the Music screen's Music Player row (`AudiobooksScreen.tsx`).
 Same full-screen structure as the Games Library and My Games (§5.4):
 section gradient, unclipped sheen, header and legend bands, the content
 raised as one slab with `CONTENT_BAND_SHADOW`, 12% side padding. It is
 painted in the Media blade's blue and sets `MEDIA_THEME` on its root so
 the shared rows take the blue ink and rules (§2.2). The header reads
-"Audiobooks"; the legend is Y Play All Music, X dimmed, Back B, A dimmed.
+"Music Player"; the legend is Y Play All Music, X dimmed, Back B, A dimmed.
 
 The body is two equal columns:
 
@@ -881,6 +902,47 @@ of drifting apart. Nothing has to tell the store that the music stopped
 while nothing is playing finds its way back to the plain section color
 on its own.
 
+**A beat is not an onset.** The envelope above, and the drops Water
+lands, both answer a transient: something crossed a threshold, so
+something moves — and the answer is necessarily as late as the detector
+needed in order to be sure. A *phase* is the other thing: where the
+music is between two beats. It is what lets a visualizer act **on** a
+beat instead of after one, and nothing in the player had it.
+
+`beat-clock.ts` infers one. It keeps the recent onsets, each with a
+strength and a time, and evaluates a single term of a Fourier transform
+of that train of events at each candidate tempo: for a period P it sums
+`w · exp(i·2π·t/P)`. The magnitude of that sum says how tightly the
+onsets cluster at one position within a bar of that period, which is
+what it means for a tempo to fit; the argument says where that position
+is, which is the phase. One quantity, and both halves fall out of it —
+no rule anywhere says what a beat looks like.
+
+Two corrections are needed on top. A transform of events prefers the
+**fastest** period that fits, since onsets a half-period apart cancel at
+1/P and align at 2/P, so a 100 BPM song also scores at 200 — the octave
+error every tempo tracker has. A log-normal prior around 120 BPM settles
+it, and hysteresis keeps the estimate from changing octave because one
+bar was busy. And the onsets it reads come from an **adaptive** gate:
+the fixed `ONSET_RATIO` of §6.16's drops is tuned for one kind of track,
+so the detector measures its own rate of events and moves the threshold
+to hold it near a target. That idea is Geiss's (1998) — its beat
+detector counted the beats of the last thirty frames and moved the
+multiplier of its threshold with that count — and it is in its source,
+commented out. The visible drops keep the fixed gate, because there the
+threshold is part of a tuned picture.
+
+**Confidence is what makes it safe.** A preview of speech, of ambient
+music or of a fade has no beat, and a clock that invents one is worse
+than no clock, so the normalised magnitude — 1 when every onset lands at
+one phase, near 0 when they are spread — is published beside the tempo,
+and a reader below `BEAT_LOCKED` must use the reactive behaviour it had
+before. It is a module-level store for the reason the pulse is, and it
+needs telling nothing when the music stops for the reason the pulse
+doesn't: the weight of an onset falls with its age, so the evidence
+decays, the confidence goes to zero, and a reader that asks in silence
+finds no beat.
+
 The visualizer (`MusicVisualizer.tsx`) is drawn as a hardware **LED
 spectrum analyser** — a matrix of discrete cells lit from the bottom of
 each column, the way a rack graphic EQ does it — on a near-black plate,
@@ -939,12 +1001,13 @@ where the same switch turns the walk off; both read one store, so a
 value set in either shows in the other.
 
 **LB and RB cycle the visualizer** (`1` and `2` on the keyboard, §8), as
-the console's did. There are eight, all reading the same band array — so
-switching costs nothing and needs no second analyser
+the console's did. There are eleven, all reading the same band array —
+so switching costs nothing and needs no second analyser
 (`visualizer-styles.ts`): the LED matrix, a pair of mirrored continuous
 bars, which is what the console itself drew, a radial ring whose spokes
 grow outward from the centre, **Water**, a **Spectrogram**, a **Grid**,
-a **Curl Field**, and a raymarched **Core**.
+a **Curl Field**, a raymarched **Core**, **Warp**, **Harlequin**, and
+**Mandelbrot**.
 
 Water (`WaterVisualizer.tsx`) is the same WebGL wave field the blade
 background uses (§3.1), with the music dropping the stones. No physics
@@ -1209,6 +1272,185 @@ anywhere else still breathes — and the curl field beside it keeps its
 walk either way, because there the values are a region to explore and
 not something someone chose.
 
+Warp (`WarpVisualizer.tsx`) is the one visualizer that **draws almost
+nothing**. Every other style builds its picture again each frame out of
+the band array of that moment; this one keeps a buffer, and each frame
+it moves the whole image through a displacement field, dims it a little,
+and draws one curve of the spectrum over the result. What is on screen
+is therefore the last two seconds of the music, each frame of it pushed
+further along the field by the frames that came after. Nothing models
+the tunnels and flowers that come out of it — they are the path the
+field traces, visible only because the image is slow to fade.
+
+That is the Geiss screensaver's method (Ryan Geiss, 1998, BSD 3-Clause),
+and it is here because the eight before it had **no feedback at all**.
+It is also by a long way the cheapest of the ten: one texture read per
+pixel, where the Core spends seventy steps of multi-octave noise. Depth
+bought over time rather than over instructions.
+
+Three of its decisions are worth keeping straight, and each is the
+modern form of something the original had to build by hand:
+
+- **The displacement is computed, not read.** Geiss could not afford a
+  coordinate per pixel per frame, so it precomputed a "warp map" of six
+  bytes per pixel — two for the source address, four for the weights of
+  the bilinear blend of the 2×2 around it. That map is exactly what a
+  `LINEAR` sampler does in one instruction, so the shader computes the
+  coordinate and lets the hardware do the part that was expensive.
+- **The buffer is half float.** Geiss carried the low eight bits its
+  fixed-point divide discarded into the next pixel, which dithered the
+  image for free. The problem that solved is real and is why this target
+  is not 8-bit: a decay of 0.95 on a byte channel quantises, so dim
+  trails stop at a value that cannot fall further and leave a fixed
+  ghost. More bits is the same fix.
+- **The beat changes the field; it does not shake it.** Geiss built its
+  next map in the background, a row at a time, and switched to it at the
+  next beat — so the *motion* of the image changed on a beat and then
+  stayed changed. This is the use of a beat that needs a phase rather
+  than an onset, and the reason the clock above exists. The time Geiss
+  needed to build a map becomes `MIN_SWAP_S` here, since a field is six
+  numbers and costs nothing to make: the wait is what the eye wants, not
+  what the machine needs. Where the clock is not locked the swap falls
+  back to a timer, which is what the original's crude broadband detector
+  effectively gave it.
+
+**A swap sorts two things, not one.** Geiss drew its mode — how the
+image moves — separately from its waveform — the shape that feeds the
+loop, and that is where most of its variety came from: the same ring
+inside a perspective field reads as a tunnel of rings and inside a
+spherical one as a ball, so two small catalogues cover far more ground
+than one large one. Both are sorted here. The shapes are a **line**
+(the spectrum above its own mirror) and a **ring** (the spectrum around
+a circle, bass at the right); each is one closed loop whose two halves
+read the same bands, so it is symmetric and closes with no seam —
+which is the problem Geiss solved by blending the first fifty samples
+of its circular wave into the last fifty.
+
+The modes are the other catalogue, and the reading of Geiss's map
+generator that matters is that **all eleven of its modes are the same
+two numbers** — a radial scale and a turn — made a function of where
+the pixel is. Its sphere is a scale that grows with the radius, its
+tunnel one that falls with it, its ripples `sin(√r)`, its flower petals
+a scale that follows the angle. So the field here carries one
+*character* at a time: flat (a spiral), ripple, petals, or fuzzy
+(gradient noise). One at a time because that is what a mode is — two
+together average into mush — and the petal count is a whole number
+because `sin(angle · n)` is continuous around the frame only for
+integers; at 4.5 the field tears along the axis where `atan` wraps.
+
+Between two swaps the image still answers the music: the bass opens the
+zoom over whatever the field asks for, and the curve is drawn brighter
+as the beat approaches — small, because a visualizer that flashes on
+every beat is a strobe, but it is the one thing on screen that follows
+the phase continuously, and a swap is too rare to show whether the clock
+is right.
+
+Harlequin (`HarlequinVisualizer.tsx`) is Warp with the dice taken out.
+MilkDrop (Geiss, 1999) is the screensaver above two years later, with
+the random field replaced by an authored one, and a `.milk` preset is
+that authored field written down: a block of scalars, a `per_frame`
+block that runs once a frame, and a `per_pixel` block that runs at each
+vertex of a coarse mesh and sets the warp there. This is one of them —
+`!mu$ - Rovastar - Harlequin's Fluid Wallpaper 3.milk`, by Rovastar and
+mu$, from the thousand that BeatDrop ships
+(`OfficialIncubo/BeatDrop-Music-Visualizer`, BSD 3-Clause; the presets
+carry their authors' own terms). It is a **MilkDrop 1** preset, which is
+what makes it portable at all: it has no `warp_` or `comp_` HLSL block,
+so the whole effect is its equations.
+
+`per_pixel_1` splits the frame at `5·rad³ = 1`, a circle at rad 0.585.
+Inside it the zoom is `1 − 0.4·log(√2 − rad)`, a smooth lens running
+from 0.86 at the centre to 1.07 at the boundary. Outside it the zoom is
+about a tenth, so a pixel out there samples **ten frame widths away**,
+and since the preset sets `bTexWrap`, what comes back is the frame
+tiled ten times, sheared by a translation of up to 1.3 units and turned
+by a rotation that reads the translation the line above it just wrote.
+That tiling is the harlequin; the lens in the middle of it is the
+fluid. Three seeds feed the loop each frame: a 100-sided disc that
+samples the last frame through a red-to-green gradient — which is why
+the picture is red and green — a red pinpoint at the centre, and the
+waveform as a slowly turning circle. An animated 2.5% frame at the
+border pushes fresh colour in at the edge, where the outer field is
+waiting to eat it.
+
+**The equations run in a vertex shader**, at the vertices of MilkDrop's
+own 32×24 mesh (`milkdrop.ts`), and that is fidelity rather than
+economy. Evaluating them per fragment is truer to the algebra and
+false to the picture: neighbouring mesh vertices that disagree about
+where to sample give the long smeared triangles the format is made of,
+where an exact per-pixel answer at a zoom of a tenth gives aliased
+noise. The same file holds the warp transform and the `bass`/`mid`/
+`treb` convention, so a second port adds only its own equations.
+
+**Two things in it are not the preset**, and both answer the same
+problem: *it does not listen*. Its equations read `time` and nothing
+else, and `fWaveScale` is 0.01, which flattens the waveform circle to a
+plain ring. It is a wallpaper, as its name says, and a wallpaper in a
+music player is a screensaver. So the circle carries the spectrum —
+which is only the wave doing the job MilkDrop gave it, with the scale
+the author turned down turned back up — and `bass_att` opens the outer
+zoom by one term, in the idiom of the presets that do listen. Nothing
+else is added; in particular there is no beat clock here, because
+swapping fields on a beat is what Warp is for and a preset is one field
+rather than a hand of them.
+
+Its audio values are normalised the way MilkDrop's are: 1.0 is the
+*usual* level of that band for the track playing, not a fraction of
+full scale. An equation written as `zoom + 0.1·bass_att` assumes that,
+so a port that hands it a 0..1 fraction gets a preset that barely
+moves.
+
+Mandelbrot (`MandelbrotVisualizer.tsx`) is the second visualizer with
+**no geometry at all** — one fullscreen quad, like the Core, with the
+per-pixel answer the escape time of `z → z² + c` rather than a march
+through a distance field. It is in a music player because it already
+has the shape every other style has to invent: the escape count falls
+in **contours** around the set, one inside the next, as far in as
+anyone cares to look. So the contours *are* the bands — the continuous
+escape count, modulo a cycle, indexes the 28 of them, and contour k is
+lit by band k. Hue therefore reads **frequency** here, as on the Curl
+Field, and brightness reads level, as on the LED matrix. The cycle
+folds back on itself, bass out to treble and back, because a ramp that
+ran 0 to 1 and wrapped would draw a hard red-to-blue edge on every
+contour.
+
+The rest of the audio splits the way the Core's does, and for the same
+reason — a surface can honestly show two spatial scales. **Bass flies
+the camera**, adding to the rate of the dive; **treble lights the
+filaments**, which are the fine crust the set hangs off its one mass;
+and the middle crawls the contours outward. The dive and the crawl are
+both **integrated** rather than taken as time × rate, since a rate that
+moves multiplied by an absolute clock jumps the whole image every time
+it changes.
+
+**The dive ends, and that is `float`.** Twenty-four bits of mantissa
+know a coordinate near 1 to about 1e-7, so two pixels collide once the
+frame is a few times narrower than that: the picture bottoms out near
+20,000×. Going deeper is a different program — a reference orbit
+computed in double on the CPU, with each pixel iterating its *small*
+difference from it, which is perturbation and is how the deep-zoom
+renderers work. So the question is only what to do at the floor, and
+Warp already answered it for its field: a state that changes **on** a
+beat reads as an edit, and the same change at an arbitrary moment reads
+as a fault. The dive holds at the floor until `beat-clock.ts` gives a
+beat and cuts to a new target there; unlocked, it cuts on a timer.
+Targets are published coordinates, hand-picked, because a point drawn
+at random on the boundary is almost always a plain filament — the
+places worth 20,000× are the ones people have already named.
+
+Three details keep it honest at the cost of a tile. The main cardioid
+and the period-2 bulb are tested in closed form and skipped, since
+every pixel inside the set runs the loop to the cap and with the set in
+frame that is most of the screen. The loop has a constant bound and
+breaks at `uIter`, the way the wave field breaks at `uDropCount`, so a
+deep frame buys its extra steps without the worst pixel becoming a
+surprise. And the derivative `dz/dc` is carried beside `z`, which gives
+the **distance to the set** — a filament is thinner than a pixel almost
+everywhere, so a test on colour loses it and a test on distance does
+not. Where the contours themselves crowd finer than a pixel, `fwidth`
+fades them to the colour they average to: the spectral centroid at the
+mean level, rather than moiré.
+
 That overlay, the core's, the curl field's and the background water's
 (§3.1) are all the same component, `TuningPanel` — a title, a table of
 knobs and which corner to sit in are the only differences, and each was
@@ -1224,7 +1466,10 @@ analyser is feeding them, and stop asking for frames when still. The
 WebGL ones instead keep painting and **freeze their clock**, which comes
 to the same thing on screen and avoids a canvas that goes blank: under
 `prefers-reduced-motion` or while paused, the shape, the camera and the
-spectrum all hold where they were.
+spectrum all hold where they were. Warp and Harlequin are the exception
+that proves the rule: their image *is* their buffer, so holding still
+means stopping the loop and presenting that buffer once more, rather
+than redrawing a frozen clock.
 
 ### 6.17 Controller sign-in toast
 
@@ -1255,6 +1500,105 @@ backwards within the last second: the pill un-draws right to left, then
 the ghost blurs and fades. Under
 `prefers-reduced-motion` it simply shows. A second connect restarts it
 rather than extending it.
+
+### 6.18 System blade and Console Settings
+
+The System blade (`page.tsx`) is purple (§2.1, `SYSTEM_THEME`) and, as
+on the console, has no profile card: two columns, the menu and the
+description pane. The menu is Console Settings, Family Settings,
+Memory, Network Settings, Computers and Initial Setup, each with a
+glyph from the monochrome set (§6.2) — the standing console, an adult
+and a child, a memory unit, linked nodes, the monitor (shared with the
+Music screen) and a seated player. The pane keeps a description's line
+breaks (`whitespace-pre-line`), so Console Settings lists what it
+covers as bullets. Console Settings opens its screen; the other rows
+open a detail box until they have one.
+
+The Console Settings screen (`ConsoleSettingsScreen.tsx`) is the song
+screen's structure (§6.15) on the system purple: header band "Console
+Settings", the content raised as one slab in two columns, and a legend
+of Y and X dimmed, Back B and Select A. The left column is Display,
+Audio, Language, Clock, Locale, Auto-Off, Screen Saver, Remote Control
+and System Info as blade rows with **no icon** (`icon={null}`). The
+right column is the highlighted row's pane: "Current Setting" over its
+current values, a blank line, then the description. System Info has no
+value, so its pane is the description alone. No setting changes yet;
+each row plays Select A.
+
+### 6.19 Marketplace blade
+
+The store blade (`page.tsx`) is orange with a peach core (§2.1,
+`STORE_THEME`) and, like System, has no profile card and no Open Tray:
+two columns, the menu on the left and promotions where the description
+pane would be.
+
+The menu has **two tiers** in one keyboard column. The four stores —
+Spotlight, New Arrivals, Game Store and Video Store — are the raised
+buttons of the Games Library (§6.2 `button`), the large glyph
+straddling the band split above and left of the label. Below them,
+Redeem Code, Active Downloads and Account Management are plain blade
+rows (§6.2 `row`) with their dividers. Down walks from the last tile
+into the rows. Spotlight holds the cursor on open and is the one tile
+with a real destination: it opens the Spotlight screen (§6.20). New
+Arrivals, Game Store and Video Store, and the three rows below them,
+still open a detail box (§5.3), since those stores do not exist yet.
+
+The raised buttons take their label colour from `--blade-ink`, so the
+same skin reads brown here, green on the Games Library and blue on the
+Media screens.
+
+The right column is not a readout of the highlighted row. It is a large
+promo tile (the console ran Guitar Hero III and the Halo 3 theme song)
+over the Xbox LIVE banner with `rings` (§6.7). The promo is a bitmap on
+the console and shows the striped placeholder until art is dropped in;
+neither is a cursor stop. Legend: Y dimmed, X Sign Out, B dimmed,
+Select A.
+
+### 6.20 Spotlight screen
+
+Opened by the Marketplace blade's Spotlight tile (`SpotlightScreen.tsx`)
+— the first of the four stores to become a real destination rather than
+a placeholder detail box (§6.19). Same full-screen structure as the
+Games Library (§5.4) in the Marketplace orange: section gradient,
+unclipped sheen, header and legend bands, the content raised as one
+slab.
+
+A full-width `XboxLiveBanner` (§6.7) sits under the header, as on the
+console. Below it is a **category carousel**: Games, Arcade, Demos,
+Free Stuff, Videos and Movies as a row of plain text tabs (§5.5), masked
+to fade at both edges and offset so a sliver of the trailing category
+always shows through the left fade, the carousel's own wraparound. The
+wrap is a look and not a loop: Left and Right still clamp at the ends
+of the category list, exactly as they do on every other tab strip (§8),
+and the wrapped sliver is never a cursor stop. A category change
+refilters the list below it and returns the cursor to its first row,
+exactly as the My Games tab strip does (§6.9).
+
+The body under the carousel repeats the Games list/detail grammar with
+two differences that set Marketplace content apart from a title the
+gamer owns:
+
+- **List rows carry no icon** (`icon={null}`, §6.2) and stack two lines
+  of text instead of one: the item's name, then its content type
+  ("Game", "Downloaded Content", "Gamer Picture", …) in the soft ink
+  below it. `MenuListItem` gained a `subtitle` prop for this row shape,
+  since every other menu row is single-line.
+- **The detail panel is a readout** (§6.9 skin, `RAISED_BORDER` /
+  `RAISED_INSET_SHADOW`), not the two-band status card of My Games: a
+  darker title strip naming the item, an empty media slot (§6.7)
+  standing in for the box art or the price the console showed there,
+  and the item's blurb. The blurb is not scrolled: the panel's height is
+  fixed and `overflow-hidden` clips the text where it runs past the
+  bottom, exactly as the console cut its last line off mid-character
+  rather than fading or scrolling it.
+
+A "N of M" counter follows the cursor at the foot of the list, as in My
+Games. Selecting an item only plays Select A, since there is no product
+page yet (§6.19). The legend shows all four buttons live — Y
+"Marketplace Home", X "Add Microsoft Points", Back B and Select A — as
+the console did. Y and X are not wired to a key: those destinations do
+not exist yet, the same reason the blade-level "Sign Out" slot is live
+but unbound (§6.19).
 
 ---
 

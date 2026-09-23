@@ -65,7 +65,7 @@ export {
   tabMirrored,
   type PanelGeometry,
 } from "./blade-layout";
-export { GAMES_THEME, MEDIA_THEME, themeVars, type BladeTheme } from "./blade-theme";
+export { GAMES_THEME, MEDIA_THEME, SYSTEM_THEME, STORE_THEME, themeVars, type BladeTheme } from "./blade-theme";
 export {
   BLADE_MOTION_MS,
   BLADE_MOTION_EASE,
@@ -111,6 +111,8 @@ export { MusicScreen } from "./MusicScreen";
 export { AudiobooksScreen } from "./AudiobooksScreen";
 export { ScrollColumn } from "./ScrollColumn";
 export { PicturesScreen } from "./PicturesScreen";
+export { ConsoleSettingsScreen } from "./ConsoleSettingsScreen";
+export { SpotlightScreen } from "./SpotlightScreen";
 export { PICTURES, PICTURES_DIR, pictureSrc, type Picture } from "./pictures";
 export { ALBUMS, albumSearchTitle, type Album } from "./albums";
 export {
@@ -159,7 +161,18 @@ export {
   bandRadius,
   bandWavenumber,
   type DropEvent,
+  type OnsetOptions,
 } from "./audio-drops";
+export {
+  beatClock,
+  pushBeatOnset,
+  beatBandWeight,
+  BEAT_LOCKED,
+  MIN_BPM,
+  MAX_BPM,
+  type BeatClockReading,
+} from "./beat-clock";
+export { useBeatClock } from "./use-beat-clock";
 export {
   ACHIEVEMENT_GAMES,
   ALL_GAMES_TITLE,

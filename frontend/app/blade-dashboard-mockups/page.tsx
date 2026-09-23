@@ -12,6 +12,8 @@ import {
   type BladeSection,
   GAMES_THEME,
   MEDIA_THEME,
+  SYSTEM_THEME,
+  STORE_THEME,
   STORE_GRADIENT,
   LIVE_GRADIENT,
   GAMES_GRADIENT,
@@ -25,6 +27,7 @@ import {
   LibraryMenuProvider,
   LibraryMenuDescription,
   type LibraryMenuItem,
+  MediaSlot,
   type LegendButton,
   MenuIcon,
   OpenTrayBar,
@@ -43,26 +46,17 @@ import { asset } from "@/app/_lib/asset-path";
  * holds the identity of its section (§2.1, §2.2): the radial gradient,
  * as data from `blade-gradient.ts`, thus the CSS fallback and the WebGL
  * surface read the same stops; the fill of the active tab; and the text
- * and rule tints. Games, Xbox LIVE and Media are built. Store and system
- * are declared, thus the fan of tabs is complete and a switch to them
- * shows an empty panel with a title and not the content of another
- * blade. Their colours are placeholders.
+ * and rule tints. Each of the five blades is built.
  */
 const BLADES: BladeSection[] = [
   {
     label: "store",
     title: "Marketplace",
+    // Marketplace orange with a peach core (DESIGN.md §2.1). The rules
+    // are darker than the panel, as on Games.
     gradient: STORE_GRADIENT,
     tabFill: "linear-gradient(90deg,#b8500f,#ff9d4e 35%,#e06a1a)",
-    theme: {
-      ink: "#2e1202",
-      inkSoft: "#3f1c05",
-      rule: "#f7a869",
-      ruleStrong: "#fbbd86",
-      glyph: "#a24a0c",
-      glyphHover: "#5e2a05",
-      watermark: "#5a2a08",
-    },
+    theme: STORE_THEME,
   },
   {
     label: "community",
@@ -99,17 +93,11 @@ const BLADES: BladeSection[] = [
   {
     label: "system",
     title: "System",
+    // Purple, #804EA9 (DESIGN.md §2.1). The rules are lighter than the
+    // panel, as on Media.
     gradient: SYSTEM_GRADIENT,
-    tabFill: "linear-gradient(90deg,#7f8891,#dfe4e9 35%,#a3acb5)",
-    theme: {
-      ink: "#1c1f23",
-      inkSoft: "#2b3036",
-      rule: "#8d969f",
-      ruleStrong: "#a2abb4",
-      glyph: "#5c656e",
-      glyphHover: "#2b3036",
-      watermark: "#3a4149",
-    },
+    tabFill: "linear-gradient(90deg,#613889,#b58ad9 35%,#8a58b6)",
+    theme: SYSTEM_THEME,
   },
 ];
 
@@ -162,6 +150,54 @@ const GAMES_MENU_ITEMS: LibraryMenuItem[] = [
     description: "Play demos and games.",
     detailTitle: "Demos and More",
     detail: "Try game demos and other downloadable content.",
+  },
+];
+
+/**
+ * The menu of the Marketplace blade (DESIGN.md §6.19), in two tiers. The
+ * four stores are raised buttons, the skin of the Games Library rows.
+ * The three account rows below them are compact divider rows. Spotlight
+ * is the one tile with a real destination, the Spotlight screen (§6.20);
+ * the rest still open a detail box, since those stores do not exist yet.
+ */
+const STORE_TILE_ITEMS: LibraryMenuItem[] = [
+  {
+    label: "Spotlight",
+    icon: <MenuIcon name="spotlight" />,
+    screen: "spotlight",
+  },
+  {
+    label: "New Arrivals",
+    icon: <MenuIcon name="newArrivals" />,
+    detail: "Browse the newest content on Xbox LIVE Marketplace.",
+  },
+  {
+    label: "Game Store",
+    icon: <MenuIcon name="controller" />,
+    detail: "Browse and download games, demos, and add-ons.",
+  },
+  {
+    label: "Video Store",
+    icon: <MenuIcon name="videoStore" />,
+    detail: "Rent or buy movies and TV shows.",
+  },
+];
+
+const STORE_ROW_ITEMS: LibraryMenuItem[] = [
+  {
+    label: "Redeem Code",
+    icon: <MenuIcon name="redeemCode" />,
+    detail: "Enter the code of a card or a promotion.",
+  },
+  {
+    label: "Active Downloads",
+    icon: <MenuIcon name="activeDownloads" />,
+    detail: "See the content that is downloading now.",
+  },
+  {
+    label: "Account Management",
+    icon: <MenuIcon name="accountManagement" />,
+    detail: "Manage your membership, your payment options and your Microsoft Points.",
   },
 ];
 
@@ -220,6 +256,58 @@ const MEDIA_MENU_ITEMS: LibraryMenuItem[] = [
   },
 ];
 
+/**
+ * The menu of the System blade (DESIGN.md §6.18). Console Settings opens
+ * the full-screen Console Settings screen. The other rows open a detail
+ * box in this mockup. Computers reuses the monitor of the Music screen.
+ * The pane keeps the line breaks of a description, thus the bullets of
+ * Console Settings stay on their own lines.
+ */
+const SYSTEM_MENU_ITEMS: LibraryMenuItem[] = [
+  {
+    label: "Console Settings",
+    icon: <MenuIcon name="consoleSettings" />,
+    description:
+      "Edit your Xbox 360 system settings, including:\n\n• Display\n• Audio\n• Language\n• Remote control\n• and more",
+    screen: "console-settings",
+  },
+  {
+    label: "Family Settings",
+    icon: <MenuIcon name="family" />,
+    description: "Control which games, videos and online content each member of your family can use.",
+    detailTitle: "Family Settings",
+    detail: "Set content limits, a timer and a pass code for the console.",
+  },
+  {
+    label: "Memory",
+    icon: <MenuIcon name="memory" />,
+    description: "Manage the content on your hard drive and memory units.",
+    detailTitle: "Memory",
+    detail: "View, copy and delete the games, profiles and content that you saved.",
+  },
+  {
+    label: "Network Settings",
+    icon: <MenuIcon name="network" />,
+    description: "Test and change the settings of your network connection.",
+    detailTitle: "Network Settings",
+    detail: "Test your connection to Xbox LIVE and edit your wired or wireless settings.",
+  },
+  {
+    label: "Computers",
+    icon: <MenuIcon name="computer" />,
+    description: "Connect your console to a Windows PC to share its music, pictures and videos.",
+    detailTitle: "Computers",
+    detail: "Find and connect to the computers on your network.",
+  },
+  {
+    label: "Initial Setup",
+    icon: <MenuIcon name="initialSetup" />,
+    description: "Set up your console again, as on the first day.",
+    detailTitle: "Initial Setup",
+    detail: "Choose your language, your display and your network again.",
+  },
+];
+
 export default function BladeDashboardMockupsPage() {
   return (
     // A context shares the selected gamer picture across the full blade.
@@ -247,7 +335,33 @@ export default function BladeDashboardMockupsPage() {
             | Menu    | Description  |
           The description cell follows the highlighted menu row through
           LibraryMenuProvider, which is above both cells. */}
-      <BladePanel blade="store" />
+      <BladePanel blade="store" legend={SIGNED_IN_LEGEND}>
+        {/* Two columns and no profile card, as the console drew the
+            Marketplace: the menu on the left, and promotions in place of
+            a description pane on the right (§6.19). Both menus sit in
+            the one keyboard column of the panel, thus Down walks from
+            the last tile into the rows. */}
+        <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-8">
+          <div className="flex min-w-0 flex-col gap-3">
+            <LibraryMenu
+              autoFocusFirst
+              layout="buttons"
+              items={STORE_TILE_ITEMS}
+              ariaLabel="Marketplace stores"
+            />
+            <LibraryMenu items={STORE_ROW_ITEMS} ariaLabel="Marketplace account" />
+          </div>
+          <div className="flex min-w-0 flex-col gap-3">
+            {/* The promotion is a bitmap on the console. It keeps the
+                striped placeholder (§6.7) until the art is available. */}
+            <MediaSlot
+              label="Guitar Hero III · Halo 3 Theme Song"
+              className="aspect-[5/4]"
+            />
+            <XboxLiveBanner rings className="h-[112px]" />
+          </div>
+        </div>
+      </BladePanel>
 
       <BladePanel blade="community" legend={SIGNED_IN_LEGEND}>
         <LibraryMenuProvider initialItem={LIVE_MENU_ITEMS[0]}>
@@ -336,7 +450,22 @@ export default function BladeDashboardMockupsPage() {
 
         <OpenTrayBar label="Open Tray" />
       </BladePanel>
-      <BladePanel blade="system" />
+      <BladePanel blade="system" legend={SIGNED_IN_LEGEND}>
+        <LibraryMenuProvider initialItem={SYSTEM_MENU_ITEMS[0]}>
+          {/* Two columns and no profile card, as the console drew the
+              System blade: the menu and the pane of the highlighted row. */}
+          <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-8">
+            <LibraryMenu
+              autoFocusFirst
+              items={SYSTEM_MENU_ITEMS}
+              ariaLabel="System menu"
+            />
+            <LibraryMenuDescription className="pt-2 text-pretty whitespace-pre-line text-[22px] leading-snug text-(--blade-ink) sm:text-[24px]" />
+          </div>
+        </LibraryMenuProvider>
+
+        <OpenTrayBar label="Open Tray" />
+      </BladePanel>
     </BladeCanvas>
     {/* The development overlay for the background water (§3.1). It is
         not part of the dashboard, and it is outside the canvas, thus the

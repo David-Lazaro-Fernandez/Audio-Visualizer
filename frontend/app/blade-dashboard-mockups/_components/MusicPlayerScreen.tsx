@@ -17,6 +17,9 @@ import { WaterVisualizer } from "./WaterVisualizer";
 import { SpectrogramVisualizer } from "./SpectrogramVisualizer";
 import { SpectrogramControls } from "./SpectrogramControls";
 import { GridVisualizer } from "./GridVisualizer";
+import { WarpVisualizer } from "./WarpVisualizer";
+import { HarlequinVisualizer } from "./HarlequinVisualizer";
+import { MandelbrotVisualizer } from "./MandelbrotVisualizer";
 import { useCoveredSurface } from "./surface-stack";
 import { CurlParticles, CURL_SIDE } from "@/app/_particles/CurlParticles";
 import { RaymarchCore } from "@/app/_raymarch/RaymarchCore";
@@ -30,6 +33,7 @@ import {
 import { ScrollColumn } from "./ScrollColumn";
 import { useAudioSpectrum } from "./use-audio-spectrum";
 import { useBladePulse } from "./use-blade-pulse";
+import { useBeatClock } from "./use-beat-clock";
 import { MEDIA_THEME, themeVars } from "./blade-theme";
 import { getPortalRoot } from "./portal";
 import { useBackKey } from "./back-stack";
@@ -190,6 +194,12 @@ export function MusicPlayerScreen({
   // this box.
   useBladePulse(spectrum, visualization);
 
+  // The tempo and the beat phase, from the same array (§6.16). It runs
+  // beside the pulse and not inside a visualizer, because a tempo needs
+  // several seconds of onsets: a clock that started when Warp came up
+  // would give it no beat for its first bars.
+  useBeatClock(spectrum, visualization);
+
   // Load and start at each change of the track. `paused` is not a
   // dependency: a change to it must not load the preview again.
   useEffect(() => {
@@ -275,10 +285,12 @@ export function MusicPlayerScreen({
 
   const visualizer = VISUALIZER_STYLES[styleIndex];
 
-  // Three of the eight styles are canvas-2D views of the spectrum. The
+  // Three of the eleven styles are canvas-2D views of the spectrum. The
   // others are WebGL scenes: a wave field that the music drops stones
   // into, a scrolling spectrogram, the same history as a landscape of
-  // points, a curl-noise particle flow and a raymarched core (§6.16).
+  // points, a curl-noise particle flow, a raymarched core, a feedback
+  // buffer that the beat re-aims, a MilkDrop preset ported into that
+  // same buffer, and a dive into the Mandelbrot set (§6.16).
   // The code holds an element and not a component, thus a change of
   // style does not give React a new component type and does not destroy
   // the canvas two times.
@@ -287,6 +299,22 @@ export function MusicPlayerScreen({
       <WaterVisualizer paused={paused} spectrum={spectrum} />
     ) : visualizer.id === "spectrogram" ? (
       <SpectrogramVisualizer paused={paused} spectrum={spectrum} />
+    ) : visualizer.id === "warp" ? (
+      // The one style with a memory: it warps its own last frame and
+      // draws the spectrum over the result. The beat clock decides when
+      // the field that does the warping changes.
+      <WarpVisualizer paused={paused} spectrum={spectrum} />
+    ) : visualizer.id === "harlequin" ? (
+      // The same loop as Warp with an authored field in place of a
+      // rolled one: the per-pixel equations of a MilkDrop preset, run
+      // at the vertices of its 32x24 mesh.
+      <HarlequinVisualizer paused={paused} spectrum={spectrum} />
+    ) : visualizer.id === "mandelbrot" ? (
+      // The escape time of `z -> z^2 + c`, for each pixel. The contours
+      // that it falls in are the bands: contour k is lit by band k. The
+      // bass flies the dive and the beat clock cuts to a new target
+      // where `float` runs out of digits.
+      <MandelbrotVisualizer paused={paused} spectrum={spectrum} />
     ) : visualizer.id === "grid" ? (
       // The grid view of `/particles`, fed from the live analyser. It
       // keeps its own ring of slices, because the analyser gives one

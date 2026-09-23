@@ -64,18 +64,58 @@ export const bandWavenumber = (band: number, bands: number) =>
   0.45 + 1.9 * bandRadius(band, bands);
 
 /**
+ * The number of onsets a second that the adaptive gate holds near, and
+ * how hard it pulls. Refer to `OnsetOptions`.
+ */
+const TARGET_RATE = 4;
+const ADAPT_GAIN = 0.06;
+const ADAPT_MIN = 0.8;
+const ADAPT_MAX = 1.6;
+/** How fast the measured rate follows the music: near one second. */
+const RATE_SMOOTH = 0.02;
+
+export interface OnsetOptions {
+  /**
+   * Moves the threshold with the density of the music.
+   *
+   * The fixed `ONSET_RATIO` is tuned for one kind of track. A dense mix
+   * goes over it in each frame and a sparse one almost never does, thus
+   * the same constant over-fires on the first and under-fires on the
+   * second. With this option the detector measures its own rate of
+   * onsets and raises the ratio while it is above `TARGET_RATE` and
+   * lowers it while it is below, inside a bounded range.
+   *
+   * The idea is from the beat detector of Geiss (1998), which is in its
+   * source but is commented out: it counted the beats of the last
+   * frames and moved the multiplier of its threshold with that count.
+   * The visible drops want the fixed gate, because there the threshold
+   * is part of a tuned picture. The beat clock wants this one, because
+   * a tempo needs a usable number of events on any track.
+   */
+  adaptive?: boolean;
+}
+
+/**
  * Returns a detector that holds its own rolling state. Call the detector
  * one time a frame with the spectrum and `performance.now()`.
  */
-export function createOnsetDetector(bands: number) {
+export function createOnsetDetector(bands: number, options: OnsetOptions = {}) {
   const mean = new Float32Array(bands);
   const readyAt = new Float32Array(bands);
   const hits: DropEvent[] = [];
+  /** Onsets a second, smoothed. It drives the gate only when adaptive. */
+  let rate = TARGET_RATE;
+  let ratedAt = -1;
 
   const cooldownFor = (band: number) =>
     COOLDOWN_LOW + (COOLDOWN_HIGH - COOLDOWN_LOW) * bandRadius(band, bands);
 
   return function detect(spectrum: Float32Array, now: number): DropEvent[] {
+    const ratio = options.adaptive
+      ? ONSET_RATIO *
+        Math.min(ADAPT_MAX, Math.max(ADAPT_MIN, 1 + (rate - TARGET_RATE) * ADAPT_GAIN))
+      : ONSET_RATIO;
+
     hits.length = 0;
     for (let band = 0; band < bands; band++) {
       const level = spectrum[band] ?? 0;
@@ -86,9 +126,18 @@ export function createOnsetDetector(bands: number) {
       mean[band] = average + (level - average) * MEAN_RATE;
 
       if (now < readyAt[band]) continue;
-      if (level < ONSET_FLOOR || level < average * ONSET_RATIO) continue;
+      if (level < ONSET_FLOOR || level < average * ratio) continue;
       readyAt[band] = now + cooldownFor(band);
       hits.push({ band, strength: Math.min(1, level) });
+    }
+
+    if (options.adaptive) {
+      // A rate needs an interval. The first frame has none, and a frame
+      // after a long stop would give a rate of near zero for a gap that
+      // is not music.
+      const dt = ratedAt < 0 ? 0 : Math.min(0.1, (now - ratedAt) / 1000);
+      ratedAt = now;
+      if (dt > 0) rate += (hits.length / dt - rate) * RATE_SMOOTH;
     }
 
     if (hits.length <= MAX_PER_FRAME) return hits;

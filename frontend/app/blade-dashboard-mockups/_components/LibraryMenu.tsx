@@ -7,6 +7,8 @@ import { resolveScreen, type ScreenKey } from "./screens";
 export interface LibraryMenuItem {
   label: string;
   meta?: string;
+  /** `rows` layout: a second, softer line under the label. Refer to `MenuListItem`. */
+  subtitle?: string;
   variant?: "row" | "button" | "brand";
   disabled?: boolean;
   /** Grey as `disabled` is, but still a cursor stop. Refer to `MenuListItem`. */

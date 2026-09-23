@@ -46,6 +46,13 @@ import { playSound } from "./sounds";
  * The item rows of a browse list use it, such as the album list of
  * Audiobooks, where the two-band button is too tall.
  *
+ * `subtitle`, on the row variant, stacks a second, softer line under the
+ * label instead of the single-line row every other menu uses. The
+ * Spotlight screen's list (DESIGN.md §6.20) needs it because a
+ * Marketplace item is named by its content type ("Game", "Downloaded
+ * Content", …) and not by a value at the end of the row, so `meta` does
+ * not fit.
+ *
  * Keyboard: each row is a `data-nav-item`, thus `KeyboardNav` can move
  * the cursor through the rows with the arrow keys. The row uses plain
  * `focus` and not `focus-visible`, thus the cursor looks the same as a
@@ -81,6 +88,9 @@ export interface MenuScreenProps {
  * bands. The row uses plain `focus` and not `focus-visible`, thus a row
  * that a mouse clicked stays lit, as the cursor of the console does.
  *
+ * The label takes the ink of the section (§2.2), thus the same skin
+ * works on the Marketplace blade and on the full-screen menus.
+ *
  * A disabled row keeps the same shape. Its border and its band fade
  * (`group-disabled`) and its text becomes the low-contrast green (§7.2).
  *
@@ -96,7 +106,7 @@ export const RAISED_INSET_SHADOW =
 // These are literals and not compositions of the constants above, thus
 // Tailwind can read the hover:, focus: and disabled: variants verbatim.
 const BUTTON_SKIN = [
-  "group relative isolate overflow-hidden border border-[#5a5a5a] bg-transparent text-[#17300a]",
+  "group relative isolate overflow-hidden border border-[#5a5a5a] bg-transparent text-(--blade-ink)",
   "shadow-[inset_0_8px_8px_-4px_rgba(0,0,0,.2),inset_8px_0_8px_-4px_rgba(0,0,0,.2),inset_-8px_0_8px_-4px_rgba(0,0,0,.2)]",
   // The cursor wash. It fades in on a ::before layer. Refer to the JSDoc above.
   "before:pointer-events-none before:absolute before:inset-0 before:-z-10",
@@ -131,6 +141,7 @@ const ROW_CURSOR_WASH = [
 export function MenuListItem({
   label,
   meta,
+  subtitle,
   variant = "row",
   disabled = false,
   unavailable = false,
@@ -148,6 +159,8 @@ export function MenuListItem({
 }: {
   label: string;
   meta?: string;
+  /** `row` variant only: a second, softer line under the label, in place of the single-line label. */
+  subtitle?: string;
   variant?: "row" | "button" | "brand";
   disabled?: boolean;
   /** `row` variant: faded as `disabled` is, but focusable and described. Select does nothing. */
@@ -349,18 +362,25 @@ export function MenuListItem({
         } ${iconOnly ? "justify-center" : ""}`}
       >
         {icon}
-        {!iconOnly && (
-          <span
-            className={`min-w-0 flex-1 truncate text-[23px] text-(--blade-ink) ${
-              unavailable ? "opacity-45" : ""
-            } ${
-              growOnFocus
-                ? "transition-[font-size] duration-150 group-hover:text-[30px] group-focus:text-[30px]"
-                : ""
-            }`}
-          >
-            {label}
+        {!iconOnly && subtitle ? (
+          <span className={`flex min-w-0 flex-1 flex-col ${unavailable ? "opacity-45" : ""}`}>
+            <span className="truncate text-[23px] text-(--blade-ink)">{label}</span>
+            <span className="truncate text-[20px] text-(--blade-ink-soft)">{subtitle}</span>
           </span>
+        ) : (
+          !iconOnly && (
+            <span
+              className={`min-w-0 flex-1 truncate text-[23px] text-(--blade-ink) ${
+                unavailable ? "opacity-45" : ""
+              } ${
+                growOnFocus
+                  ? "transition-[font-size] duration-150 group-hover:text-[30px] group-focus:text-[30px]"
+                  : ""
+              }`}
+            >
+              {label}
+            </span>
+          )
         )}
         {!iconOnly && meta && (
           <span className="shrink-0 text-[20px] text-(--blade-ink-soft)">{meta}</span>
