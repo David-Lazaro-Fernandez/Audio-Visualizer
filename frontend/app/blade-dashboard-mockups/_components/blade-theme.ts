@@ -68,6 +68,20 @@ export const SYSTEM_THEME: BladeTheme = {
 };
 
 /**
+ * The Xbox LIVE (community) blade, DESIGN.md §2.2, in gold. The rules
+ * are lighter than the panel, as on Media and System.
+ */
+export const LIVE_THEME: BladeTheme = {
+  ink: "#2a1a04",
+  inkSoft: "#3d2707",
+  rule: "#f2c66a",
+  ruleStrong: "#f7d585",
+  glyph: "#a86a12",
+  glyphHover: "#5e3a06",
+  watermark: "#5a3a0a",
+};
+
+/**
  * The store blade, DESIGN.md §2.2, in Marketplace orange. The rules are
  * darker than the panel, as on Games: the dividers of the console are
  * brown shadow lines on the peach.

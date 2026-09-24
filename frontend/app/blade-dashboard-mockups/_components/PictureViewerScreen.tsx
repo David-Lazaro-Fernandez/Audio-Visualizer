@@ -373,9 +373,9 @@ export function PictureViewerScreen({ startIndex = 0 }: { startIndex?: number })
               clipPath: "polygon(0 0, 100% 0, 79% 100%, 21% 100%)",
               background: TOOLTIP_BACKGROUND,
             }}
-            className="px-3 py-1 text-left text-[15px] text-white/90"
+            className="polygon px-3 py-1 text-left text-[15px] text-white/90"
           >
-            {tooltipLabel}
+            <p className="ml-[50px]">{tooltipLabel}</p>
           </span>
         </div>
       </div>

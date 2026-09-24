@@ -14,20 +14,27 @@ import {
   type LibraryMenuItem,
 } from "./LibraryMenu";
 import { RAISED_BORDER, RAISED_INSET_SHADOW } from "./MenuListItem";
-import { MediaSlot } from "./MediaSlot";
 import { XboxLiveBanner } from "./XboxLiveBanner";
 import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
 
 /**
- * The Spotlight screen, opened by the Marketplace blade's Spotlight tile
- * (DESIGN.md §6.20) — the first of the four stores to become a real
- * destination rather than a placeholder detail box (§6.19). Same
- * full-screen structure as the Games Library (§5.4) in the Marketplace
- * orange: section gradient, unclipped sheen, header and legend bands, the
- * content raised as one slab. It sets `STORE_THEME` on its root, because
- * a full-screen surface portals outside the canvas and would otherwise
- * take the games green (§5.4).
+ * The Spotlight screen (DESIGN.md §6.20), opened by the Marketplace
+ * blade's Spotlight tile — the first of the stores to become a real
+ * destination rather than a placeholder detail box (§6.19). New
+ * Arrivals and Game Store open this exact same screen under their own
+ * title (`NewArrivalsScreen`, `GameStoreListScreen`, both thin
+ * wrappers around `SpotlightScreenImpl` below): the same categories,
+ * the same items, the same everything, since none of the three stores
+ * has real content of its own yet. `SpotlightScreenImpl` takes the
+ * title as a required prop and is never registered directly — each of
+ * the three exported screens is its own zero-prop component, thus
+ * each satisfies `MenuScreenProps` the way every other screen here
+ * does. Same full-screen structure as the Games Library (§5.4) in the
+ * Marketplace orange: section gradient, unclipped sheen, header and
+ * legend bands, the content raised as one slab. It sets `STORE_THEME`
+ * on its root, because a full-screen surface portals outside the
+ * canvas and would otherwise take the games green (§5.4).
  *
  * A full-width `XboxLiveBanner` sits under the header, as on the console.
  * Below it a category carousel (`CategoryCarousel`) filters the list the
@@ -41,11 +48,10 @@ import { playSound } from "./sounds";
  * with the two differences that mark Marketplace content as not the
  * gamer's own: each row has no icon and stacks two lines (`subtitle` on
  * `MenuListItem`, added for this screen), and the detail panel is a
- * readout (§6.9 skin) of a darker title strip, an empty media slot (§6.7)
- * standing in for box art or a price, and the item's blurb, which is not
- * scrolled — the panel's height is fixed and `overflow-hidden` clips the
- * text where it runs past the bottom, exactly as the console cut its
- * last line off mid-character.
+ * readout (§6.9 skin) of a darker title strip and the item's blurb,
+ * which is not scrolled — the panel's height is fixed and
+ * `overflow-hidden` clips the text where it runs past the bottom,
+ * exactly as the console cut its last line off mid-character.
  *
  * The legend shows all four buttons live: Y "Marketplace Home" and X
  * "Add Microsoft Points" are not wired to a key, the same as the
@@ -177,7 +183,7 @@ const ITEMS: Record<CategoryKey, SpotlightItem[]> = {
 /** The same radial orange as the canvas of the Marketplace blade. */
 const BACKGROUND = gradientCss(STORE_GRADIENT);
 
-export function SpotlightScreen() {
+function SpotlightScreenImpl({ title }: { title: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [categoryIndex, setCategoryIndex] = useState(0);
   const category = CATEGORIES[categoryIndex];
@@ -240,7 +246,7 @@ export function SpotlightScreen() {
       ref={rootRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Spotlight"
+      aria-label={title}
       tabIndex={-1}
       onKeyDown={onKeyDown}
       className="fixed inset-0 z-40 flex flex-col text-(--blade-ink) outline-none"
@@ -253,7 +259,7 @@ export function SpotlightScreen() {
         className="relative z-0 px-[12%] pt-8 pb-5 md:pt-10 md:pb-6"
       >
         <h1 className="text-3xl text-white [text-shadow:0_1px_2px_rgba(0,0,0,.28)] sm:text-4xl">
-          Spotlight
+          {title}
         </h1>
       </BladeChromeBand>
 
@@ -309,6 +315,34 @@ export function SpotlightScreen() {
     </div>,
     getPortalRoot(),
   );
+}
+
+/** The Marketplace blade's own Spotlight tile (DESIGN.md §6.20). */
+export function SpotlightScreen() {
+  return <SpotlightScreenImpl title="Spotlight" />;
+}
+
+/**
+ * The Marketplace blade's New Arrivals tile (DESIGN.md §6.19): the
+ * exact same categories, items and detail panel as Spotlight, under
+ * its own title, since New Arrivals has no real content of its own
+ * yet either.
+ */
+export function NewArrivalsScreen() {
+  return <SpotlightScreenImpl title="New Arrivals" />;
+}
+
+/**
+ * The Marketplace blade's Game Store tile (DESIGN.md §6.19): the exact
+ * same categories, items and detail panel as Spotlight, under its own
+ * title. This replaces the tile-based Game Store screen
+ * (`GameStoreScreen.tsx`, §6.19.1) as the blade's own destination; that
+ * screen, and the Xbox Originals screen behind it, stay in the code
+ * registered under their own key (`"game-store"`) but are no longer
+ * linked from any menu.
+ */
+export function GameStoreListScreen() {
+  return <SpotlightScreenImpl title="Game Store" />;
 }
 
 /** How far the carousel offsets the active category from the wrapped sliver before it. Refer to `CategoryCarousel`. */
@@ -412,12 +446,11 @@ function SpotlightCounter({ items }: { items: SpotlightItem[] }) {
 }
 
 /**
- * The detail panel (DESIGN.md §6.20, §6.9 skin): a darker title strip, an
- * empty media slot (§6.7) standing in for the box art or the price the
- * console showed there, and the blurb. The blurb sits in a fixed-height,
- * `overflow-hidden` band and is not scrolled, thus a long description is
- * clipped where it runs past the bottom instead of fading or scrolling,
- * as the console's own panel cut its last line off mid-character.
+ * The detail panel (DESIGN.md §6.20, §6.9 skin): a darker title strip and
+ * the blurb. The blurb sits in a fixed-height, `overflow-hidden` band and
+ * is not scrolled, thus a long description is clipped where it runs past
+ * the bottom instead of fading or scrolling, as the console's own panel
+ * cut its last line off mid-character.
  */
 function SpotlightDetailPanel({ items }: { items: SpotlightItem[] }) {
   const highlighted = useHighlightedItem();
@@ -432,7 +465,6 @@ function SpotlightDetailPanel({ items }: { items: SpotlightItem[] }) {
       style={{ background: "rgba(255,255,255,.12)" }}
     >
       <div className="bg-black/10 px-5 py-2 text-[24px] leading-tight">{item.title}</div>
-      <MediaSlot label={item.category.toUpperCase()} className="mx-5 mt-4 h-[110px] shrink-0" />
       <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">
         <p className="text-pretty text-[22px] leading-snug">{item.description}</p>
       </div>

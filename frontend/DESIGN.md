@@ -65,6 +65,48 @@ Rules:
   `<svg>`/`<path>`. The clip-path is what makes a tab's clickable area its
   actual curved shape.
 
+**The open panel's own two edges also carry a soft dark seam just inside
+their boundary** (`BladePanelSeam.tsx`), the same idea as the Sign In
+drawer's own seam stroke (§6.22: a fade, not a hard line) applied to
+every blade. It is `edgeBandGeometry`, not `edgeSvgPathD` and a `filter:
+drop-shadow(...)`, the drawer's own technique: the drawer's seam never
+moves once it has slid in, but this one has to track the open blade and
+slide at the shared tempo (§7.4), and `clip-path: polygon(...)` is what
+already interpolates smoothly between two blades here, because every
+edge samples the same vertex count — an SVG path's `d` does not
+interpolate reliably across browsers. Since `clip-path` clips a
+`filter`'s own output along with the fill, the same problem the drawer's
+seam hit, the fade is a gradient inside the fill instead, with only a
+small blur on top for softness. It is purely decorative and never a
+cursor stop. It does not sit on the collapsed tabs, only the open panel:
+a tab immediately beside the panel is already its own near-identical
+curved ribbon (§2.3), so a second decorative one there would duplicate
+it rather than add depth.
+
+**The left seam sits one tab-width outside the panel's own nominal
+edge**, not at it. `BladeTabNav` gives the open blade its own tab too, in
+the left stack (§6.1: marked `aria-current="page"`), painted the same
+`tabFill` green as the panel — so the open blade's *true* outer edge,
+where that green actually meets a neutral tab, is `geometry.leftX -
+TAB_WIDTH`, one tab-pitch further out than the boundary between the
+active tab and the panel, which are the same colour and were never a
+seam to begin with. A first version drew it at `geometry.leftX` and cut
+a visible crack through the middle of what reads as one continuous
+shape. The right edge has no such neighbour — every tab past the open
+blade sits in the right stack — so `geometry.rightX` is already correct
+there.
+
+**Both seams carry `z-[25]`, above `BladeTabNav`'s `z-20`.** Both sit
+exactly where a tab's own curved shape is — that boundary is the entire
+point of a seam — and a tab is opaque, so with no z-index of its own
+(stacking at the same level as `BladeEdges` and `BladeBackground`, both
+far below `z-20`) the tab painted over the seam completely: it was
+correctly positioned and completely invisible, which is why the fix
+above did not actually show up until the page was checked directly
+rather than reasoned about. `pointer-events-none` keeps the seam from
+covering the tab's own hit target even though it now paints on top of
+it.
+
 ### 1.2 Reference frame
 
 All chrome is positioned as a **percentage of the 1280×720 reference frame**,
@@ -189,7 +231,7 @@ Fixed regardless of section:
 open blade sits on neutral silver or gray:
 
 - Collapsed tab fill: `linear-gradient(90deg, #a9a9a9, #fbfbfb 30%, #dcdcdc 62%, #b6b6b6)`; label `#7d7d7d`, white on hover.
-- Tab gutters behind the collapsed stacks: `linear-gradient(180deg, #c9c9c9, #ececec 45%, #c4c4c4)` at 95% opacity. Gutters stop exactly at the panel edges.
+- Tab gutters behind the collapsed stacks: `linear-gradient(180deg, #c9c9c9, #ececec 45%, #c4c4c4)` at 95% opacity. A gutter's own inner edge is the §1.1 curve, at the same `topX` as the panel's edge on that side, not a straight line (`BladeMenuGutters.tsx`, `edgeOnlyClipPath` / `edgeOnlyClipPathFromRight`) — the same "share one curve" rule as the panel and the ribbon of the Sign In drawer (§6.22). A straight gutter sits opaque *above* the WebGL canvas in stacking order, so once the shader is live and `BladeEdges`' own CSS fill stands down (§3.1), the canvas alone paints the curve's flare, which reaches past the panel's nominal edge — and a straight gutter there just covers it, a hard rectangular cut hiding a curve that is still being drawn underneath. Curving the gutter's own edge to retreat exactly where the panel flares out removes the conflict instead of masking it.
 - Detail boxes and cards on neutral: `linear-gradient(180deg, #ffffff, #f2f2f2 52%, #dcdcdc)`.
 - Branded tiles: flat `#616063`.
 
@@ -376,11 +418,29 @@ measured against the menu boundary at runtime (`menu-box-placement.ts`):
 2. Fall back to below the row.
 3. If neither fits (minimum 220 × 96 px), render nothing rather than overflow.
 
-Boxes are capped at 320 px wide, use the neutral gradient (§2.3), a 10 px
-radius, and a title row with a `×` close control.
+Boxes are capped at 320 px wide, use the neutral gradient (§2.3), and a
+title row with a `×` close control. The right edge is the §1.1 curve
+rather than a straight line (`MenuDetailBox.tsx`, `edgeOnlyClipPath`, at
+`topX` equal to the box's own width), the same one polygon boundary a
+blade panel or the Sign In drawer (§6.22) is drawn from, in every blade
+that still opens one: Marketplace, Games, Media and System all do.
+Unlike the drawer's own panel, there is no extra width to reserve for
+the curve's flare — the box already claims exactly however much space
+`placeMenuBox` finds free beside the row, and rule 3 above forbids
+claiming more — so the curve sits flush at the box's own edge instead of
+inset from it: the bow reads as a shallow notch about a third of the way
+down, and the flare beyond it has nothing left to spill into. The
+content keeps a little extra right padding so no text reaches the
+notch.
 
 Rows that lead to a **full-screen destination** open that screen instead. The
 row that opened it owns the open state and the Back key.
+
+One row opens neither: the Xbox LIVE blade's Connect row opens the Sign In
+**drawer** instead (§6.22), through the same `screen` mechanism as a
+full-screen destination, because the console's own Sign In screen only
+ever covered part of the blade, with the rest left visible and dimmed
+behind it.
 
 ### 5.4 Full-screen surfaces and portals
 
@@ -492,9 +552,12 @@ Variants:
   a pseudo-element over the 150 ms tempo. It uses plain `focus` (not
   `focus-visible`) so a mouse-clicked row stays lit like the console cursor.
   With `compact` the empty top band is dropped and the row band alone
-  carries the skin, at label height with 11 px padding: the entries of a
-  browse list (the Music Library's albums, §6.12), where the full button
-  is too tall to stack a dozen deep.
+  carries the skin, at label height with 11 px padding and a 24 px icon:
+  the entries of a browse list (the Music Library's albums, §6.12),
+  where the full button is too tall to stack a dozen deep. `compactLarge`
+  steps that down band up to an 18 px padding and a 32 px icon, for a
+  handful of tiles rather than a browse list (the TV Shows menu,
+  §6.19.3).
 - **brand**: dark steel gradient pill with the swirl glyph and the two-tone
   wordmark (`#8bc93e` / `#e2701f`).
 
@@ -508,7 +571,11 @@ pictures (camera) and videos (camcorder) for the Media blade, two fanned
 game cards with a controller for the Achievements screen's "All Games"
 row, and for the Marketplace blade (§6.19) a down arrow with a star, a
 starburst, a film case with a disc, a flat card, a download roundel and
-a crown, plus the Marketplace "m" roundel, currently unused. The music menus
+a crown, and for its Game Store screen (§6.19.1) a bold letterform X, a
+picture frame with a paint roller and a folder, and for its TV Shows
+screen (§6.19.3) a monitor with a broadcast signal, two fanned clips,
+and two pairs of overlapping cards mirrored between Genres and All TV
+Shows, plus the Marketplace "m" roundel, currently unused. The music menus
 have their own: hard drive, monitor and pocket player for the Music
 screen's sources (§6.11); microphone, list with a note, single note and
 guitar for the Music Library categories (§6.12); and a play roundel, a
@@ -528,11 +595,15 @@ lists and playlists carried none (§6.14, §6.16).
 ### 6.3 Gamer profile card
 
 Appears identically wherever identity matters. Structure: gamertag header bar,
-gamer picture, then three stat rows. There is one signed-in gamer
+gamer picture, then three stat rows. There is one signed-in gamer at a time
 (`profile.ts`), and every card shows that same person: same gamertag, same
 picture (the profile's default until the user picks another, then the
 shared pick), and the LIVE silhouette glyph at the header's right whenever
-the profile is online. Only the rows differ per blade: on Games they are
+the profile is online. "One at a time" rather than always the base
+`PROFILE`: signing in as one of the Sign In drawer's two rows (§6.22) swaps
+the gamertag and the default picture app-wide, through
+`SignedInProfileContext`, the same pattern `GamerPicContext` already uses
+for a chosen picture alone. Only the rows differ per blade: on Games they are
 Games, Gamerscore and Achievements counts (`gamerStats`); on Xbox LIVE and
 Media they are Rep (five stars, `RepStars`, lit in the Y button's yellow),
 the same Gamerscore, and Zone (`liveStats`). Numeric values are bold; stars
@@ -1658,10 +1729,13 @@ buttons of the Games Library (§6.2 `button`), the large glyph
 straddling the band split above and left of the label. Below them,
 Redeem Code, Active Downloads and Account Management are plain blade
 rows (§6.2 `row`) with their dividers. Down walks from the last tile
-into the rows. Spotlight holds the cursor on open and is the one tile
-with a real destination: it opens the Spotlight screen (§6.20). New
-Arrivals, Game Store and Video Store, and the three rows below them,
-still open a detail box (§5.3), since those stores do not exist yet.
+into the rows. Spotlight holds the cursor on open. All four tiles now
+have a real destination: Spotlight, New Arrivals and Game Store all
+open the Spotlight screen (§6.20) under their own title — the same
+categories, the same items and the same detail panel, since none of
+the three has real content of its own yet — and Video Store opens the
+TV Shows screen (§6.19.3). The three rows below the tiles still open a
+detail box (§5.3).
 
 The raised buttons take their label colour from `--blade-ink`, so the
 same skin reads brown here, green on the Games Library and blue on the
@@ -1674,14 +1748,168 @@ the console and shows the striped placeholder until art is dropped in;
 neither is a cursor stop. Legend: Y dimmed, X Sign Out, B dimmed,
 Select A.
 
+### 6.19.1 Game Store screen
+
+Registered under the `"game-store"` key (`GameStoreScreen.tsx`), but
+no longer linked from the Marketplace blade: the blade's own Game
+Store tile now opens the Spotlight screen (§6.20) under the title
+"Game Store" instead, the same as New Arrivals. This screen, and the
+Xbox Originals screen behind it (§6.19.2), stay exactly as built for a
+future reconnection. Same full-screen structure as the Games Library
+(§5.4) in the Marketplace orange: section gradient, unclipped sheen,
+header and legend bands, the content raised as one slab. It sets
+`STORE_THEME` on its root, as Spotlight's does, because a full-screen
+surface portals outside the canvas and would otherwise take the games
+green (§5.4).
+
+Two columns, without a category carousel or a description pane:
+
+- **Menu** (left): six raised button tiles (§6.2 `button`), the
+  console's own categories of the store — All Games, Xbox LIVE Arcade,
+  Xbox Originals, Game Demos, Themes and Gamer Pictures, and More… —
+  each with its own glyph from the monochrome set (§6.2): `allGames`,
+  `joystick`, a bold letterform X for Xbox Originals, `controller` for
+  Game Demos, a picture frame with a paint roller for Themes and Gamer
+  Pictures, and a folder for More…. Xbox Originals is the one tile
+  with a real destination, the Xbox Originals screen (§6.19.2); the
+  rest launch the same URL as a cover of that screen (`LAUNCH_URL`, as
+  `MyGamesScreen.tsx`'s own), since none has a real one yet. Xbox LIVE
+  Arcade, not the first tile, holds the cursor at the open, as it does
+  on the console.
+- **Promotions** (right): two stacked promo tiles, the same shape as
+  the promotion beside the blade's own menu (§6.19) rather than a
+  panel that follows the cursor — a short, wide game-art banner above a
+  large tile, both bitmaps on the console and both the striped
+  placeholder (§6.7) until art is dropped in. Neither is a cursor stop.
+
+Legend: Y "Marketplace Home" is live but unbound, the same live-but-
+unbound kind of slot as the blade's own Sign Out (§6.19), since that
+destination does not exist yet; X is dimmed, Back is B, Select is A.
+
+### 6.19.2 Xbox Originals screen
+
+Opened by the Game Store screen's Xbox Originals tile
+(`XboxOriginalsScreen.tsx`). This one screen is not a Nova OS blade:
+the reference is the original console's own black-and-green Xbox
+Originals storefront, so it keeps that console's own skin rather than
+the shared chrome every other screen in this mockup builds on. The
+header and the footer are flat `#000000` bars, not `BladeChromeBand`'s
+translucent tint over a section gradient, and the body sits on the
+`xbox_wallpaper.webp` graphic rather than the WebGL water sheet (§3.1).
+Its ink is literal white and the same Xbox green the brand wordmark
+already uses (`#8bc93e`), not a `BladeTheme` — this screen has no
+section colour to tint. The header's left side is the green original
+Xbox "X" logo beside "Xbox Originals" in that green; the right side
+shows the highlighted cover's name, truncated with an ellipsis if it
+overruns its width, its launch date, and its ESRB rating badge.
+
+The body is a five-wide grid of box art, each cover a fixed 200 px on
+a wide 100 px gap, so the row reads large and airy without stretching
+edge to edge (`data-nav-list={5}`, §8, which `KeyboardNav` already
+walks with the arrow keys with no extra handler). Each cover keeps a thin dark green
+border at rest; the highlighted cover, by hover or by focus, grows
+slightly and takes a soft glow in `#728A1E` with a lighter frame,
+reported to the header at the right. Hover and focus are tracked
+separately, exactly as the Achievements grid does (§6.10): a hover
+previews a cover without moving the keyboard cursor, and clears when
+the pointer leaves the grid; the focused cover is the fallback once
+the hover clears. Below the grid, a full-width "All Xbox Originals"
+bar — silver outline, dark translucent fill, a small 10 px radius
+rather than a full pill — is itself a cursor stop and launches the
+same URL as a cover, since the catalogue is only this one list with
+nothing to filter into, unlike the Music Library's category rows
+(§6.12). The bar sits outside the grid's own `data-nav-list`, so a
+small handler on the content column bridges the two, exactly as the
+Achievements screen bridges its game filter and its grid: Down from
+the grid's last row moves to the bar, and Up from the bar returns to
+the highlighted cover.
+
+The catalogue (`xbox-originals.ts`) is nine titles, each with its cover
+art file, its launch date and its ESRB rating; the rating selects the
+badge from `public/assets/marketplace/rates/`. Legend: Y "Marketplace
+Home" live but unbound, the same live-but-unbound kind of slot as the
+Game Store's own Y (§6.19.1); X dimmed, Back B, Select A.
+
+### 6.19.3 TV Shows screen
+
+Opened by the Marketplace blade's Video Store tile
+(`TvShowsScreen.tsx`) — the third of the four stores to become a real
+destination, after Spotlight (§6.20) and the Game Store (§6.19.1).
+Same full-screen structure as the Games Library (§5.4) in the
+Marketplace orange: section gradient, unclipped sheen, header and
+legend bands, the content raised as one slab. It sets `STORE_THEME` on
+its root, as Spotlight's and the Game Store's do (§5.4).
+
+Two columns, both interactive, bridged the way the Achievements screen
+bridges its game filter and its tile grid (§6.10), because
+`KeyboardNav` only moves within one `data-nav-list`: Right from the
+menu enters the episode list, and Left from the episode list returns
+to the highlighted menu tile.
+
+- **Menu** (left): five compact raised button tiles (§6.2 `button`
+  `compact`, with `compactLarge` for a bigger icon and a taller band
+  than the dense browse lists that skin usually carries) — New
+  Arrivals, Networks & Studios, Shorts, Genres and
+  All TV Shows — each with its own glyph from the monochrome set
+  (§6.2): `newArrivals`, a monitor with a broadcast signal, two fanned
+  clips, and two pairs of overlapping cards, mirrored between Genres
+  and All TV Shows so the pair reads as two readings of one family of
+  glyphs. Genres is the one tile with a real destination, the Genres
+  screen (§6.19.4); the rest launch the same URL as a cover of the
+  Xbox Originals screen (`LAUNCH_URL`, as `MyGamesScreen.tsx`'s own),
+  since none has a real one yet. Shorts, not the first tile, holds the
+  cursor at the open. Below the tiles, a promo banner sits in the slot
+  a sixth tile would take, a bitmap on the console (`TV_SHOWS_PROMO`,
+  art under `public/assets/marketplace/tv-shows/`).
+- **Top TV Episodes** (right): a static heading over a scrolling list
+  (`ScrollColumn`) of the highest-ranked episodes, the blade's own
+  divider rows (§6.2 `row`) with `subtitle` for the show's name and the
+  show's own logo as the row's icon (`tvShowLogoUrl`), or the neutral
+  placeholder square (§6.2) for a show with no logo yet. Each row also
+  launches `LAUNCH_URL`, since there is no episode page yet. A "1 of 50"
+  counter follows the cursor in the scroll column's own footer slot,
+  but its denominator is the chart's real size and not the length of
+  this mockup's five sample rows (`tv-shows.ts`).
+
+Legend: Y "Marketplace Home" live but unbound, the same live-but-unbound
+kind of slot as the Game Store's own Y (§6.19.1); X dimmed, Back B,
+Select A.
+
+### 6.19.4 Genres screen
+
+Opened by the TV Shows screen's Genres tile (`GenresScreen.tsx`). Same
+full-screen structure as the Games Library (§5.4) in the Marketplace
+orange: section gradient, unclipped sheen, header and legend bands,
+the content raised as one slab. It sets `STORE_THEME` on its root, as
+the other Marketplace screens do (§5.4).
+
+Unlike every other screen on this blade, the body is **one full-width
+column**, not two: a single scrolling list (`ScrollColumn`) of the
+blade's own divider rows (§6.2 `row`), each with no icon
+(`icon={null}`), since the console drew this list as plain text. "All
+Genres" leads the fifteen-entry catalogue (`genres.ts`), as "All
+Games" leads the Achievements screen and My Games (§6.9, §6.10). None
+has a destination yet, so every row launches the same URL as a cover
+of the Xbox Originals screen (`LAUNCH_URL`, as `MyGamesScreen.tsx`'s
+own). A "N of 15" counter follows the cursor in the scroll column's
+own footer slot.
+
+Legend: Y "Marketplace Home" live but unbound, the same
+live-but-unbound kind of slot as the Game Store's own Y (§6.19.1); X
+dimmed, Back B, Select A.
+
 ### 6.20 Spotlight screen
 
-Opened by the Marketplace blade's Spotlight tile (`SpotlightScreen.tsx`)
-— the first of the four stores to become a real destination rather than
-a placeholder detail box (§6.19). Same full-screen structure as the
-Games Library (§5.4) in the Marketplace orange: section gradient,
-unclipped sheen, header and legend bands, the content raised as one
-slab.
+Opened by the Marketplace blade's Spotlight tile — the first of the
+stores to become a real destination rather than a placeholder detail
+box (§6.19). New Arrivals and Game Store open this exact same screen
+under their own title (`NewArrivalsScreen`, `GameStoreListScreen` in
+`SpotlightScreen.tsx`, both thin wrappers around a shared
+`SpotlightScreenImpl`): the same category carousel, the same items and
+the same detail panel, since none of the three stores has real
+content of its own yet. Same full-screen structure as the Games
+Library (§5.4) in the Marketplace orange: section gradient, unclipped
+sheen, header and legend bands, the content raised as one slab.
 
 A full-width `XboxLiveBanner` (§6.7) sits under the header, as on the
 console. Below it is a **category carousel**: Games, Arcade, Demos,
@@ -1705,12 +1933,11 @@ gamer owns:
   since every other menu row is single-line.
 - **The detail panel is a readout** (§6.9 skin, `RAISED_BORDER` /
   `RAISED_INSET_SHADOW`), not the two-band status card of My Games: a
-  darker title strip naming the item, an empty media slot (§6.7)
-  standing in for the box art or the price the console showed there,
-  and the item's blurb. The blurb is not scrolled: the panel's height is
-  fixed and `overflow-hidden` clips the text where it runs past the
-  bottom, exactly as the console cut its last line off mid-character
-  rather than fading or scrolling it.
+  darker title strip naming the item, then the item's blurb. The blurb
+  is not scrolled: the panel's height is fixed and `overflow-hidden`
+  clips the text where it runs past the bottom, exactly as the console
+  cut its last line off mid-character rather than fading or scrolling
+  it.
 
 A "N of M" counter follows the cursor at the foot of the list, as in My
 Games. Selecting an item only plays Select A, since there is no product
@@ -1774,6 +2001,116 @@ Screens now stack six deep on this path: Media blade → Music (§6.11) →
 Music Library (§6.12) → artist or genre (§6.21) → album (§6.14) → song
 (§6.15) → player (§6.16). Each is its own portal and Back peels off one
 at a time (§5.4).
+
+### 6.22 Sign In drawer
+
+Opened by the Xbox LIVE blade's one menu row, "Connect to Xbox LIVE"
+(`ConnectXboxLiveDrawer.tsx`), in place of the master-detail box (§5.3)
+every other row with `detail` gets: signing in is worth the console's own
+Sign In screen, not a box beside the row. It is a **drawer**, pinned to
+the left edge of the viewport and sliding in over a dimmed backdrop that
+still shows the Xbox LIVE blade behind it, rather than a full-screen
+surface (§5.4): the console's own screen covered only part of the blade,
+and the menu, the logo and the description pane stay visible, dimmed,
+behind it.
+
+It opens through the same `screen` mechanism as a full-screen destination
+(`LibraryMenuItem.screen`, `MenuListItem`), so the row owns the open
+state and the Back key exactly as it would for one, and a click on the
+backdrop calls the same `onClose`, which plays the Back cue (§7.3).
+`role="dialog"` and `aria-modal="true"` keep the D-pad from switching
+blades underneath it (§8). There is no `×`: the console's own screen has
+none, closing only by Back (B) or the backdrop, so the focus moves onto
+the first profile at the open and back to the row at the close, as every
+full-screen surface does (§5.4).
+
+**The panel and the ribbon are clipped from the same curve.** Both are
+the §1.1 curve at one shared `SEAM_X` — `edgeOnlyClipPath` for the
+panel's own right edge, `edgeBandGeometry`'s left edge for the ribbon —
+so the two boundaries are one line and not two independent
+approximations of it that can drift apart. Two earlier versions got this
+wrong in opposite ways: clipping the whole panel to one curved edge cut
+into the row content itself wherever the curve's bow reached inland, and
+then keeping the panel a plain rectangle beside an independently-shaped
+ribbon left a strip of the dimmed backdrop showing through wherever the
+two didn't happen to touch, worst at the bottom where the curve flares
+well past any width the rectangle was given. Clipping both from the same
+`sampleEdge(SEAM_X, false)` call is the only way they are guaranteed to
+meet at every y and not just at the sampled stops. `edgeBandGeometry` is
+the same math `tabGeometry` uses for a collapsed tab, generalized off
+the blade canvas's 1280-wide scale so a shape elsewhere can borrow it at
+a scale of its own. The panel's own box reaches past `SEAM_X` as far as
+the curve's flare, so its background never falls short of where the
+ribbon still overlaps it, and its content keeps extra right padding
+(`pr-28` against the header and footer's own `pl-7`) so no text reaches
+the curve's bow, where the panel's own background narrows. The ribbon
+carries the neutral collapsed-tab fill of §2.3
+(`linear-gradient(90deg, #a9a9a9, #fbfbfb 30%, #dcdcdc 62%, #b6b6b6)`),
+rather than the bright rim a saturated blade panel gets (`BladeEdges`):
+this screen is brushed silver, not a section colour.
+
+**The `#3E3E3E` border belongs on the seam only** — the curve the panel
+and the ribbon share — not on the ribbon's own outer flare edge or its
+top/bottom caps, so a uniform inset border on the ribbon (a first
+attempt) is the wrong tool: it draws all four. Two more attempts drew
+`SignInSeamStroke` as its own `div`, clipped to a thin band on that same
+`SEAM_X` curve, with the fade as a gradient fill and then as a `filter:
+drop-shadow(...)` — and neither ever showed, because `clip-path` clips a
+`filter`'s own output along with the fill, so the drop shadow had
+nowhere to spread into on an element clipped to its own outline. The fix
+is `edgeSvgPathD`: the same curve `sampleEdge` samples for every
+clip-path here, as an SVG path `d` instead, so `SignInSeamStroke` is a
+real `<path>` stroke with nothing clipping it, matching the reference
+(Figma node 216:17: a solid 5 px line with a blurred, offset drop
+shadow) exactly. It is painted after the ribbon in DOM order. A
+small green ring sits at the ribbon's own waist, as the console's own
+handle. The ribbon, the seam stroke and the ring are all siblings of the
+panel, not children, painted after it so they sit on top of its edge
+instead of being clipped by it. The sliding transform is on the wrapper
+all four share, thus they move together.
+
+The panel is three bands, stacked, exactly as the console drew this
+screen:
+
+- **Header**: "Sign In" and the console's own live clock (`LiveClock.tsx`,
+  extracted here from the Change Gamer Picture screen, §6.3, which now
+  shares it), on the header gradient of the reference file exactly as
+  given: `linear-gradient(180deg, #4f5042 0%, #989995 50%, #848484 100%)`.
+- **Body**: a flat `#B8B8B8`, listing the console's local profiles as
+  two-line rows — a gamerpic, the gamertag over the account type, and the
+  storage device right-aligned. The highlighted profile takes a lighter
+  fill and a thin `#1e8a1e` outline, the same selection green the picture
+  grid of §6.3 uses. The console's own gamerpics for these two accounts
+  were a Bungie logo and an iron cross, both real marks that do not
+  belong redrawn here, so two of the generic gamerpics already in
+  `public/profile_pics` (the set `GamerPicPicker` itself offers) stand
+  in. The rows are real `<button>`s and a `data-nav-list="column"`, as
+  every navigable list here is, and a click really does sign in as that
+  row: `SignedInProfileContext` (`SignedInProfileContext.tsx`) persists
+  the chosen gamertag the same way `GamerPicContext` already persists a
+  chosen picture (§6.3), and every gamer card, the picture picker and the
+  controller sign-in toast (§6.17) read it through `useActiveProfile`
+  instead of the static `PROFILE`, so all of them switch identity at
+  once. The two mock accounts (`SIGN_IN_PROFILES`, `profile.ts`) carry no
+  stats of their own, so a sign-in only ever swaps the gamertag and the
+  default picture — the Games/Gamerscore/Achievements and Rep/Zone rows
+  stay `PROFILE`'s own numbers regardless of which row is active. There
+  is no backend and no more than these two profiles to switch between:
+  this is a client-only mockup of the idea, not a real account system.
+- **Footer**: the same four-slot `ButtonLegendBar` (§6.5) every screen
+  uses, on the reference file's footer gradient,
+  `linear-gradient(180deg, #565656 0%, #9b9b97 50%, #878980 100%)`: Y
+  "Create New Profile" and X "Recover Gamertag" on the left, Back B and
+  Select A on the right.
+
+The slide is its own tempo, 1 s and not the blade's own 350 ms (§7.4),
+easing in with the same curve (`BLADE_MOTION_EASE`) but taking longer,
+because a panel this size reads better easing in slowly. The backdrop
+fades on the same 1 s. The open plays the Page Left cue (§7.3) — the
+same cue a blade switch to the left plays, since this too is new content
+sliding in from the left. Both the slide and the fade carry the
+`blade-motion` class, so `prefers-reduced-motion` still cuts them to an
+instant appearance and disappearance.
 
 ---
 

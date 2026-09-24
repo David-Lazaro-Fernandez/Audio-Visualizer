@@ -7,7 +7,11 @@
  * a row so far, and the Marketplace "m" roundel, likewise unused; the
  * down arrow with a star, the starburst, the film case with a disc, the
  * card, the download roundel and the crown of the Marketplace blade; the
- * two stacked game cards with a controller for the "All Games" filter of
+ * bold X mark, the picture frame with a paint roller and the folder of
+ * its Game Store screen; the monitor with a broadcast signal, the two
+ * fanned clips, and the two pairs of overlapping screens of its TV
+ * Shows screen; the two stacked game cards with a controller
+ * for the "All Games" filter of
  * the Achievements screen; the same trophy under a padlock for a locked
  * achievement tile; the music menus (§6.11, §6.12, §6.14, §6.15): the
  * hard drive, the monitor and the portable player of the sources, the
@@ -44,6 +48,13 @@ export type MenuIconName =
   | "redeemCode"
   | "activeDownloads"
   | "accountManagement"
+  | "xboxOriginals"
+  | "themes"
+  | "folder"
+  | "tvNetworks"
+  | "shorts"
+  | "tvGenres"
+  | "allTvShows"
   | "allGames"
   | "lockedTrophy"
   | "hardDrive"
@@ -257,6 +268,105 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
         strokeLinecap="round"
       />
       <ellipse cx="11.2" cy="9.4" rx="1.6" ry="3" fill="#fff" stroke="none" opacity=".6" transform="rotate(35 11.2 9.4)" />
+    </>
+  ),
+
+  /* Xbox Originals, on the Game Store screen: a bold letterform X, the
+     two strokes tapering as they cross at the centre, standing in for
+     the original console's own wordmark. */
+  xboxOriginals: (
+    <>
+      <path d="M8.5 5.5h5.2l4.3 6.1 4.3-6.1h5.2l-7 9.9 7.4 10.6h-5.2L18 19.3l-4.7 6.7H8.1l7.4-10.6z" />
+      <ellipse cx="11.6" cy="9" rx="1" ry="2.6" fill="#fff" stroke="none" opacity=".6" transform="rotate(35 11.6 9)" />
+    </>
+  ),
+
+  /* Themes and Gamer Pictures, on the Game Store screen: a picture frame
+     with an inked landscape, and a paint roller crossing its lower right
+     corner on a long handle. The code draws the roller last, thus it
+     sits in front of the frame. */
+  themes: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="1.6" />
+      <circle cx="8" cy="9.2" r="1.6" fill={INK} stroke="none" />
+      <path d="M5.5 17l3.4-4.6 2.6 2.8 3.2-4.6 3.6 6.4z" fill={INK} stroke="none" opacity=".85" />
+      <rect x="16" y="14.5" width="11" height="3.4" rx="1.4" transform="rotate(42 16 14.5)" />
+      <path d="M22.4 19.6l3.6 4.2" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" />
+      <ellipse cx="18" cy="15.6" rx=".8" ry="1.8" fill="#fff" stroke="none" opacity=".6" transform="rotate(42 18 15.6)" />
+    </>
+  ),
+
+  /* More…, on the Game Store screen: a folder, a back flap with the
+     tab and a front flap overlapping its lower half. */
+  folder: (
+    <>
+      <path d="M4 9.5a1.5 1.5 0 0 1 1.5-1.5h5.6l2 2.4h13.4a1.5 1.5 0 0 1 1.5 1.5v13.6a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 25.5z" />
+      <path d="M4 12.5h24l-1.8 12.6a1.5 1.5 0 0 1-1.5 1.4H7.3a1.5 1.5 0 0 1-1.5-1.4z" opacity=".9" />
+      <ellipse cx="7.6" cy="11.4" rx=".9" ry="2.4" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* Networks & Studios, on the TV Shows screen: a monitor, as
+     `computer`, with a small broadcast signal of two nested arcs and a
+     dot fanning off its lower left corner. */
+  tvNetworks: (
+    <>
+      <rect x="5" y="7" width="22" height="14" rx="1.8" />
+      <rect x="7.6" y="9.4" width="16.8" height="9.2" rx=".8" fill={INK} stroke="none" />
+      <path d="M13 21.5h6l.8 3h-7.6z" />
+      <rect x="10.5" y="24.8" width="11" height="2" rx="1" />
+      <path
+        d="M6 6.5a10 10 0 0 1 8 8M6 9.5a6.5 6.5 0 0 1 5 5"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        opacity=".85"
+      />
+      <circle cx="6" cy="14.5" r="1.1" fill={INK} stroke="none" />
+      <ellipse cx="9.4" cy="11.4" rx=".8" ry="2" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* Shorts, on the TV Shows screen: two small clips fanned one behind
+     the other, as the fanned cards of `allGames` without the
+     controller in front. */
+  shorts: (
+    <>
+      <rect x="7" y="4" width="14" height="18" rx="1.6" transform="rotate(-8 14 13)" />
+      <rect x="11" y="8" width="14" height="18" rx="1.6" transform="rotate(6 18 17)" />
+      <path
+        d="M14.4 12.6h6.2M14.4 15.4h6.2M14.4 18.2h4.4"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1"
+        opacity=".7"
+        transform="rotate(6 18 17)"
+      />
+      <ellipse cx="10" cy="8.4" rx="1" ry="3" fill="#fff" stroke="none" opacity=".6" transform="rotate(-8 14 13)" />
+    </>
+  ),
+
+  /* Genres, on the TV Shows screen: two cards overlapping toward the
+     lower right, distinct from the guitar `genre` of the Music Library. */
+  tvGenres: (
+    <>
+      <rect x="4" y="8" width="17" height="12" rx="1.8" />
+      <rect x="10" y="13" width="17" height="12" rx="1.8" />
+      <path d="M13.6 16.6h10M13.6 19.2h10" fill="none" stroke={INK} strokeWidth="1" opacity=".7" />
+      <ellipse cx="7" cy="11" rx="1" ry="2.6" fill="#fff" stroke="none" opacity=".6" />
+    </>
+  ),
+
+  /* All TV Shows, on the TV Shows screen: the same two overlapping
+     cards as `tvGenres`, mirrored toward the upper left, thus the pair
+     of rows reads as two readings of one family of glyphs. */
+  allTvShows: (
+    <>
+      <rect x="10" y="6" width="17" height="12" rx="1.8" />
+      <rect x="4" y="11" width="17" height="12" rx="1.8" />
+      <path d="M8.6 20h7.8M8.6 22.6h5.4" fill="none" stroke={INK} strokeWidth="1" opacity=".7" />
+      <ellipse cx="24" cy="9" rx="1" ry="2.6" fill="#fff" stroke="none" opacity=".6" />
     </>
   ),
 

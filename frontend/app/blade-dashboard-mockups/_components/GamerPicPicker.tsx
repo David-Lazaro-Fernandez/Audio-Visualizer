@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useGamerPic } from "./GamerPicContext";
+import { useActiveProfile } from "./SignedInProfileContext";
 import { ButtonGlyph } from "./ButtonGlyph";
 import type { ProfileStat } from "./GamerProfileCard";
 import { useBackKey } from "./back-stack";
 import { getPortalRoot } from "./portal";
 import { playSound } from "./sounds";
+import { LiveClock } from "./LiveClock";
 import { asset } from "@/app/_lib/asset-path";
 
 /** The number of columns in the picture grid. It also gives `KeyboardNav` the step of Up and Down. */
@@ -24,27 +26,28 @@ const GRID_COLS = 4;
  * the profile card, with the same gamertag and the same `stats` rows as
  * the card that opened it, and the Xbox logo; and a black footer with
  * the A and B button legend.
+ *
+ * The gamertag and the picture come from `useActiveProfile`
+ * (`SignedInProfileContext.tsx`) rather than from a prop, so this always
+ * echoes whichever profile the Sign In drawer signed in as (§6.22), the
+ * same identity `ActiveGamertag` shows beside it on the card.
+ * `useActiveProfile` already folds an explicit `GamerPicContext` pick
+ * over that profile's own default picture, so `effective` here does not
+ * need to re-apply `selected` itself; it only falls back further, to the
+ * first option, for the edge case of an explicit pick that named a file
+ * no longer in `options`.
  */
 export function GamerPicPicker({
   options,
-  defaultSrc,
-  gamertag,
   stats,
 }: {
   options: string[];
-  /** The picture of the profile. The card shows it until the user selects another. */
-  defaultSrc?: string;
-  gamertag: string;
   stats: ProfileStat[];
 }) {
   const [open, setOpen] = useState(false);
-  // The selection is in GamerPicContext, thus each card on each blade
-  // shows the same picture. `selected` is null until the user selects a
-  // picture. The render then uses the picture of the profile, else the
-  // first option. There is no effect that sets an initial value, because
-  // such an effect raced the read of localStorage.
-  const { selected, setSelected, hydrated } = useGamerPic();
-  const effective = selected ?? defaultSrc ?? options[0] ?? null;
+  const { gamertag, gamerpic } = useActiveProfile();
+  const { setSelected, hydrated } = useGamerPic();
+  const effective = gamerpic ?? options[0] ?? null;
   // Show the placeholder until the code reads the stored value. Thus the
   // card does not show the default image and then change it.
   const current = hydrated ? effective : null;
@@ -155,7 +158,7 @@ export function GamerPicPicker({
                     />
                   </div>
                 )}
-                <Clock />
+                <LiveClock className="text-[22px] tabular-nums" />
               </div>
 
               {/* ── Body: two panes ─────────────────────────────────── */}
@@ -177,7 +180,7 @@ export function GamerPicPicker({
                           onMouseEnter={() => playSound("select")}
                           onClick={() => {
                             playSound("selectA");
-                            setSelected(src);
+                            setSelected(gamertag, src);
                           }}
                           aria-label="Select gamerpic"
                           aria-pressed={isSelected}
@@ -295,24 +298,6 @@ export function GamerPicPicker({
         )}
     </>
   );
-}
-
-/** A live HH:MM AM/PM clock for the header, as on the dashboard. */
-function Clock() {
-  const [now, setNow] = useState<string>(() => formatTime(new Date()));
-  useEffect(() => {
-    const id = setInterval(() => setNow(formatTime(new Date())), 30_000);
-    return () => clearInterval(id);
-  }, []);
-  return <span className="text-[22px] tabular-nums">{now}</span>;
-}
-
-function formatTime(d: Date) {
-  return d.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 function PencilIcon() {

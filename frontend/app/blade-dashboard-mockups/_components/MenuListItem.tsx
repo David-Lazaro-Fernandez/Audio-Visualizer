@@ -62,6 +62,16 @@ import { playSound } from "./sounds";
  */
 export interface MenuScreenProps {
   onClose: () => void;
+  /**
+   * True once a close has been requested (a second click, ESC/B, or a
+   * backdrop click) but before the row actually unmounts the screen.
+   * Only set for a screen whose component declares its own
+   * `EXIT_ANIMATION_MS` (the Sign In drawer, DESIGN.md §6.22): every
+   * other screen still unmounts the instant `onClose` runs, exactly as
+   * before, and never sees this prop turn `true`. A screen that reads it
+   * can play an exit animation for that many ms while it stays mounted.
+   */
+  closing?: boolean;
 }
 
 /*
@@ -154,6 +164,7 @@ export function MenuListItem({
   iconOnly = false,
   chevron = false,
   compact = false,
+  compactLarge = false,
   onHighlight,
   onSelect,
 }: {
@@ -195,6 +206,8 @@ export function MenuListItem({
   chevron?: boolean;
   /** `button` variant only: one band and no empty top band. This is the compact skin of a browse-list item. */
   compact?: boolean;
+  /** `compact` only: a bigger icon and a taller band, for a handful of tiles rather than a browse list stacked a dozen deep. */
+  compactLarge?: boolean;
   /** Called when the cursor arrives, by a hover or a focus. It can update a description pane. */
   onHighlight?: () => void;
   /**
@@ -205,6 +218,7 @@ export function MenuListItem({
   onSelect?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const { ref, rect } = useRect<HTMLButtonElement>();
   const containerRect = useMenuBoundary();
   const expandable =
@@ -213,10 +227,25 @@ export function MenuListItem({
     expandable && !Screen && open && rect && containerRect
       ? placeMenuBox(containerRect, rect)
       : null;
+  // A screen opts into a delayed close by declaring how long its own
+  // exit animation runs (the Sign In drawer, DESIGN.md §6.22). Every
+  // other screen leaves this unset, so `close` still unmounts it the
+  // instant it runs, exactly as before.
+  const exitAnimationMs =
+    (Screen as { EXIT_ANIMATION_MS?: number } | undefined)?.EXIT_ANIMATION_MS ?? 0;
 
   const close = () => {
+    if (closing) return;
     playSound("back");
-    setOpen(false);
+    if (exitAnimationMs > 0) {
+      setClosing(true);
+      window.setTimeout(() => {
+        setOpen(false);
+        setClosing(false);
+      }, exitAnimationMs);
+    } else {
+      setOpen(false);
+    }
   };
 
   const handleClick = () => {
@@ -299,15 +328,31 @@ export function MenuListItem({
       >
         {/* The empty top band. `compact` removes it. */}
         {!compact && <span aria-hidden="true" className="block h-[26px] w-full" />}
-        {/* The bottom band, which is the row. */}
-        <span className={`${BUTTON_BAND} ${compact ? "py-[11px]" : ""}`}>
-          <span className="flex min-w-0 items-center gap-3.5">
+        {/* The bottom band, which is the row. `compactLarge` widens the
+            band's own padding to match its bigger icon. */}
+        <span
+          className={`${BUTTON_BAND} ${
+            compact ? (compactLarge ? "py-[18px]" : "py-[11px]") : ""
+          }`}
+        >
+          <span className="flex min-w-0 items-center justify-start gap-3.5">
             {/* The icon is larger than the band and moves up, thus it
                 crosses the split between the two bands. The wrapper has a
                 fixed height, thus the large glyph does not stretch the
-                band. */}
+                band. `compact` has no top band to cross, so its icon
+                stays at its own size and centers on the label instead;
+                `compactLarge` steps that size up for a handful of tiles
+                rather than a browse list stacked a dozen deep. */}
             {icon && (
-              <span className="flex h-6 shrink-0 items-center [&_svg]:h-11 [&_svg]:w-11 [&_svg]:-translate-y-[10px]">
+              <span
+                className={`flex h-6 shrink-0 items-center justify-start ${
+                  compact
+                    ? compactLarge
+                      ? "[&_svg]:h-8 [&_svg]:w-8"
+                      : "[&_svg]:h-6 [&_svg]:w-6"
+                    : "[&_svg]:h-11 [&_svg]:w-11 [&_svg]:-translate-y-[10px]"
+                }`}
+              >
                 {icon}
               </span>
             )}
@@ -401,7 +446,7 @@ export function MenuListItem({
   return (
     <>
       {row}
-      {Screen && open && <Screen onClose={close} />}
+      {Screen && open && <Screen onClose={close} closing={closing} />}
       {placement && (
         <MenuDetailBox
           placement={placement}

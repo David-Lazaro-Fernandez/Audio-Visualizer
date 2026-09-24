@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { ControllerNotification } from "./ControllerNotification";
 import type { InputAction } from "./gamepad-input";
-import { PROFILE } from "./profile";
+import { useActiveProfile } from "./SignedInProfileContext";
 import { useGamepad } from "./use-gamepad";
 
 /**
@@ -32,6 +32,9 @@ import { useGamepad } from "./use-gamepad";
 export function GamepadNav() {
   const [toast, setToast] = useState<{ key: number; player: number } | null>(null);
   const clearToast = useCallback(() => setToast(null), []);
+  // Whichever profile the Sign In drawer signed in as (§6.22), the same
+  // one the gamer cards show, not always the base `PROFILE`.
+  const { gamertag } = useActiveProfile();
 
   useGamepad(
     (action) => {
@@ -49,7 +52,7 @@ export function GamepadNav() {
   return (
     <ControllerNotification
       key={toast.key}
-      gamertag={PROFILE.gamertag}
+      gamertag={gamertag}
       player={toast.player}
       onDone={clearToast}
     />

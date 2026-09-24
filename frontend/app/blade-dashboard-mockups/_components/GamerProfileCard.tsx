@@ -1,5 +1,6 @@
 import { readdirSync } from "node:fs";
 import path from "node:path";
+import { ActiveGamertag } from "./ActiveGamertag";
 import { GamerPicPicker } from "./GamerPicPicker";
 import { LetterBadge } from "./LetterBadge";
 import type { GamerProfile } from "./profile";
@@ -43,13 +44,17 @@ export function liveStats(profile: GamerProfile): ProfileStat[] {
  * The gamer profile card of DESIGN.md §6.3. It looks the same at each
  * position where the identity is necessary: a gamertag header, the gamer
  * picture and then three stat rows. All of it comes from the one shared
- * `GamerProfile` (`profile.ts`). The name, the default picture and the
- * online silhouette in the header come from the profile, thus each card
- * shows the same person. Only the rows change with the blade: Games,
- * Gamerscore and Achievements (`gamerStats`), or Rep, Gamerscore and
- * Zone (`liveStats`). The signed-out card is a separate and more simple
- * card, a "Sign In - N Profiles Found" slot, and not a state of this
- * card.
+ * `GamerProfile` (`profile.ts`). The online silhouette in the header and
+ * the stat rows come straight from the `profile` prop, since those never
+ * change with a sign-in (`profile.ts` explains why); the name and the
+ * default picture instead go through `ActiveGamertag` and
+ * `GamerPicPicker`, the two client leaves that read
+ * `SignedInProfileContext` so every card updates together when the user
+ * signs in as a different `SIGN_IN_PROFILES` row (§6.22). Only the stat
+ * rows differ by blade: Games, Gamerscore and Achievements
+ * (`gamerStats`), or Rep, Gamerscore and Zone (`liveStats`). The
+ * signed-out card is a separate and more simple card, a "Sign In - N
+ * Profiles Found" slot, and not a state of this card.
  */
 export function GamerProfileCard({
   profile,
@@ -85,16 +90,11 @@ export function GamerProfileCard({
             "linear-gradient(90deg, rgba(156,156,156,.9) 0%, rgba(156,156,156,0) 100%)",
         }}
       >
-        <span className="min-w-0 truncate">{profile.gamertag}</span>
+        <ActiveGamertag className="min-w-0 truncate" />
         {profile.online && <LiveSilhouette />}
       </div>
       <div className="flex gap-3.5 p-3">
-        <GamerPicPicker
-          options={gamerpicOptions}
-          defaultSrc={profile.gamerpic}
-          gamertag={profile.gamertag}
-          stats={stats}
-        />
+        <GamerPicPicker options={gamerpicOptions} stats={stats} />
         <div className="grid flex-1 grid-cols-[auto_1fr] items-center gap-x-3 gap-y-[3px] text-[19px] text-[#1a1a1a]">
           {stats.map(({ label, value }, index) => (
             <StatRow key={index} label={label} value={value} />

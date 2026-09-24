@@ -42,6 +42,7 @@ export {
   type SectionGradient,
 } from "./blade-gradient";
 export { BladeEdges, PANEL_CLIP_PATH } from "./BladeEdges";
+export { BladePanelSeam } from "./BladePanelSeam";
 export { BladeMenuGutters } from "./BladeMenuGutters";
 export { BladeChromeBand, CONTENT_BAND_SHADOW } from "./BladeChromeBand";
 export { BladePanel } from "./BladePanel";
@@ -65,7 +66,7 @@ export {
   tabMirrored,
   type PanelGeometry,
 } from "./blade-layout";
-export { GAMES_THEME, MEDIA_THEME, SYSTEM_THEME, STORE_THEME, themeVars, type BladeTheme } from "./blade-theme";
+export { GAMES_THEME, MEDIA_THEME, SYSTEM_THEME, STORE_THEME, LIVE_THEME, themeVars, type BladeTheme } from "./blade-theme";
 export {
   BLADE_MOTION_MS,
   BLADE_MOTION_EASE,
@@ -81,15 +82,28 @@ export {
   liveStats,
   type ProfileStat,
 } from "./GamerProfileCard";
-export { PROFILE, type GamerProfile } from "./profile";
+export {
+  PROFILE,
+  SIGN_IN_PROFILES,
+  type GamerProfile,
+  type SignInProfile,
+} from "./profile";
 export { LetterBadge } from "./LetterBadge";
+export { LiveClock } from "./LiveClock";
 export { RepStars } from "./RepStars";
 export { GamerPicPicker } from "./GamerPicPicker";
+export { ActiveGamertag } from "./ActiveGamertag";
 export {
   GamerPicProvider,
   useGamerPic,
   type GamerPicContextValue,
 } from "./GamerPicContext";
+export {
+  SignedInProfileProvider,
+  useSignedInProfile,
+  useActiveProfile,
+  type SignedInProfileContextValue,
+} from "./SignedInProfileContext";
 export {
   LibraryMenu,
   LibraryMenuProvider,
@@ -114,7 +128,31 @@ export { PicturesScreen } from "./PicturesScreen";
 export { PictureBrowserScreen } from "./PictureBrowserScreen";
 export { PictureViewerScreen, pictureViewerFor } from "./PictureViewerScreen";
 export { ConsoleSettingsScreen } from "./ConsoleSettingsScreen";
-export { SpotlightScreen } from "./SpotlightScreen";
+export { ConnectXboxLiveDrawer } from "./ConnectXboxLiveDrawer";
+export {
+  SpotlightScreen,
+  NewArrivalsScreen,
+  GameStoreListScreen,
+} from "./SpotlightScreen";
+export { GameStoreScreen } from "./GameStoreScreen";
+export { XboxOriginalsScreen } from "./XboxOriginalsScreen";
+export {
+  XBOX_ORIGINALS,
+  xboxOriginalCoverUrl,
+  xboxOriginalRatingUrl,
+  type XboxOriginalGame,
+  type XboxOriginalsRating,
+} from "./xbox-originals";
+export { TvShowsScreen } from "./TvShowsScreen";
+export {
+  TOP_TV_EPISODES,
+  TOP_TV_EPISODES_TOTAL,
+  TV_SHOWS_PROMO,
+  tvShowLogoUrl,
+  type TvEpisode,
+} from "./tv-shows";
+export { GenresScreen } from "./GenresScreen";
+export { TV_GENRES } from "./genres";
 export { PICTURES, PICTURES_DIR, pictureSrc, type Picture } from "./pictures";
 export { ALBUMS, albumSearchTitle, type Album } from "./albums";
 export {

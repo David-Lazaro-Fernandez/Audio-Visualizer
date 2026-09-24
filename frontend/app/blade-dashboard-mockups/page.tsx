@@ -5,6 +5,7 @@ import {
   BladeWaterControls,
   SHOW_WATER_CONTROLS,
   BladeEdges,
+  BladePanelSeam,
   BladeMenuGutters,
   BladePanel,
   BladeTabNav,
@@ -14,6 +15,7 @@ import {
   MEDIA_THEME,
   SYSTEM_THEME,
   STORE_THEME,
+  LIVE_THEME,
   STORE_GRADIENT,
   LIVE_GRADIENT,
   GAMES_GRADIENT,
@@ -23,6 +25,7 @@ import {
   gamerStats,
   liveStats,
   GamerPicProvider,
+  SignedInProfileProvider,
   LibraryMenu,
   LibraryMenuProvider,
   LibraryMenuDescription,
@@ -63,15 +66,7 @@ const BLADES: BladeSection[] = [
     title: "Xbox LIVE",
     gradient: LIVE_GRADIENT,
     tabFill: "linear-gradient(90deg,#c67a1a,#f8c85e 35%,#e39a2b)",
-    theme: {
-      ink: "#2a1a04",
-      inkSoft: "#3d2707",
-      rule: "#f2c66a",
-      ruleStrong: "#f7d585",
-      glyph: "#a86a12",
-      glyphHover: "#5e3a06",
-      watermark: "#5a3a0a",
-    },
+    theme: LIVE_THEME,
   },
   {
     label: "games",
@@ -156,9 +151,14 @@ const GAMES_MENU_ITEMS: LibraryMenuItem[] = [
 /**
  * The menu of the Marketplace blade (DESIGN.md §6.19), in two tiers. The
  * four stores are raised buttons, the skin of the Games Library rows.
- * The three account rows below them are compact divider rows. Spotlight
- * is the one tile with a real destination, the Spotlight screen (§6.20);
- * the rest still open a detail box, since those stores do not exist yet.
+ * The three account rows below them are compact divider rows. All four
+ * tiles now have a real destination: Spotlight, New Arrivals and Game
+ * Store all open the Spotlight screen (§6.20) under their own title —
+ * `SpotlightScreen`, `NewArrivalsScreen` and `GameStoreListScreen` are
+ * the same screen, since none of the three has real content of its own
+ * yet — and Video Store opens the TV Shows screen (§6.19.3). Game
+ * Store's own tile-based screen (§6.19.1, `"game-store"`) still exists
+ * but nothing here links to it any more.
  */
 const STORE_TILE_ITEMS: LibraryMenuItem[] = [
   {
@@ -169,17 +169,17 @@ const STORE_TILE_ITEMS: LibraryMenuItem[] = [
   {
     label: "New Arrivals",
     icon: <MenuIcon name="newArrivals" />,
-    detail: "Browse the newest content on Xbox LIVE Marketplace.",
+    screen: "new-arrivals",
   },
   {
     label: "Game Store",
     icon: <MenuIcon name="controller" />,
-    detail: "Browse and download games, demos, and add-ons.",
+    screen: "game-store-list",
   },
   {
     label: "Video Store",
     icon: <MenuIcon name="videoStore" />,
-    detail: "Rent or buy movies and TV shows.",
+    screen: "tv-shows",
   },
 ];
 
@@ -204,6 +204,9 @@ const STORE_ROW_ITEMS: LibraryMenuItem[] = [
 /**
  * The menu of the Xbox LIVE blade: one "Connect" row. The pane describes
  * it under the name of the service and not under the label of the row.
+ * Select opens the Connect to Xbox LIVE drawer (DESIGN.md §6.22) rather
+ * than the master-detail box (§5.3) every other row with `detail` gets:
+ * signing in is worth a full pitch, not a 320 px box beside the row.
  */
 const LIVE_MENU_ITEMS: LibraryMenuItem[] = [
   {
@@ -212,9 +215,7 @@ const LIVE_MENU_ITEMS: LibraryMenuItem[] = [
     descriptionTitle: "Xbox LIVE",
     description:
       "Games. Tournaments. Entertainment. All the rewards. Endless possibilities. What are you waiting for?",
-    detailTitle: "Connect to Xbox LIVE",
-    detail:
-      "Sign in to Xbox LIVE to play online, chat with friends and download new content.",
+    screen: "connect-live",
   },
 ];
 
@@ -310,7 +311,10 @@ const SYSTEM_MENU_ITEMS: LibraryMenuItem[] = [
 
 export default function BladeDashboardMockupsPage() {
   return (
-    // A context shares the selected gamer picture across the full blade.
+    // One context shares the selected gamer picture, another which of
+    // the two Sign In drawer profiles the user signed in as, across the
+    // full blade.
+    <SignedInProfileProvider>
     <GamerPicProvider>
     <BladeNavProvider blades={BLADES} initialIndex={DEFAULT_ACTIVE_INDEX}>
     {/* Up and Down move the cursor, Left and Right switch blades,
@@ -326,6 +330,9 @@ export default function BladeDashboardMockupsPage() {
           of the sheen and the rings, and it renders nothing while the
           shader is live. */}
       <BladeBackground />
+      {/* A soft dark seam just inside the open panel's own curved edges
+          (DESIGN.md §1.1), on both sides, purely decorative. */}
+      <BladePanelSeam />
 
       <BladeTabNav />
 
@@ -474,5 +481,6 @@ export default function BladeDashboardMockupsPage() {
     {SHOW_WATER_CONTROLS && <BladeWaterControls />}
     </BladeNavProvider>
     </GamerPicProvider>
+    </SignedInProfileProvider>
   );
 }
