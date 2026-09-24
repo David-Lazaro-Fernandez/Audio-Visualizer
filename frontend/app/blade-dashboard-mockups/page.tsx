@@ -359,11 +359,13 @@ export default function BladeDashboardMockupsPage() {
             <LibraryMenu items={STORE_ROW_ITEMS} ariaLabel="Marketplace account" />
           </div>
           <div className="flex min-w-0 flex-col gap-3">
-            {/* The promotion is a bitmap on the console. It keeps the
-                striped placeholder (§6.7) until the art is available. */}
+            {/* The promotion is a bitmap on the console (§6.7). The box
+                follows the art's own 511×556 proportions rather than the
+                placeholder's arbitrary 5:4, now that the art is in. */}
             <MediaSlot
               label="Guitar Hero III · Halo 3 Theme Song"
-              className="aspect-[5/4]"
+              src="/assets/marketplace/menu/free.png"
+              className="aspect-[511/556]"
             />
             <XboxLiveBanner rings className="h-[112px]" />
           </div>
