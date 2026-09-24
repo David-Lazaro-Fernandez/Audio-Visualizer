@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
  *
  * The screens stack, and each one is its own portal with its own water
  * shader (§3.1). To reach the Music Player is to open five of them —
- * Music, Audiobooks, the album, the song, the player — above the blade
- * canvas, and each surface below the top one kept painting a full
+ * Music, Music Library, the album, the song, the player — above the
+ * blade canvas, and each surface below the top one kept painting a full
  * viewport of water that nothing could see. Six WebGL2 contexts drawing
  * at once left the visualizer on the top screen the small part of a
  * frame that the hidden five did not take.

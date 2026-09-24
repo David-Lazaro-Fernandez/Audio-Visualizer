@@ -39,7 +39,7 @@ export const GAMES_THEME: BladeTheme = {
  * The media blade, DESIGN.md §2.2, in sky blue. The rules are lighter
  * than the panel, because the blue dividers of the console are pale
  * lines. The full-screen surfaces that the Media blade opens, such as
- * Audiobooks, also use this theme.
+ * Music Library, also use this theme.
  */
 export const MEDIA_THEME: BladeTheme = {
   ink: "#0a2240",

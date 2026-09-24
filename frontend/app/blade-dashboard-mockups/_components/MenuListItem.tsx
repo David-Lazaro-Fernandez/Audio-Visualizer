@@ -40,11 +40,11 @@ import { playSound } from "./sounds";
  *
  * `chevron`, on the row variant, draws a small right-pointing triangle
  * at the end of the row while the cursor is on it. This is the cue of
- * the console for a list to the right, as on the category rows of
- * Audiobooks. `compact`, on the button variant, removes the empty top
+ * the console for a list to the right, as on the category rows of Music
+ * Library. `compact`, on the button variant, removes the empty top
  * band, thus the raised skin is one band at the height of its label.
  * The item rows of a browse list use it, such as the album list of
- * Audiobooks, where the two-band button is too tall.
+ * Music Library, where the two-band button is too tall.
  *
  * `subtitle`, on the row variant, stacks a second, softer line under the
  * label instead of the single-line row every other menu uses. The

@@ -108,9 +108,11 @@ export { GamesLibraryScreen } from "./GamesLibraryScreen";
 export { MyGamesScreen } from "./MyGamesScreen";
 export { AchievementsScreen } from "./AchievementsScreen";
 export { MusicScreen } from "./MusicScreen";
-export { AudiobooksScreen } from "./AudiobooksScreen";
+export { MusicLibraryScreen } from "./MusicLibraryScreen";
 export { ScrollColumn } from "./ScrollColumn";
 export { PicturesScreen } from "./PicturesScreen";
+export { PictureBrowserScreen } from "./PictureBrowserScreen";
+export { PictureViewerScreen, pictureViewerFor } from "./PictureViewerScreen";
 export { ConsoleSettingsScreen } from "./ConsoleSettingsScreen";
 export { SpotlightScreen } from "./SpotlightScreen";
 export { PICTURES, PICTURES_DIR, pictureSrc, type Picture } from "./pictures";
@@ -121,10 +123,16 @@ export {
   albumHeading,
   albumArtworkUrl,
   formatTrackLength,
+  ARTISTS,
+  GENRES,
+  type AlbumGroup,
   type Track,
 } from "./album-details";
 export { useAudioSpectrum } from "./use-audio-spectrum";
+export { AlbumArt, ArtistArt } from "./RowArt";
+export { artistImageUrl } from "./artist-images";
 export { AlbumScreen } from "./AlbumScreen";
+export { AlbumGroupScreen, albumGroupScreenFor } from "./AlbumGroupScreen";
 export { SongScreen, songScreenFor } from "./SongScreen";
 export { MusicPlayerScreen, musicPlayerFor } from "./MusicPlayerScreen";
 export { MusicVisualizer } from "./MusicVisualizer";

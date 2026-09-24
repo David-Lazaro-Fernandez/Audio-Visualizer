@@ -28,8 +28,8 @@ import { songScreenFor } from "./SongScreen";
 import { musicPlayerFor } from "./MusicPlayerScreen";
 
 /**
- * The album screen, which an album row in the Audiobooks browse list
- * opens (DESIGN.md §6.14). The path is: Media blade, Music, Audiobooks,
+ * The album screen, which an album row in the Music Library list opens
+ * (DESIGN.md §6.14). The path is: Media blade, Music, Music Library,
  * this screen.
  *
  * It has the same full-screen structure as each other surface that the
@@ -39,12 +39,12 @@ import { musicPlayerFor } from "./MusicPlayerScreen";
  * blue of the Media blade with its text and rule tints, because a
  * full-screen surface portals outside the canvas.
  *
- * It uses the two-column grammar of the Audiobooks screen with the roles
- * exchanged. The left column is a fixed menu of actions for this album
- * (§6.2 `row`) and not a filter. The right column is the track listing,
- * as compact raised buttons (§6.2 `button`, `compact`), with the
- * duration in the meta slot. The "N of M" counter at the foot follows
- * the cursor through the tracks.
+ * It uses the two-column grammar of the Music Library screen with the
+ * roles exchanged. The left column is a fixed menu of actions for this
+ * album (§6.2 `row`) and not a filter. The right column is the track
+ * listing, as compact raised buttons (§6.2 `button`, `compact`), with
+ * the duration in the meta slot. The "N of M" counter at the foot
+ * follows the cursor through the tracks.
  *
  * No action works yet: there is no player, no playlist and no tag
  * editor. Thus each row plays Select A, as the Achievements grid did
@@ -123,9 +123,9 @@ export function AlbumScreen({ album }: { album: Album }) {
 
 /**
  * The two columns. Left and Right move the cursor between them, as on
- * the Audiobooks screen: Right from an action goes to the first track,
- * and Left from a track returns to the action list. Both columns take
- * the key, thus `KeyboardNav` does not switch the blades below.
+ * the Music Library screen: Right from an action goes to the first
+ * track, and Left from a track returns to the action list. Both columns
+ * take the key, thus `KeyboardNav` does not switch the blades below.
  *
  * Only the track column has a `LibraryMenuProvider`. The counter follows
  * the tracks, and the action list has no description pane. Thus a

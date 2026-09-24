@@ -158,7 +158,7 @@ Each `BladeSection` carries them as a `BladeTheme` (`blade-theme.ts`), which
 variables rather than literal greens. The section layout sets the games
 values as the default, so full-screen surfaces (which portal outside the
 canvas) stay green unless they set another theme on their root, as the
-Audiobooks screen does with `MEDIA_THEME`.
+Music Library screen does with `MEDIA_THEME`.
 
 | Role | Variable | Green (games) | Gold (Xbox LIVE) | Blue (media) | Purple (system) | Orange (store) |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -410,8 +410,10 @@ than in the seam.
 Screens stack: Games blade → Games Library → My Games; the blade's
 Achievements row opens the Achievements screen (§6.10) directly. On Media,
 the blade's Music row opens the Music screen (§6.11), whose Music Player row
-opens the Audiobooks screen (§6.12), and the Pictures row opens the
-Pictures grid (§6.13). Each is
+opens the Music Library screen (§6.12), and the Pictures row opens the
+Pictures screen (§6.13), whose Computer row opens the picture browser
+(§6.13.1), whose tiles and Play Slideshow open the picture viewer
+(§6.13.2). Each is
 its own portal, so later screens simply paint over earlier ones. Back (ESC / B) is
 arbitrated by a module-level stack (`back-stack.ts`): only the topmost open
 surface answers, so one press peels off one screen.
@@ -475,10 +477,10 @@ Variants:
   `aria-label` (the Achievements screen's column of title art, §6.10). With
   `chevron` a right-pointing triangle in `--blade-glyph` (a CSS shape, like
   the eject mark) sits at the row's end and fades in with the wash: the
-  console's cue that the row has a list to its right (Audiobooks, §6.12).
-  With `subtitle` the label stacks over a second, softer line in place of
-  a single line, for a row named by its content type rather than by a
-  trailing value (the Spotlight list, §6.20).
+  console's cue that the row has a list to its right (Music Library,
+  §6.12). With `subtitle` the label stacks over a second, softer line in
+  place of a single line, for a row named by its content type rather
+  than by a trailing value (the Spotlight list, §6.20).
 - **button**: the raised skin for full-screen menus. Two stacked bands: a
   transparent 26 px top band, and the row band with a left-to-right gradient
   from transparent to white at 39%. Icon and label left, meta right. 1 px
@@ -491,8 +493,8 @@ Variants:
   `focus-visible`) so a mouse-clicked row stays lit like the console cursor.
   With `compact` the empty top band is dropped and the row band alone
   carries the skin, at label height with 11 px padding: the entries of a
-  browse list (Audiobooks' albums, §6.12), where the full button is too tall
-  to stack a dozen deep.
+  browse list (the Music Library's albums, §6.12), where the full button
+  is too tall to stack a dozen deep.
 - **brand**: dark steel gradient pill with the swirl glyph and the two-tone
   wordmark (`#8bc93e` / `#e2701f`).
 
@@ -509,14 +511,14 @@ starburst, a film case with a disc, a flat card, a download roundel and
 a crown, plus the Marketplace "m" roundel, currently unused. The music menus
 have their own: hard drive, monitor and pocket player for the Music
 screen's sources (§6.11); microphone, list with a note, single note and
-guitar for the Audiobooks categories (§6.12); and a play roundel, a list
-with a plus, a pencil and a bin for the Play / Add to Current Playlist /
-Edit Info / Delete actions shared by the album and song screens (§6.14,
-§6.15). Icons that are
-full-colour bitmaps on the console (Media Center's Windows flag, title
-art, achievement art) are not redrawn in this finish: the row takes an
-`<Image>` node from `public/assets/` as its `icon` instead, and shows the
-striped placeholder (§6.7) until the bitmap is available.
+guitar for the Music Library categories (§6.12); and a play roundel, a
+list with a plus, a pencil and a bin for the Play / Add to Current
+Playlist / Edit Info / Delete actions shared by the album and song
+screens (§6.14, §6.15). Icons that are full-colour bitmaps on the
+console (Media Center's Windows flag, title art, achievement art) are
+not redrawn in this finish: the row takes an `<Image>` node from
+`public/assets/` as its `icon` instead, and shows the striped
+placeholder (§6.7) until the bitmap is available.
 
 Omitting `icon` leaves the neutral square, which is the placeholder for a
 bitmap not yet redrawn. Passing `icon={null}` means the row has **no**
@@ -677,7 +679,7 @@ columns, the left 45% wide:
 
 - **Source list** (left): blade rows (§6.2 `row`). "Music Player" heads
   the list and is live: the cursor lands on it by default and opens the
-  Audiobooks screen (§6.12). The sources below it sit on a slab in the
+  Music Library screen (§6.12). The sources below it sit on a slab in the
   chrome-band tint (`bg-black/10`, §5.2) with the corner facing the pane
   rounded 25 px, running to the bottom of the content, and are all
   disabled: Hard Drive and Computer because the catalogue now lives
@@ -693,9 +695,9 @@ redrawn rather than waiting on the console's bitmaps. The pane's music
 note is still a full-colour bitmap and shows a 120 px striped placeholder
 (§6.7) until the image is dropped in.
 
-### 6.12 Audiobooks screen
+### 6.12 Music Library screen
 
-Opened by the Music screen's Music Player row (`AudiobooksScreen.tsx`).
+Opened by the Music screen's Music Player row (`MusicLibraryScreen.tsx`).
 Same full-screen structure as the Games Library and My Games (§5.4):
 section gradient, unclipped sheen, header and legend bands, the content
 raised as one slab with `CONTENT_BAND_SHADOW`, 12% side padding. It is
@@ -717,11 +719,19 @@ The body is two equal columns:
   column behind a hidden scrollbar (`ScrollColumn`, shared with §6.10). At
   its foot a "N of M" counter at 22 px sits on the left and the
   down-pointing more-below triangle on the right. Left from any entry
-  returns the cursor to the category that owns the list. Selecting an
-  entry only plays Select A until the player exists.
+  returns the cursor to the category that owns the list. An album row
+  opens that album's screen (§6.14), and an artist or a genre row the
+  list of its albums (§6.21); the hand-written categories, Saved
+  Playlists and Songs, play Select A only, since neither has a
+  destination yet.
 
-  Album rows carry their **cover art** in the 24 px icon box, in place of
-  the neutral square — the only category that has any, as on the console.
+  Album rows carry their **cover art** in the 24 px icon box, in place
+  of the neutral square, and artist rows their **photo** in the same box
+  (`RowArt`). Genres have none: the store has no picture of a genre. The
+  console showed art only on albums, because it read tags off a hard
+  drive and a file carries its cover; a catalogue also knows what the
+  artist looks like, and a 10-foot list of 48 names is exactly where a
+  face is worth more than a word.
 
   Artwork, genre and the track listing all come from the **iTunes Search
   API**, which needs no key. `scripts/fetch-apple-music.mts` (`npm run
@@ -744,6 +754,42 @@ The body is two equal columns:
   unlike there, the row stays: the art illustrates the title, it is not
   the item).
 
+  **The artist photo is the one thing the Search API does not have.** A
+  lookup of an artist entity returns the name, the link and the genre
+  and no image field of any kind; the Apple Music API does carry
+  `attributes.artwork`, but it needs a MusicKit developer token, which
+  is the same reason this pipeline is the Search API in the first
+  place. So the script reads the `og:image` of the artist's public
+  page, whose URL (`artistViewUrl`) arrives with the album lookup it
+  already makes — nothing guesses a URL. What comes back sits on the
+  same `mzstatic` CDN as the sleeves, with the same size template in
+  the path and the same CORS header, so at the point of use
+  `artistImageUrl` is `albumArtworkUrl` with a different stored string
+  (`artist-images.ts`, `artist-images.json`). It reads a page rather
+  than an API, which is the weak point; Open Graph is metadata meant
+  for other sites to read, so it is the most stable part of that page
+  to depend on, and a miss costs a row its square and nothing else.
+  "Various Artists" is the one name in the library with no photo: it is
+  not an artist and has no page.
+
+  **Three of the five categories are one list.** Albums, Artists and
+  Genres are three readings of the same library, so none of them is
+  written out: the albums are `ALBUMS`, the artists are its `artist`
+  field, and the genres are the genre the store returned beside the
+  artwork. Both are a grouping rather than a list of names
+  (`AlbumGroup`, `ARTISTS` / `GENRES` in `album-details.ts`): a name
+  and the albums under it, so the row already carries what its screen
+  shows (§6.21). Groups sort the way the album list itself does — by
+  letter, ignoring case, so Belanova precedes BROCKHAMPTON — and the
+  albums inside a group keep `ALBUMS`' order, which is by title. A
+  hand-written list of names would be a third copy of facts the payload
+  already carries, and it would go stale the moment an album is added.
+  An album with no artist or no genre falls back to the console's
+  "Unknown Artist" / "Unknown Genre", so it still reaches a group
+  rather than vanishing from the screen. Saved Playlists and Songs stay
+  hand-written: no playlist exists yet, and a song list is the track
+  listings rather than the albums.
+
 Two highlight providers nest (`LibraryMenuProvider`): the outer follows
 the category rows and picks the list, the inner follows the entries and
 drives the counter, so hovering an entry never changes the category. The
@@ -752,31 +798,105 @@ list is keyed by category so a switch remounts it with the counter reset.
 ### 6.13 Pictures screen
 
 Opened by the Media blade's Pictures row (`PicturesScreen.tsx`). Same
-full-screen structure and Media blue as the Audiobooks screen (§6.12);
-the header reads "Pictures", the legend is Y/X dimmed, Back B, Select A.
+full-screen structure and Media blue as the Music screen (§6.11); the
+header reads "Pictures", the legend is Y/X dimmed, Back B, Select A.
 
-The body is a **3×3 grid** of square tiles, centred and bounded by the
-slab's height so the nine tiles stay square at any viewport, with a 16 px
-gap. Tiles wear the Achievements tile skin (§6.10): raised border and
-bevel on white at 8%, the pale grey wash at 55% as the cursor. A filled
-tile shows its picture edge to edge behind an 8 px inset with 6 px
-corners. Slots past the end of the list show the striped placeholder
-(§6.7) watermarked with the slot number, and stay cursor stops with
-`aria-disabled` (like an `unavailable` row, §7.2) so the grid's D-pad
-arithmetic holds; Select on them does nothing. A 24 px caption under the
-grid names the highlighted picture.
+It is a source list rather than a grid, following the console: two
+columns, a menu of the four picture sources on the left and a description
+pane on the right (§6.4). Computer is the one source this mockup can
+serve pictures from, so it alone is live and opens the picture browser
+(§6.13.1); Digital Camera, Current Disc and Portable Device stay
+disabled, the console's own way of showing a source with nothing plugged
+into it. Each row carries a glyph from the monochrome set (§6.2): the
+`computer` monitor, the `pictures` camera, the `disc`, and the pocket
+player of `portableDevice` (shared with the Music screen's sources,
+§6.11). The pane shows the highlighted source's own glyph, oversized and
+centred above the blurb, in place of the bitmap placeholder the Music
+screen's pane falls back to (§6.7): a source is a device, and the icon
+set already draws every one of these devices.
 
-Pictures are the user's own: files dropped into `public/assets/pictures/`
+### 6.13.1 Picture browser
+
+Opened by the Computer row (`PictureBrowserScreen.tsx`). Same full-screen
+structure as the Music Library and album screens (§6.12, §6.14) in the
+same Media blue; the header names the source, "Computer", and the legend
+is Y dimmed, X "Apply as Background" (unbound, the same live-but-unbound
+kind of slot as the Marketplace blade's Sign Out, §6.19, since the mockup
+has no background to apply one to), Back B and Select A.
+
+Two columns, the left a fixed menu of one action, "Play Slideshow" — a
+single blade row (§6.2 `row`), which already draws the dividers above and
+below a list's only row. It opens the picture viewer (§6.13.2) at the
+first picture.
+
+The right column is the console's own **3×3 grid** of square tiles,
+centred and bounded by the slab's height so the nine tiles stay square at
+any viewport, with a 16 px gap. Tiles wear the Achievements tile skin
+(§6.10): raised border and bevel on white at 8%, the pale grey wash at
+55% as the cursor. A filled tile shows its picture edge to edge behind an
+8 px inset with 6 px corners, and opens the viewer at that picture. Slots
+past the end of the list show the striped placeholder (§6.7) watermarked
+with the slot number, and stay cursor stops with `aria-disabled` (like an
+`unavailable` row, §7.2) so the grid's D-pad arithmetic holds; Select on
+them does nothing. A "N of M" counter under the grid follows the cursor,
+counting only the real pictures and not the nine slots, as the console's
+own counter did over a folder of eight photos in nine slots. Left from
+the first column of tiles returns to Play Slideshow, and Right from it
+enters the grid, the same handoff the album and Music Library screens
+give their own two columns (§6.12, §6.14).
+
+Pictures are the user's own: files dropped into `public/assets/demo-photos/`
 and listed in `pictures.ts` (file name and caption). The grid shows the
-first nine. Selecting a picture only plays Select A until the viewer
-exists. The grid is `data-nav-list="3"` (§8): Up/Down step a row,
+first nine. The grid is `data-nav-list="3"` (§8): Up/Down step a row,
 Left/Right a column.
+
+### 6.13.2 Picture viewer
+
+Opened by Play Slideshow or by a tile of the picture browser
+(`PictureViewerScreen.tsx`), which is why it takes only a `startIndex`:
+whichever row or tile opened it owns Back (`MenuListItem`, or the tile's
+own copy of that pattern), and this screen only needs to say which
+picture to open on. Unlike every other full-screen surface here, it is
+not the blade structure at all: the console gave this one screen no
+header, no blade chrome and no legend, because the photo is the whole
+screen. `aria-modal` keeps the D-pad below it inert, and Back still
+closes it, unannounced, the way the Music Player's own full-screen
+visualization does (§6.16).
+
+A floating transport bar sits centred in the lower third over the photo:
+eight buttons — Pause/Play, Previous, Stop, Next, Shuffle, Repeat, Rotate
+Left and Rotate Right — drawn as the Music Player's own simple monochrome
+transport glyphs are (§6.16), and living with this screen for the same
+reason: no other screen uses them, on a 5 px gap. The bar behind them is
+one steel pill: a single light-to-dark grey fill in the neutral chrome
+of §2.3, carrying the same pale top/bottom shine as the raised content
+band's own light (Figma node 158:5, `CONTENT_BAND_SHADOW` in
+`BladeChromeBand.tsx`), scaled down from a content band's height to a
+36 px bar. A resting button has no fill of its own, so that shine shows
+through it unbroken; the cursor (hover or focus) is a pale green fill
+with a matching glow and corners that round out further than a resting
+button's, so the selected control visibly pops off the strip. Under the
+bar, a caption three quarters of the bar's own width and
+centred beneath it names whichever button the cursor is on, its text
+held to the left edge of that box, since the console labelled only the
+one the cursor was on.
+
+Every control really does something, in the spirit of the Music Player
+(§6.16): the screen opens already advancing through the pictures on a
+timer, which Pause/Play stops and restarts; Previous and Next step by
+one; Stop returns to the first picture and pauses; Shuffle re-randomises
+the advance order, as the Music Player's own sort reverses its queue;
+Repeat decides whether reaching the last picture wraps to the first or
+stops there; and Rotate Left and Rotate Right turn the picture on screen
+a quarter turn, remembered per picture for the rest of the session. The
+eight buttons are a `data-nav-list="8"` row, thus Left and Right already
+step along them (§8).
 
 ### 6.14 Album screen
 
-Opened by an album row in the Audiobooks browse list
-(`AlbumScreen.tsx`) — Media blade → Music → Audiobooks → here. Same
-full-screen structure and Media blue as §6.12.
+Opened by an album row in the Music Library list (`AlbumScreen.tsx`) —
+Media blade → Music → Music Library → here. Same full-screen structure
+and Media blue as §6.12.
 
 The header is the album and its artist in parentheses, `Album (Artist)`.
 The console put the record *label* there; no music file carries one, and
@@ -817,16 +937,16 @@ The tags are album-level facts, so they come from the album the song sits
 on. Genre is MusicBrainz's most-tagged genre for the release group,
 capitalised for display since MusicBrainz records genres in lowercase.
 
-Screens stack four deep here: Media blade → Music (§6.11) → Audiobooks
-(§6.12) → album (§6.14) → song (§6.15). Each is its own portal and Back
-peels off one at a time (§5.4).
+Screens stack four deep here: Media blade → Music (§6.11) → Music
+Library (§6.12) → album (§6.14) → song (§6.15). Each is its own portal
+and Back peels off one at a time (§5.4).
 
 ### 6.16 Music Player
 
 Opened by Play Song on the song screen (§6.15) or Play Album on the album
 screen (§6.14) — `MusicPlayerScreen.tsx`. Same full-screen structure and
 Media blue as the rest of the chain, which now runs five deep: Media
-blade → Music → Audiobooks → album → song → player.
+blade → Music → Music Library → album → song → player.
 
 Two columns. The **left** is the player, gathered into one raised panel
 (§6.9 skin): a row of five transport buttons — pause/play, previous,
@@ -1599,6 +1719,61 @@ page yet (§6.19). The legend shows all four buttons live — Y
 the console did. Y and X are not wired to a key: those destinations do
 not exist yet, the same reason the blade-level "Sign Out" slot is live
 but unbound (§6.19).
+
+### 6.21 Artist and genre screen
+
+Opened by a row of the Artists or the Genres category of the Music
+Library list (`AlbumGroupScreen.tsx`) — Media blade → Music → Music
+Library → here → an album (§6.14). Same full-screen structure and Media
+blue as the rest of the chain (§5.4, §6.12); the header is the artist's
+or the genre's name, the legend is Y/X dimmed, Back B, Select A.
+
+**One screen serves both**, because an artist and a genre are the same
+fact here — an `AlbumGroup`: a name, and the albums under it. Only the
+header and the screen-reader labels differ, through one `kind` prop.
+
+**The albums are the library's, not the store's.** Apple has an artist
+endpoint that returns a full discography; that is the wrong set. The
+console listed the records the gamer *had*, and grouping `ALBUMS`
+(§6.12) gives exactly those, for free, with no second request, no key
+and no way to disagree with the album list the screen above it shows.
+The store is worth asking only for something the library genuinely
+lacks — artist artwork, a biography — and that needs a MusicKit
+developer token, which is the same reason the fetch script uses iTunes
+Search rather than the Apple Music API.
+
+It takes the **Music screen's** two-column grammar (§6.11), a list left
+and a pane right, rather than the album screen's (§6.14), because there
+is no column of actions to offer: the player is bound to one album
+(§6.16), so "Play Artist" would have to build a queue across albums.
+
+- **Album list** (left, 45% wide): the group's albums as compact raised
+  buttons (§6.2 `button`, `compact`) carrying their cover art in the
+  24 px icon box, exactly the rows of §6.12, in a `ScrollColumn` with
+  the "N of M" counter at its foot following the cursor. Each row opens
+  that album's screen (§6.14). It is the only column with a cursor, so
+  Left/Right do nothing here.
+- **Pane** (right): a hero image at 220 px, then the album the cursor
+  is on. **The hero is the subject of the screen**: on an artist screen
+  it is the artist's photo (§6.12) and holds still while the cursor
+  runs down their records, with the highlighted album below it at row
+  size, so the pane reads "this artist, this record of theirs". A genre
+  has no such subject — the store has no picture of one — so there the
+  hero is the highlighted album's own sleeve and it moves with the
+  cursor. An artist with no photo falls back to the striped placeholder
+  (§6.7) rather than to a sleeve, because swapping a record into the
+  hero would make it move with the cursor on one artist and not on the
+  next. Under it, the title at 30 px and the facts the library holds,
+  stacked label-over-value as the song screen stacks its tags (§6.15).
+  Genre shows on an artist screen only; on a genre screen every row has
+  the header's genre, so printing it under each one would say nothing,
+  and that screen shows the artist instead. The pane is a readout,
+  never a cursor stop.
+
+Screens now stack six deep on this path: Media blade → Music (§6.11) →
+Music Library (§6.12) → artist or genre (§6.21) → album (§6.14) → song
+(§6.15) → player (§6.16). Each is its own portal and Back peels off one
+at a time (§5.4).
 
 ---
 

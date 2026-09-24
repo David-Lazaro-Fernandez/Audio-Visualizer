@@ -21,7 +21,7 @@ import type { Album } from "./albums";
 
 /**
  * The song screen, which a track row on the album screen opens
- * (DESIGN.md §6.15). The path is: Media blade, Music, Audiobooks,
+ * (DESIGN.md §6.15). The path is: Media blade, Music, Music Library,
  * album, this screen.
  *
  * It has the same full-screen structure and the same Media blue as the

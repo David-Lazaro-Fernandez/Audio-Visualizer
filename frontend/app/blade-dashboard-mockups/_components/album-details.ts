@@ -18,7 +18,7 @@
  */
 
 import ALBUM_DETAILS from "./album-details.json";
-import type { Album } from "./albums";
+import { ALBUMS, type Album } from "./albums";
 
 /** One track, as the store gives it. */
 export interface Track {
@@ -92,3 +92,75 @@ export function formatTrackLength(ms: number | null): string {
 export function albumHeading(album: Album): string {
   return album.artist ? `${album.title} (${album.artist})` : album.title;
 }
+
+/**
+ * An artist or a genre, with the albums of the library that sit under
+ * it (DESIGN.md §6.12, §6.21).
+ *
+ * One interface serves both, because an artist and a genre are the same
+ * fact here: a name, and the albums it gathers. Thus the screen that
+ * lists them is one component and not two.
+ *
+ * The albums are the albums of **this library** and not the catalogue
+ * of the store. Apple has an artist endpoint that returns a full
+ * discography, and that is the wrong set: the browse list of the
+ * console showed the records that the gamer had. Grouping `ALBUMS` is
+ * also free, needs no second request and no key, and cannot disagree
+ * with the album list that the same screen shows.
+ */
+export interface AlbumGroup {
+  name: string;
+  albums: Album[];
+}
+
+/**
+ * The placeholders of the console. Both fields are optional, thus an
+ * album that the store does not resolve still reaches a group instead
+ * of disappearing from the browse screen.
+ */
+const UNKNOWN_ARTIST = "Unknown Artist";
+const UNKNOWN_GENRE = "Unknown Genre";
+
+/**
+ * The albums, gathered by one of their fields.
+ *
+ * The groups are in the collation of the album list itself, which
+ * orders by letter and ignores case, thus "Belanova" precedes
+ * "BROCKHAMPTON". The locale is fixed, because the groups are built at
+ * module scope and are rendered on the server and on the client: a
+ * default that differs between the two would be a hydration mismatch.
+ *
+ * Inside a group the albums keep the order of `ALBUMS`, which is
+ * already by title.
+ */
+function groupAlbums(keyOf: (album: Album) => string): AlbumGroup[] {
+  const groups = new Map<string, Album[]>();
+  for (const album of ALBUMS) {
+    const key = keyOf(album);
+    const albums = groups.get(key);
+    if (albums) albums.push(album);
+    else groups.set(key, [album]);
+  }
+  return [...groups]
+    .map(([name, albums]) => ({ name, albums }))
+    .sort((a, b) => a.name.localeCompare(b.name, "en"));
+}
+
+/**
+ * The Artists and the Genres categories of the browse screen (§6.12).
+ *
+ * Neither list is written by hand. The artist is the field that a
+ * person maintains in `albums.ts`, which is the one that the album
+ * screen prints in its heading (§6.14), and the genre arrives with the
+ * payload of the store beside the artwork and the track listing. A
+ * hand-written list of names would be a third copy of facts that the
+ * data already carries, and it would go stale the moment an album is
+ * added.
+ */
+export const ARTISTS: AlbumGroup[] = groupAlbums(
+  (album) => album.artist ?? UNKNOWN_ARTIST,
+);
+
+export const GENRES: AlbumGroup[] = groupAlbums(
+  (album) => albumGenre(album) ?? UNKNOWN_GENRE,
+);

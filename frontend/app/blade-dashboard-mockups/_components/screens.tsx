@@ -1,11 +1,12 @@
 import type { MenuScreenProps } from "./MenuListItem";
 import { AchievementsScreen } from "./AchievementsScreen";
-import { AudiobooksScreen } from "./AudiobooksScreen";
+import { MusicLibraryScreen } from "./MusicLibraryScreen";
 import { ConsoleSettingsScreen } from "./ConsoleSettingsScreen";
 import { GamesLibraryScreen } from "./GamesLibraryScreen";
 import { MusicScreen } from "./MusicScreen";
 import { MyGamesScreen } from "./MyGamesScreen";
 import { PicturesScreen } from "./PicturesScreen";
+import { PictureBrowserScreen } from "./PictureBrowserScreen";
 import { SpotlightScreen } from "./SpotlightScreen";
 
 /**
@@ -20,24 +21,27 @@ import { SpotlightScreen } from "./SpotlightScreen";
  * The screens stack. The Games blade opens "games-library", which opens
  * "my-games". The Achievements row of the blade opens "achievements"
  * directly. The Media blade opens "music", and the Music Player row of the
- * Music screen opens "audiobooks". The Pictures row of the Media blade
- * opens "pictures" directly. The Console Settings row of the System
- * blade opens "console-settings". The Spotlight tile of the Marketplace
- * blade opens "spotlight" directly.
+ * Music screen opens "music-library". The Pictures row of the Media blade
+ * opens "pictures" directly, whose Computer row opens "picture-browser"
+ * (§6.13.1). The Console Settings row of the System blade opens
+ * "console-settings". The Spotlight tile of the Marketplace blade opens
+ * "spotlight" directly.
  *
  * Some screens cannot be here. A key names a destination that exists one
  * time. The album screen (§6.14) and the song screen (§6.15) exist one
- * time for each album and for each track. Thus their rows pass a
- * component that is bound to their data. Refer to
- * `LibraryMenuItem.screen`, which accepts both forms.
+ * time for each album and for each track, and the picture viewer (§6.13.2)
+ * exists one time for each picture. Thus their rows pass a component that
+ * is bound to their data. Refer to `LibraryMenuItem.screen`, which accepts
+ * both forms.
  */
 export type ScreenKey =
   | "games-library"
   | "my-games"
   | "achievements"
   | "music"
-  | "audiobooks"
+  | "music-library"
   | "pictures"
+  | "picture-browser"
   | "console-settings"
   | "spotlight";
 
@@ -51,10 +55,12 @@ export function resolveScreen(key: ScreenKey): React.ComponentType<MenuScreenPro
       return AchievementsScreen;
     case "music":
       return MusicScreen;
-    case "audiobooks":
-      return AudiobooksScreen;
+    case "music-library":
+      return MusicLibraryScreen;
     case "pictures":
       return PicturesScreen;
+    case "picture-browser":
+      return PictureBrowserScreen;
     case "console-settings":
       return ConsoleSettingsScreen;
     case "spotlight":

@@ -3,17 +3,19 @@
  * the left with a label). They follow the console dashboard. The set is:
  * the trophy, the controller, the arcade stick and the disc for the
  * Games blade; the globe with a controller of "Connect to Xbox LIVE" for
- * the Xbox LIVE blade; the disc with a note, the camera, the camcorder
- * and the Marketplace "m" roundel, which no row uses now; the down arrow
- * with a star, the starburst, the film case with a disc, the card, the
- * download roundel and the crown of the Marketplace blade; the two stacked
- * game cards with a controller for the "All Games" filter of the
- * Achievements screen; the same trophy under a padlock for a locked
- * achievement tile; and the music menus (§6.11, §6.12, §6.14, §6.15):
- * the hard drive, the monitor and the portable player of the sources,
- * the microphone, the playlist, the note and the guitar of the browse
+ * the Xbox LIVE blade; the disc with a note and the camcorder, unused by
+ * a row so far, and the Marketplace "m" roundel, likewise unused; the
+ * down arrow with a star, the starburst, the film case with a disc, the
+ * card, the download roundel and the crown of the Marketplace blade; the
+ * two stacked game cards with a controller for the "All Games" filter of
+ * the Achievements screen; the same trophy under a padlock for a locked
+ * achievement tile; the music menus (§6.11, §6.12, §6.14, §6.15): the
+ * hard drive, the monitor and the portable player of the sources, the
+ * microphone, the playlist, the note and the guitar of the browse
  * categories, and the play roundel, the playlist with a plus, the pencil
- * and the bin of the album and song actions; and the System blade: the
+ * and the bin of the album and song actions; the Pictures screen's own
+ * sources (§6.13): the camera of Digital Camera, and the monitor and the
+ * portable player shared with the music sources; the System blade: the
  * standing console, the adult and the child, the memory unit, the
  * linked nodes of the network and the seated player of Initial Setup
  * (Computers reuses the monitor).
@@ -349,7 +351,7 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Artists, on the Audiobooks screen: a stage microphone. It has a
+  /* Artists, on the Music Library screen: a stage microphone. It has a
      round capsule with an inked grille, a U-shaped holder on a stem, and
      a foot. The code draws the capsule last, thus it sits in the holder. */
   artists: (
@@ -362,7 +364,7 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Saved Playlists, on the Audiobooks screen: three lines of a list,
+  /* Saved Playlists, on the Music Library screen: three lines of a list,
      the last one short, and the eighth note of `music` at their right. */
   playlist: (
     <>
@@ -376,7 +378,7 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Songs, on the Audiobooks screen: one large eighth note, the stem
+  /* Songs, on the Music Library screen: one large eighth note, the stem
      with a curled flag and then the head. */
   song: (
     <>
@@ -386,10 +388,10 @@ const ICONS: Record<MenuIconName, React.ReactNode> = {
     </>
   ),
 
-  /* Genres, on the Audiobooks screen: an acoustic guitar, leaning to the
-     right. The body is one figure-eight path, thus the two bouts have
-     one outline. It has an inked sound hole and bridge. The code draws
-     the neck first, thus the body overlaps it. */
+  /* Genres, on the Music Library screen: an acoustic guitar, leaning
+     to the right. The body is one figure-eight path, thus the two
+     bouts have one outline. It has an inked sound hole and bridge. The
+     code draws the neck first, thus the body overlaps it. */
   genre: (
     <g transform="rotate(40 16 16)">
       <rect x="13.8" y="1" width="4.4" height="5" rx="1" />

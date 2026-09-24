@@ -1,5 +1,5 @@
 /**
- * The albums that the Audiobooks browse screen lists (DESIGN.md §6.12).
+ * The albums that the Music Library screen lists (DESIGN.md §6.12).
  *
  * The artwork, the genre and the track listing, with the previews, all
  * come from the iTunes Search API. The key is the `collectionId` of the

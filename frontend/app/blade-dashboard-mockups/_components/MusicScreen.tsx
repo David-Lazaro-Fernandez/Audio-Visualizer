@@ -29,15 +29,15 @@ import { getPortalRoot } from "./portal";
  * blue.
  *
  * The left column is the source list of the console, as blade rows.
- * "Music Player" is the first row and opens the Audiobooks browse screen
- * (§6.12) as the next surface in the stack; that row owns the screen and
- * its Back key (`MenuListItem`). The sources below it sit on a darker
- * slab, the chrome-band tint of §5.2, that continues to the bottom of the
- * content, and are all disabled: Hard Drive and Computer because the
- * catalogue lives behind Music Player now, Current Disc and Portable
- * Device because there is no disc and no device. The right column is the
- * pane, which shows the name of the highlighted row, its artwork and one
- * sentence.
+ * "Music Player" is the first row and opens the Music Library screen
+ * (§6.12) as the next surface in the stack; that row owns the screen
+ * and its Back key (`MenuListItem`). The sources below it sit on a
+ * darker slab, the chrome-band tint of §5.2, that continues to the
+ * bottom of the content, and are all disabled: Hard Drive and Computer
+ * because the catalogue lives behind Music Player now, Current Disc and
+ * Portable Device because there is no disc and no device. The right
+ * column is the pane, which shows the name of the highlighted row, its
+ * artwork and one sentence.
  *
  * Icons: each row has a glyph of the monochrome set (§6.2): the disc and
  * note for Music Player, the hard drive, the monitor, the disc for
@@ -57,8 +57,8 @@ const MUSIC_PLAYER_ITEM: LibraryMenuItem = {
   label: "Music Player",
   icon: <MenuIcon name="music" />,
   description: "Play music saved on your console's hard drive.",
-  // Opens the Audiobooks browse screen (§6.12) above this screen.
-  screen: "audiobooks",
+  // Opens the Music Library screen (§6.12) above this screen.
+  screen: "music-library",
 };
 
 const MUSIC_SOURCE_ITEMS: LibraryMenuItem[] = [

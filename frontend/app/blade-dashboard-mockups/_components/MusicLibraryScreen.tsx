@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import { BladeScreenSurface } from "./BladeBackground";
 import { gradientCss, MEDIA_GRADIENT } from "./blade-gradient";
 import { BladeChromeBand, CONTENT_BAND_SHADOW } from "./BladeChromeBand";
@@ -14,8 +13,10 @@ import {
   type LibraryMenuItem,
 } from "./LibraryMenu";
 import { MenuIcon } from "./MenuIcons";
-import { ALBUMS, type Album } from "./albums";
-import { albumArtworkUrl } from "./album-details";
+import { ALBUMS } from "./albums";
+import { ARTISTS, GENRES } from "./album-details";
+import { AlbumArt, ArtistArt } from "./RowArt";
+import { albumGroupScreenFor } from "./AlbumGroupScreen";
 import { AlbumScreen } from "./AlbumScreen";
 import type { MenuScreenProps } from "./MenuListItem";
 import { MEDIA_THEME, themeVars } from "./blade-theme";
@@ -24,15 +25,16 @@ import { ScrollColumn } from "./ScrollColumn";
 import { playSound } from "./sounds";
 
 /**
- * The Audiobooks browse screen, which the Music Player row of the Music
+ * The Music Library screen, which the Music Player row of the Music
  * screen opens (DESIGN.md §6.12). The path is: Media blade, Music, this
- * screen. It has the same full-screen structure as the Games Library and
- * My Games (§5.4): the section gradient with the wave sheen and no clip,
- * darker header and legend bands, the content as one raised slab with
- * `CONTENT_BAND_SHADOW`, and 12% side padding. It is in the sky blue of
- * the Media blade, and it sets the text and rule tints of that blade
- * (`MEDIA_THEME`) on its root. A full-screen surface portals outside the
- * canvas, thus without those tints it would take the games green.
+ * screen. It has the same full-screen structure as the Games Library
+ * and My Games (§5.4): the section gradient with the wave sheen and no
+ * clip, darker header and legend bands, the content as one raised slab
+ * with `CONTENT_BAND_SHADOW`, and 12% side padding. It is in the sky
+ * blue of the Media blade, and it sets the text and rule tints of that
+ * blade (`MEDIA_THEME`) on its root. A full-screen surface portals
+ * outside the canvas, thus without those tints it would take the games
+ * green.
  *
  * The left column is the browse categories of the console, which are
  * Albums, Artists, Saved Playlists, Songs and Genres. They are the
@@ -54,10 +56,21 @@ import { playSound } from "./sounds";
  * disc and note for Albums, a microphone for Artists, a list with a note
  * for Saved Playlists, one note for Songs and a guitar for Genres.
  *
- * Each album row carries its sleeve, linked from the artwork CDN of
- * Apple (`album-details.ts`, `scripts/fetch-apple-music.mts`). An album
- * with no cover keeps the neutral square, thus the list looks the same
- * with and without a sleeve.
+ * An album row carries its sleeve and an artist row their photo, both
+ * linked from the artwork CDN of Apple (`RowArt`, `album-details.ts`,
+ * `artist-images.ts`, `scripts/fetch-apple-music.mts`). A row with no
+ * artwork keeps the neutral square, thus the list looks the same with
+ * and without one. Genres have no art: a genre is not a thing that the
+ * store has a picture of.
+ *
+ * Albums, Artists and Genres are three readings of one library, thus
+ * all three come from `ALBUMS` and the payload that the store returns
+ * for it (`ARTISTS`, `GENRES` in `album-details.ts`). An artist row and
+ * a genre row open the same screen, which lists the albums of that
+ * group (§6.21), thus the three readings meet again at one album. Only
+ * Saved Playlists and Songs are still written by hand, because no
+ * playlist exists yet and a song list is the track listings and not the
+ * albums.
  *
  * The legend is the legend of the console: Y Play All Music, X unbound,
  * Back B and A unbound. The row that opened this screen owns Back
@@ -65,9 +78,13 @@ import { playSound } from "./sounds";
  */
 interface CategoryEntry {
   label: string;
-  /** The album sleeve. The other categories are text only, as on the console. */
+  /** The album sleeve or the artist photo. A genre row is text only. */
   icon?: React.ReactNode;
-  /** The full-screen destination of an album row (§6.14). */
+  /**
+   * The full-screen destination of the entry: the album screen for an
+   * album (§6.14), and the list of its albums for an artist or a
+   * genre (§6.21). A category with no destination has none.
+   */
   screen?: React.ComponentType<MenuScreenProps>;
 }
 
@@ -80,48 +97,6 @@ interface Category {
 /** Entries with text only, for each category but Albums. */
 const plain = (...labels: string[]): CategoryEntry[] =>
   labels.map((label) => ({ label }));
-
-/**
- * The sleeve of one album, at the 24 px of the neutral square that it
- * replaces. `MenuListItem` makes only an `svg` glyph larger, thus a
- * bitmap keeps its size in the icon box.
- *
- * A row with a missing file falls back to that neutral square and does
- * not show a broken image, as the Achievements screen does with art that
- * does not load (§6.10). This row stays in the list: on that screen the
- * art is the item, and here it only illustrates a title that is
- * complete without it.
- */
-/** The box of the sleeve. It is the same `h-6 w-6` as the neutral square. */
-const ART_PX = 24;
-
-function AlbumArt({ album }: { album: Album }) {
-  const [failed, setFailed] = useState(false);
-  // The CDN of Apple resizes from the path, thus ask for the size that
-  // the screen shows.
-  const src = albumArtworkUrl(album, ART_PX * 4);
-  if (!src || failed) {
-    return (
-      <span
-        aria-hidden="true"
-        className="block h-6 w-6 shrink-0 rounded-[4px] bg-[rgba(0,0,0,.22)]"
-      />
-    );
-  }
-  return (
-    <Image
-      src={src}
-      // The image is decoration: the label of the row names the album.
-      alt=""
-      // Two times the box, thus the image is sharp on a retina panel.
-      // A larger variant would waste the work of the optimizer.
-      width={ART_PX * 2}
-      height={ART_PX * 2}
-      onError={() => setFailed(true)}
-      className="h-6 w-6 shrink-0 rounded-[4px] object-cover"
-    />
-  );
-}
 
 /**
  * Each album row opens its own album screen (§6.14). The screen takes
@@ -157,21 +132,11 @@ const CATEGORIES: Category[] = [
   {
     label: "Artists",
     icon: <MenuIcon name="artists" />,
-    entries: plain(
-      "Unknown Artist",
-      "A Flock Of Seagulls",
-      "Adele",
-      "Coldplay",
-      "Daft Punk",
-      "Green Day",
-      "Linkin Park",
-      "Massive Attack",
-      "Muse",
-      "Oasis",
-      "Pink Floyd",
-      "Queen",
-      "The National",
-    ),
+    entries: ARTISTS.map((group) => ({
+      label: group.name,
+      icon: <ArtistArt name={group.name} />,
+      screen: albumGroupScreenFor(group, "artist"),
+    })),
   },
   {
     label: "Saved Playlists",
@@ -199,14 +164,17 @@ const CATEGORIES: Category[] = [
   {
     label: "Genres",
     icon: <MenuIcon name="genre" />,
-    entries: plain("Unknown Genre", "Alternative", "Electronic", "Pop", "Rock", "Trip Hop"),
+    entries: GENRES.map((group) => ({
+      label: group.name,
+      screen: albumGroupScreenFor(group, "genre"),
+    })),
   },
 ];
 
 /** The same radial blue as the canvas of the Media blade (DESIGN.md §2.1). */
 const BACKGROUND = gradientCss(MEDIA_GRADIENT);
 
-export function AudiobooksScreen() {
+export function MusicLibraryScreen() {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
