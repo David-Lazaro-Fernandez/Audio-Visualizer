@@ -10,8 +10,8 @@ import { useEffect, useRef, useState } from "react";
  * scrolls a tile into view.
  *
  * `footer` renders at the left of the row of the arrow. The "1 of 273"
- * counter of the Audiobooks list is there, level with the arrow, as on
- * the console.
+ * counter of the Music Library list is there, level with the arrow, as
+ * on the console.
  */
 export function ScrollColumn({
   children,

@@ -7,7 +7,7 @@ import { gradientCss, MEDIA_GRADIENT } from "./blade-gradient";
 import { BladeChromeBand, CONTENT_BAND_SHADOW } from "./BladeChromeBand";
 import { ButtonLegendBar } from "./ButtonLegendBar";
 import { LibraryMenu, type LibraryMenuItem } from "./LibraryMenu";
-import { MenuIcon } from "./MenuIcons";
+import { MenuIcon, type MenuIconName } from "./MenuIcons";
 import {
   RAISED_BORDER,
   RAISED_INSET_SHADOW,
@@ -21,7 +21,7 @@ import type { Album } from "./albums";
 
 /**
  * The song screen, which a track row on the album screen opens
- * (DESIGN.md §6.15). The path is: Media blade, Music, Audiobooks,
+ * (DESIGN.md §6.15). The path is: Media blade, Music, Music Library,
  * album, this screen.
  *
  * It has the same full-screen structure and the same Media blue as the
@@ -44,12 +44,12 @@ import type { Album } from "./albums";
  */
 
 /** The actions that the console gave for a song. None of them works yet. */
-const ACTIONS = [
-  "Play Song",
-  "Add to Current Playlist",
-  "Edit Song Info",
-  "Delete Song",
-] as const;
+const ACTIONS: { label: string; icon: MenuIconName }[] = [
+  { label: "Play Song", icon: "play" },
+  { label: "Add to Current Playlist", icon: "addToPlaylist" },
+  { label: "Edit Song Info", icon: "edit" },
+  { label: "Delete Song", icon: "delete" },
+];
 
 /** The same radial blue as the canvas of the Media blade (DESIGN.md §2.1). */
 const BACKGROUND = gradientCss(MEDIA_GRADIENT);
@@ -69,10 +69,10 @@ export function SongScreen({ album, track }: { album: Album; track: Track }) {
   // is the "1 of 1" that the console showed.
   const actionItems: LibraryMenuItem[] = useMemo(
     () =>
-      ACTIONS.map((label) =>
+      ACTIONS.map(({ label, icon }) =>
         label === "Play Song"
-          ? { label, screen: musicPlayerFor(album, [track]) }
-          : { label, onSelect: () => {} },
+          ? { label, icon: <MenuIcon name={icon} />, screen: musicPlayerFor(album, [track]) }
+          : { label, icon: <MenuIcon name={icon} />, onSelect: () => {} },
       ),
     [album, track],
   );

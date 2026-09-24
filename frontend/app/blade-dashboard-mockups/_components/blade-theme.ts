@@ -39,7 +39,7 @@ export const GAMES_THEME: BladeTheme = {
  * The media blade, DESIGN.md §2.2, in sky blue. The rules are lighter
  * than the panel, because the blue dividers of the console are pale
  * lines. The full-screen surfaces that the Media blade opens, such as
- * Audiobooks, also use this theme.
+ * Music Library, also use this theme.
  */
 export const MEDIA_THEME: BladeTheme = {
   ink: "#0a2240",
@@ -49,6 +49,51 @@ export const MEDIA_THEME: BladeTheme = {
   glyph: "#2a74b8",
   glyphHover: "#143f6e",
   watermark: "#123a60",
+};
+
+/**
+ * The system blade, DESIGN.md §2.2, in purple. The rules are lighter
+ * than the panel, as on Media: the purple dividers of the console are
+ * pale lines. The full-screen surfaces that the System blade opens,
+ * such as Console Settings, also use this theme.
+ */
+export const SYSTEM_THEME: BladeTheme = {
+  ink: "#1f0f33",
+  inkSoft: "#2d1a45",
+  rule: "#a17dc6",
+  ruleStrong: "#b797d6",
+  glyph: "#5c3480",
+  glyphHover: "#331b4d",
+  watermark: "#3a2154",
+};
+
+/**
+ * The Xbox LIVE (community) blade, DESIGN.md §2.2, in gold. The rules
+ * are lighter than the panel, as on Media and System.
+ */
+export const LIVE_THEME: BladeTheme = {
+  ink: "#2a1a04",
+  inkSoft: "#3d2707",
+  rule: "#f2c66a",
+  ruleStrong: "#f7d585",
+  glyph: "#a86a12",
+  glyphHover: "#5e3a06",
+  watermark: "#5a3a0a",
+};
+
+/**
+ * The store blade, DESIGN.md §2.2, in Marketplace orange. The rules are
+ * darker than the panel, as on Games: the dividers of the console are
+ * brown shadow lines on the peach.
+ */
+export const STORE_THEME: BladeTheme = {
+  ink: "#2e1a0c",
+  inkSoft: "#40250f",
+  rule: "#c97a45",
+  ruleStrong: "#d48a56",
+  glyph: "#a8581c",
+  glyphHover: "#5e2e0a",
+  watermark: "#6a3812",
 };
 
 /** The theme as inline-style custom properties: `--blade-ink` and the others. */

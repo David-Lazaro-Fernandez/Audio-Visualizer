@@ -49,16 +49,16 @@ const section = (...colors: string[]): SectionGradient => ({
   stops: colors.map((color, i) => ({ at: STOP_POSITIONS[i], color })),
 });
 
-/** A placeholder orange until the store blade has a design (§2.1). */
-export const STORE_GRADIENT = section("#ff9b4a", "#f57a25", "#dd6216", "#b94d0f");
+/** Marketplace orange. The core is a pale peach, as on the console. */
+export const STORE_GRADIENT = section("#f7c9a0", "#eea673", "#e0834a", "#c9652b");
 /** Xbox LIVE gold. */
 export const LIVE_GRADIENT = section("#f8cd5e", "#f3ae3c", "#e4952b", "#cf7b1d");
 /** Games green. This is the default blade. */
 export const GAMES_GRADIENT = section("#6ecb2e", "#52b81f", "#3e9c16", "#2f7e10");
 /** Media sky blue. */
 export const MEDIA_GRADIENT = section("#6dbdf4", "#46a2e8", "#2f86d2", "#2369b4");
-/** A placeholder steel until the system blade has a design (§2.1). */
-export const SYSTEM_GRADIENT = section("#d9dde2", "#b9bfc7", "#9aa2ac", "#7d8690");
+/** System purple. `#804EA9` is the colour of the blade, at the 30% stop. */
+export const SYSTEM_GRADIENT = section("#9c6fc6", "#804ea9", "#6d4094", "#58327b");
 
 /** Removes the trailing zeros, thus the CSS looks like a written value. */
 const pct = (fraction: number) => `${+(fraction * 100).toFixed(4)}%`;

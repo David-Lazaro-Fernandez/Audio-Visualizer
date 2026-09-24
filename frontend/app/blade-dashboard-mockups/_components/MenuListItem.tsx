@@ -40,11 +40,18 @@ import { playSound } from "./sounds";
  *
  * `chevron`, on the row variant, draws a small right-pointing triangle
  * at the end of the row while the cursor is on it. This is the cue of
- * the console for a list to the right, as on the category rows of
- * Audiobooks. `compact`, on the button variant, removes the empty top
+ * the console for a list to the right, as on the category rows of Music
+ * Library. `compact`, on the button variant, removes the empty top
  * band, thus the raised skin is one band at the height of its label.
  * The item rows of a browse list use it, such as the album list of
- * Audiobooks, where the two-band button is too tall.
+ * Music Library, where the two-band button is too tall.
+ *
+ * `subtitle`, on the row variant, stacks a second, softer line under the
+ * label instead of the single-line row every other menu uses. The
+ * Spotlight screen's list (DESIGN.md §6.20) needs it because a
+ * Marketplace item is named by its content type ("Game", "Downloaded
+ * Content", …) and not by a value at the end of the row, so `meta` does
+ * not fit.
  *
  * Keyboard: each row is a `data-nav-item`, thus `KeyboardNav` can move
  * the cursor through the rows with the arrow keys. The row uses plain
@@ -55,6 +62,16 @@ import { playSound } from "./sounds";
  */
 export interface MenuScreenProps {
   onClose: () => void;
+  /**
+   * True once a close has been requested (a second click, ESC/B, or a
+   * backdrop click) but before the row actually unmounts the screen.
+   * Only set for a screen whose component declares its own
+   * `EXIT_ANIMATION_MS` (the Sign In drawer, DESIGN.md §6.22): every
+   * other screen still unmounts the instant `onClose` runs, exactly as
+   * before, and never sees this prop turn `true`. A screen that reads it
+   * can play an exit animation for that many ms while it stays mounted.
+   */
+  closing?: boolean;
 }
 
 /*
@@ -81,6 +98,9 @@ export interface MenuScreenProps {
  * bands. The row uses plain `focus` and not `focus-visible`, thus a row
  * that a mouse clicked stays lit, as the cursor of the console does.
  *
+ * The label takes the ink of the section (§2.2), thus the same skin
+ * works on the Marketplace blade and on the full-screen menus.
+ *
  * A disabled row keeps the same shape. Its border and its band fade
  * (`group-disabled`) and its text becomes the low-contrast green (§7.2).
  *
@@ -96,7 +116,7 @@ export const RAISED_INSET_SHADOW =
 // These are literals and not compositions of the constants above, thus
 // Tailwind can read the hover:, focus: and disabled: variants verbatim.
 const BUTTON_SKIN = [
-  "group relative isolate overflow-hidden border border-[#5a5a5a] bg-transparent text-[#17300a]",
+  "group relative isolate overflow-hidden border border-[#5a5a5a] bg-transparent text-(--blade-ink)",
   "shadow-[inset_0_8px_8px_-4px_rgba(0,0,0,.2),inset_8px_0_8px_-4px_rgba(0,0,0,.2),inset_-8px_0_8px_-4px_rgba(0,0,0,.2)]",
   // The cursor wash. It fades in on a ::before layer. Refer to the JSDoc above.
   "before:pointer-events-none before:absolute before:inset-0 before:-z-10",
@@ -131,6 +151,7 @@ const ROW_CURSOR_WASH = [
 export function MenuListItem({
   label,
   meta,
+  subtitle,
   variant = "row",
   disabled = false,
   unavailable = false,
@@ -143,11 +164,14 @@ export function MenuListItem({
   iconOnly = false,
   chevron = false,
   compact = false,
+  compactLarge = false,
   onHighlight,
   onSelect,
 }: {
   label: string;
   meta?: string;
+  /** `row` variant only: a second, softer line under the label, in place of the single-line label. */
+  subtitle?: string;
   variant?: "row" | "button" | "brand";
   disabled?: boolean;
   /** `row` variant: faded as `disabled` is, but focusable and described. Select does nothing. */
@@ -182,6 +206,8 @@ export function MenuListItem({
   chevron?: boolean;
   /** `button` variant only: one band and no empty top band. This is the compact skin of a browse-list item. */
   compact?: boolean;
+  /** `compact` only: a bigger icon and a taller band, for a handful of tiles rather than a browse list stacked a dozen deep. */
+  compactLarge?: boolean;
   /** Called when the cursor arrives, by a hover or a focus. It can update a description pane. */
   onHighlight?: () => void;
   /**
@@ -192,6 +218,7 @@ export function MenuListItem({
   onSelect?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const { ref, rect } = useRect<HTMLButtonElement>();
   const containerRect = useMenuBoundary();
   const expandable =
@@ -200,10 +227,25 @@ export function MenuListItem({
     expandable && !Screen && open && rect && containerRect
       ? placeMenuBox(containerRect, rect)
       : null;
+  // A screen opts into a delayed close by declaring how long its own
+  // exit animation runs (the Sign In drawer, DESIGN.md §6.22). Every
+  // other screen leaves this unset, so `close` still unmounts it the
+  // instant it runs, exactly as before.
+  const exitAnimationMs =
+    (Screen as { EXIT_ANIMATION_MS?: number } | undefined)?.EXIT_ANIMATION_MS ?? 0;
 
   const close = () => {
+    if (closing) return;
     playSound("back");
-    setOpen(false);
+    if (exitAnimationMs > 0) {
+      setClosing(true);
+      window.setTimeout(() => {
+        setOpen(false);
+        setClosing(false);
+      }, exitAnimationMs);
+    } else {
+      setOpen(false);
+    }
   };
 
   const handleClick = () => {
@@ -286,15 +328,31 @@ export function MenuListItem({
       >
         {/* The empty top band. `compact` removes it. */}
         {!compact && <span aria-hidden="true" className="block h-[26px] w-full" />}
-        {/* The bottom band, which is the row. */}
-        <span className={`${BUTTON_BAND} ${compact ? "py-[11px]" : ""}`}>
-          <span className="flex min-w-0 items-center gap-3.5">
+        {/* The bottom band, which is the row. `compactLarge` widens the
+            band's own padding to match its bigger icon. */}
+        <span
+          className={`${BUTTON_BAND} ${
+            compact ? (compactLarge ? "py-[18px]" : "py-[11px]") : ""
+          }`}
+        >
+          <span className="flex min-w-0 items-center justify-start gap-3.5">
             {/* The icon is larger than the band and moves up, thus it
                 crosses the split between the two bands. The wrapper has a
                 fixed height, thus the large glyph does not stretch the
-                band. */}
+                band. `compact` has no top band to cross, so its icon
+                stays at its own size and centers on the label instead;
+                `compactLarge` steps that size up for a handful of tiles
+                rather than a browse list stacked a dozen deep. */}
             {icon && (
-              <span className="flex h-6 shrink-0 items-center [&_svg]:h-11 [&_svg]:w-11 [&_svg]:-translate-y-[10px]">
+              <span
+                className={`flex h-6 shrink-0 items-center justify-start ${
+                  compact
+                    ? compactLarge
+                      ? "[&_svg]:h-8 [&_svg]:w-8"
+                      : "[&_svg]:h-6 [&_svg]:w-6"
+                    : "[&_svg]:h-11 [&_svg]:w-11 [&_svg]:-translate-y-[10px]"
+                }`}
+              >
                 {icon}
               </span>
             )}
@@ -349,18 +407,25 @@ export function MenuListItem({
         } ${iconOnly ? "justify-center" : ""}`}
       >
         {icon}
-        {!iconOnly && (
-          <span
-            className={`min-w-0 flex-1 truncate text-[23px] text-(--blade-ink) ${
-              unavailable ? "opacity-45" : ""
-            } ${
-              growOnFocus
-                ? "transition-[font-size] duration-150 group-hover:text-[30px] group-focus:text-[30px]"
-                : ""
-            }`}
-          >
-            {label}
+        {!iconOnly && subtitle ? (
+          <span className={`flex min-w-0 flex-1 flex-col ${unavailable ? "opacity-45" : ""}`}>
+            <span className="truncate text-[23px] text-(--blade-ink)">{label}</span>
+            <span className="truncate text-[20px] text-(--blade-ink-soft)">{subtitle}</span>
           </span>
+        ) : (
+          !iconOnly && (
+            <span
+              className={`min-w-0 flex-1 truncate text-[23px] text-(--blade-ink) ${
+                unavailable ? "opacity-45" : ""
+              } ${
+                growOnFocus
+                  ? "transition-[font-size] duration-150 group-hover:text-[30px] group-focus:text-[30px]"
+                  : ""
+              }`}
+            >
+              {label}
+            </span>
+          )
         )}
         {!iconOnly && meta && (
           <span className="shrink-0 text-[20px] text-(--blade-ink-soft)">{meta}</span>
@@ -381,7 +446,7 @@ export function MenuListItem({
   return (
     <>
       {row}
-      {Screen && open && <Screen onClose={close} />}
+      {Screen && open && <Screen onClose={close} closing={closing} />}
       {placement && (
         <MenuDetailBox
           placement={placement}

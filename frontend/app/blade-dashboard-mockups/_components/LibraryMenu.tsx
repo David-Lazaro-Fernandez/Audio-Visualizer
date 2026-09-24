@@ -7,6 +7,8 @@ import { resolveScreen, type ScreenKey } from "./screens";
 export interface LibraryMenuItem {
   label: string;
   meta?: string;
+  /** `rows` layout: a second, softer line under the label. Refer to `MenuListItem`. */
+  subtitle?: string;
   variant?: "row" | "button" | "brand";
   disabled?: boolean;
   /** Grey as `disabled` is, but still a cursor stop. Refer to `MenuListItem`. */
@@ -123,6 +125,7 @@ export function LibraryMenu({
   growOnFocus = false,
   iconOnly = false,
   compact = false,
+  compactLarge = false,
   ariaLabel = "Library menu",
   className,
 }: {
@@ -135,6 +138,8 @@ export function LibraryMenu({
   iconOnly?: boolean;
   /** `buttons` layout: raised rows with one band, as in a browse list. Refer to `MenuListItem`. */
   compact?: boolean;
+  /** `compact` only: a bigger icon and a taller band. Refer to `MenuListItem`. */
+  compactLarge?: boolean;
   ariaLabel?: string;
   className?: string;
 }) {
@@ -164,6 +169,7 @@ export function LibraryMenu({
                 growOnFocus={growOnFocus}
                 iconOnly={iconOnly}
                 compact={compact}
+                compactLarge={compactLarge}
                 onHighlight={
                   highlight
                     ? () =>

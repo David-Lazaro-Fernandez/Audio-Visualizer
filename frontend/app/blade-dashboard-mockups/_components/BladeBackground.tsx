@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useBladeNav } from "./BladeNavContext";
 import { bladeTransition } from "./blade-motion";
 import type { SectionGradient } from "./blade-gradient";
+import { useCoveredSurface } from "./surface-stack";
 import {
   BladeSurface,
   BladeSurfacePaintedProvider,
@@ -95,9 +96,16 @@ export function BladeBackground({
  */
 export function BladeScreenSurface({ gradient }: { gradient: SectionGradient }) {
   const [painted, setPainted] = useState(false);
+  // A screen is opaque and full-screen: it hides what is under it, and
+  // the next screen to open hides it in turn (`surface-stack.ts`).
+  const covered = useCoveredSurface(true);
   return (
     <BladeSurfacePaintedProvider painted={painted}>
-      <BladeSurface gradient={gradient} onPaintedChange={setPainted} />
+      <BladeSurface
+        gradient={gradient}
+        covered={covered}
+        onPaintedChange={setPainted}
+      />
       <BladeBackground clip={false} />
     </BladeSurfacePaintedProvider>
   );

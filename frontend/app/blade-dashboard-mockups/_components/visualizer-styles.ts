@@ -4,9 +4,11 @@
  *
  * This is a separate module, because the list has several owners. Three
  * visualizers are canvas-2D views of the spectrum
- * (`MusicVisualizer.tsx`). Four are WebGL scenes
- * (`WaterVisualizer.tsx`, `SpectrogramVisualizer.tsx`, the shared
- * `CurlParticles` from `app/_particles/` and the raymarched core from
+ * (`MusicVisualizer.tsx`). Eight are WebGL scenes
+ * (`WaterVisualizer.tsx`, `SpectrogramVisualizer.tsx`,
+ * `WarpVisualizer.tsx`, `HarlequinVisualizer.tsx`,
+ * `MandelbrotVisualizer.tsx`, the shared `CurlParticles` and
+ * `ParticleField` from `app/_particles/` and the raymarched core from
  * `app/_raymarch/`). If the registry were in one of them, the others
  * would import that file for a constant. That is how `WaterVisualizer`
  * came to depend on `MusicVisualizer` for a band count.
@@ -30,8 +32,12 @@ export type VisualizerStyle =
   | "radial"
   | "water"
   | "spectrogram"
+  | "grid"
   | "curl"
-  | "core";
+  | "core"
+  | "warp"
+  | "harlequin"
+  | "mandelbrot";
 
 /**
  * The number of frequency bands that each style draws, which is also the
@@ -46,6 +52,10 @@ export const VISUALIZER_STYLES: { id: VisualizerStyle; label: string }[] = [
   { id: "radial", label: "Radial" },
   { id: "water", label: "Water" },
   { id: "spectrogram", label: "Spectrogram" },
+  { id: "grid", label: "Grid" },
   { id: "curl", label: "Curl Field" },
   { id: "core", label: "Core" },
+  { id: "warp", label: "Warp" },
+  { id: "harlequin", label: "Harlequin" },
+  { id: "mandelbrot", label: "Mandelbrot" },
 ];
